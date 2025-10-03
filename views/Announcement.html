@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>키우미 | 공지사항</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        // Tailwind configuration and custom colors maintained
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'main-red': '#ed2024',
+                        'sub-blue': '#003875',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 기존 디자인 스타일 유지 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            /* bg-slate-50 */
+            color: #1e293b;
+            /* text-slate-800 */
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-card {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .filter-btn.active {
+            background-color: #ed2024;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
+            <h1 class="text-xl font-bold text-slate-800">공지사항</h1>
+            <button class="relative p-2 rounded-full hover:bg-slate-200 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-slate-600">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+            </button>
+        </header>
+
+        <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
+            <div id="announcements-section">
+
+                <div id="announcement-filters" class="mb-4">
+                    <button class="filter-btn active px-3 py-1 text-sm bg-main-red text-white rounded-full shadow-sm"
+                        data-filter="all">전체</button>
+                    <button
+                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
+                        data-filter="학사">학사</button>
+                    <button
+                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
+                        data-filter="장학">장학</button>
+                    <button
+                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
+                        data-filter="채용">채용</button>
+                    <button
+                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
+                        data-filter="일반">일반</button>
+                </div>
+
+                <ul id="announcement-list" class="space-y-3 flex-grow overflow-y-auto"></ul>
+            </div>
+        </main>
+
+        <nav class="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
+            <div class="flex justify-around h-16 items-start">
+                <a href="/Main"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span class="text-xs mt-1">홈</span>
+                </a>
+                <a href="/Calendar"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                        <line x1="16" x2="16" y1="2" y2="6"></line>
+                        <line x1="8" x2="8" y1="2" y2="6"></line>
+                        <line x1="3" x2="21" y1="10" y2="10"></line>
+                    </svg>
+                    <span class="text-xs mt-1">캘린더</span>
+                </a>
+                <a href="/Announcement"
+                    class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 6h13"></path>
+                        <path d="M8 12h13"></path>
+                        <path d="M8 18h13"></path>
+                        <path d="M3 6h.01"></path>
+                        <path d="M3 12h.01"></path>
+                        <path d="M3 18h.01"></path>
+                    </svg>
+                    <span class="text-xs mt-1">공지사항</span>
+                </a>
+                <a href="/Timetable"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+                        <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+                        <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+                        <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+                    </svg>
+                    <span class="text-xs mt-1">시간표</span>
+                </a>
+                <a href="/MyPage"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span class="text-xs mt-1">마이</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // --- Announcements Data ---
+            const announcementData = [
+                { category: '학사', title: '2025학년도 2학기 재학생 등록 안내', date: '2025-08-20' },
+                { category: '장학', title: '교내 성적우수장학금 신청 안내', date: '2025-08-19' },
+                { category: '채용', title: 'OO기업 2025 하반기 신입사원 채용 공고', date: '2025-08-18' },
+                { category: '일반', title: '중앙도서관 시스템 점검 안내 (08/25)', date: '2025-08-17' },
+                { category: '학사', title: '2025-2학기 수강신청 장바구니 일정 안내', date: '2025-08-15' },
+                { category: '장학', title: '국가장학금 2차 신청 마감 임박', date: '2025-08-14' },
+            ];
+
+            function renderAnnouncements(filter = 'all') {
+                const announcementList = document.getElementById('announcement-list');
+                if (!announcementList) return;
+                announcementList.innerHTML = '';
+
+                const filteredData = filter === 'all'
+                    ? announcementData
+                    : announcementData.filter(item => item.category === filter);
+
+                if (filteredData.length === 0) {
+                    announcementList.innerHTML = `<li class="text-center text-slate-500 p-4 text-sm">해당 유형의 공지사항이 없습니다.</li>`;
+                    return;
+                }
+
+                filteredData.forEach(item => {
+                    let categoryColor;
+                    switch (item.category) {
+                        case '학사': categoryColor = 'text-main-red'; break;
+                        case '장학': categoryColor = 'text-sub-blue'; break;
+                        case '채용': categoryColor = 'text-purple-600'; break;
+                        default: categoryColor = 'text-slate-600';
+                    }
+
+                    const li = document.createElement('li');
+                    // 각 공지사항을 얇고 개별적인 카드로 렌더링
+                    li.className = 'bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition'; // 얇은 카드 디자인
+                    li.innerHTML = `
+                    <a href="#" class="block">
+                        <p class="font-semibold text-sm flex justify-between items-start">
+                            <span class="truncate">
+                                <span class="font-bold ${categoryColor}">[${item.category}]</span>
+                                ${item.title}
+                            </span>
+                            <span class="text-xs text-slate-500 flex-shrink-0 ml-4">${item.date}</span>
+                        </p>
+                    </a>
+                `;
+                    announcementList.appendChild(li);
+                });
+            }
+
+            // --- Event Listeners for Filters ---
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 필터 버튼 CSS 로직: 활성화/비활성화 상태 변경
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active', 'bg-main-red', 'text-white');
+                        btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+                    });
+                    button.classList.add('active', 'bg-main-red', 'text-white');
+                    button.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+
+                    renderAnnouncements(button.dataset.filter);
+                });
+            });
+
+            // --- Initial Renders ---
+            renderAnnouncements();
+        });
+    </script>
+</body>
+
+</html>
