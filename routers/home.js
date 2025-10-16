@@ -1,9 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const controller = require("../controllers/controller");
 
 router.get("/", (req, res) => { // 첫 페이지
     res.render('Main');
 });
+
+// router.get("/", controller.Main);
 
 router.get("/Main", (req, res) => {
     res.render("Main");
@@ -21,6 +24,7 @@ router.get("/Calculator", (req, res) => {
     res.render("Calculator");
 });
 
+
 router.get("/Timetable", (req, res) => {
     res.render("Timetable");
 });
@@ -36,6 +40,9 @@ router.get("/AddEvent", (req, res) => {
 router.get("/Announcement", (req, res) => {
     res.render("Announcement");
 });
+
+router.get("/Login", controller.login);
+router.post("/Login", controller.loginProc);
 
 module.exports = {
     router

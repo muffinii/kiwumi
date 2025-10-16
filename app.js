@@ -10,6 +10,11 @@ nunjucks.configure('views', {
     watch: true
 })
 
+// post 데이터 받기
+app.use(express.urlencoded({
+    extended : true
+}));
+
 // 정적파일 설정
 app.use("/assets", express.static(__dirname + "/views/assets"));
 
