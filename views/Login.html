@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>키우미 | 로그인</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        // Tailwind configuration and custom colors maintained
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'main-red': '#ed2024',
+                        'sub-blue': '#003875',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 기존 디자인 스타일 유지 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc; /* bg-slate-50 */
+            color: #1e293b; /* text-slate-800 */
+        }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 수직 중앙 정렬 */
+            align-items: center; /* 수평 중앙 정렬 */
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        
+        <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-2xl">
+            
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-extrabold text-main-red">(대충 로고 사진 넣기)</h1>
+            </div>
+            
+            <form action="/Main.html" method="GET" class="space-y-6">
+                <div>
+                    <label for="student-id" class="block text-sm font-medium text-slate-700 mb-1">학번</label>
+                    <input type="text" id="student-id" placeholder="학번을 입력하세요 (예: 202512345)" 
+                           class="w-full p-3 border border-slate-300 rounded-lg focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition bg-slate-50">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1">비밀번호</label>
+                    <input type="password" id="password" placeholder="비밀번호를 입력하세요" 
+                           class="w-full p-3 border border-slate-300 rounded-lg focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition bg-slate-50">
+                </div>
+                
+                <button type="submit" class="w-full bg-sub-blue text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-lg">
+                    로그인
+                </button>
+                
+                <div class="flex justify-center space-x-4 text-sm mt-4">
+                    <a href="#" class="text-slate-500 hover:text-main-red">비밀번호 찾기</a>
+                    <!-- <span class="text-slate-300">|</span>
+                    <a href="#" class="text-slate-500 hover:text-main-red">회원가입</a> -->
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+</body>
+</html>
