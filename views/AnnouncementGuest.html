@@ -70,7 +70,7 @@
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
             <div id="announcements-section">
 
-                <div id="announcement-filters" class="mb-4">
+                <div id="announcement-filters" class="flex flex-wrap gap-2 mb-4">
                     <button class="filter-btn active px-3 py-1 text-sm bg-main-red text-white rounded-full shadow-sm"
                         data-filter="all">전체</button>
                     <button
@@ -87,7 +87,29 @@
                         data-filter="일반">일반</button>
                 </div>
 
-                <ul id="announcement-list" class="space-y-3 flex-grow overflow-y-auto"></ul>
+                <ul id="announcement-list" class="space-y-3 flex-grow overflow-y-auto">
+                    {% if announcements and announcements.length > 0 %}
+                    {% for a in announcements %}
+                    <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition"
+                        data-category="{{ a.category or '일반' }}">
+                        <a href="#" class="block">
+                            <p class="font-semibold text-sm flex justify-between items-start">
+                                <span class="truncate">
+                                    {% set catClass = 'text-slate-600' %}
+                                    {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set catClass = 'text-purple-600' %}{% endif %}
+                                    <span class="font-bold {{ catClass }}">[{{ a.category or '일반' }}]</span>
+                                    {{ a.title }}
+                                </span>
+                                <span class="text-xs text-slate-500 flex-shrink-0 ml-4">{{ a.created_at }}</span>
+                            </p>
+                        </a>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="text-center text-slate-500 p-4 text-sm">공지사항이 없습니다.</li>
+                    {% endif %}
+                </ul>
+
             </div>
         </main>
 
@@ -113,7 +135,7 @@
                     </svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/Announcement"
+                <a href="/AnnouncementGuest"
                     class="flex flex-col items-center justify-center text-main-red font-bold p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -151,64 +173,13 @@
     </div>
 
     <script>
+        // Filter server-rendered announcements by category (cards)
         document.addEventListener('DOMContentLoaded', function () {
-
-            // --- Announcements Data ---
-            const announcementData = [
-                { category: '학사', title: '2025학년도 2학기 재학생 등록 안내', date: '2025-08-20' },
-                { category: '장학', title: '교내 성적우수장학금 신청 안내', date: '2025-08-19' },
-                { category: '채용', title: 'OO기업 2025 하반기 신입사원 채용 공고', date: '2025-08-18' },
-                { category: '일반', title: '중앙도서관 시스템 점검 안내 (08/25)', date: '2025-08-17' },
-                { category: '학사', title: '2025-2학기 수강신청 장바구니 일정 안내', date: '2025-08-15' },
-                { category: '장학', title: '국가장학금 2차 신청 마감 임박', date: '2025-08-14' },
-            ];
-
-            function renderAnnouncements(filter = 'all') {
-                const announcementList = document.getElementById('announcement-list');
-                if (!announcementList) return;
-                announcementList.innerHTML = '';
-
-                const filteredData = filter === 'all'
-                    ? announcementData
-                    : announcementData.filter(item => item.category === filter);
-
-                if (filteredData.length === 0) {
-                    announcementList.innerHTML = `<li class="text-center text-slate-500 p-4 text-sm">해당 유형의 공지사항이 없습니다.</li>`;
-                    return;
-                }
-
-                filteredData.forEach(item => {
-                    let categoryColor;
-                    switch (item.category) {
-                        case '학사': categoryColor = 'text-main-red'; break;
-                        case '장학': categoryColor = 'text-sub-blue'; break;
-                        case '채용': categoryColor = 'text-purple-600'; break;
-                        default: categoryColor = 'text-slate-600';
-                    }
-
-                    const li = document.createElement('li');
-                    // 각 공지사항을 얇고 개별적인 카드로 렌더링
-                    li.className = 'bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition'; // 얇은 카드 디자인
-                    li.innerHTML = `
-                    <a href="#" class="block">
-                        <p class="font-semibold text-sm flex justify-between items-start">
-                            <span class="truncate">
-                                <span class="font-bold ${categoryColor}">[${item.category}]</span>
-                                ${item.title}
-                            </span>
-                            <span class="text-xs text-slate-500 flex-shrink-0 ml-4">${item.date}</span>
-                        </p>
-                    </a>
-                `;
-                    announcementList.appendChild(li);
-                });
-            }
-
-            // --- Event Listeners for Filters ---
             const filterButtons = document.querySelectorAll('.filter-btn');
+            const items = document.querySelectorAll('#announcement-list .announcement-item');
+
             filterButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // 필터 버튼 CSS 로직: 활성화/비활성화 상태 변경
                     filterButtons.forEach(btn => {
                         btn.classList.remove('active', 'bg-main-red', 'text-white');
                         btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
@@ -216,12 +187,17 @@
                     button.classList.add('active', 'bg-main-red', 'text-white');
                     button.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
 
-                    renderAnnouncements(button.dataset.filter);
+                    const filter = button.dataset.filter;
+                    items.forEach(item => {
+                        const cat = item.getAttribute('data-category') || '';
+                        if (filter === 'all' || filter === cat) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
                 });
             });
-
-            // --- Initial Renders ---
-            renderAnnouncements();
         });
     </script>
 </body>
