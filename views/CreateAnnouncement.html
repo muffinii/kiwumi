@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>키우미 | 공지 작성</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'main-red': '#ed2024',
+                        'sub-blue': '#003875',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-card {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .form-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .form-field:focus {
+            outline: none;
+            border-color: #003875;
+            box-shadow: 0 0 0 1px #003875;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
+            <a href="/Announcement.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="feather feather-x">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </a>
+            <h1 class="text-xl font-bold text-slate-800 flex-grow text-center pr-12">공지사항 작성</h1>
+        </header>
+
+        <main class="flex-grow px-4 py-4 overflow-y-auto">
+
+            <form class="section-card p-6 flex flex-col h-full">
+
+                <div class="space-y-4 flex-grow flex flex-col">
+
+                    <div>
+                        <label for="announcement-category"
+                            class="block text-sm font-medium text-slate-700 mb-1">카테고리</label>
+                        <select id="announcement-category" class="form-field bg-white">
+                            <option>학사</option>
+                            <option>장학</option>
+                            <option>채용</option>
+                            <option>일반</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="announcement-title" class="block text-sm font-medium text-slate-700 mb-1">제목</label>
+                        <input type="text" id="announcement-title" placeholder="공지사항 제목을 입력하세요"
+                            class="form-field bg-slate-50">
+                    </div>
+
+                    <div class="flex-grow flex flex-col">
+                        <label for="announcement-content"
+                            class="block text-sm font-medium text-slate-700 mb-1">내용</label>
+                        <textarea id="announcement-content" rows="10" placeholder="공지사항 본문을 입력하세요..."
+                            class="form-field bg-slate-50 flex-grow"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="mt-6">
+                    <a href="/AnnouncementAdmin.html" class="w-full block">
+                        <button type="submit"
+                            class="w-full bg-sub-blue text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-lg">
+                            게시하기
+                        </button>
+                    </a>
+                </div>
+            </form>
+
+        </main>
+
+    </div>
+</body>
+
+</html>
