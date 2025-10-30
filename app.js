@@ -15,15 +15,30 @@ app.use(express.urlencoded({
     extended : true
 }));
 
-// 정적파일 설정
 app.use("/assets", express.static(__dirname + "/views/assets"));
+
+// Session 사용 설정
+const session = require('express-session');
+const sessionDB = require('express-mysql-session')(session);
+const db = require('./common/db');
+
+// 실제 session 적용
+app.use(
+    session({
+        secret: "kiwu",
+        resave: true,
+        saveUninitialized : false, // 아무 정보 없는 세션 저장 금지
+
+        // DB에 저장
+        store: new sessionDB(db.db) 
+    })
+)
 
 //Routing 방법
 const indexRouter = require('./routers/home');
 
 app.use('/', indexRouter.router);
 
-// 404 Not found
 app.use((req, res) => {
     res.status(404).send("404 오류 발생");
 });

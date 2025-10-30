@@ -1,4 +1,13 @@
 const model = require('../models/model');
+const common = require('../common/common');
+
+const main = (req, res) => {
+    try {
+        res.render('Main');
+    } catch {
+        res.status(500).send("500 Error");
+    }
+}
 
 const login = (req, res) => {
     try {
@@ -29,6 +38,7 @@ const loginProc = async (req, res) => {
 }
 
 module.exports = {
+    main,
     login,
     loginProc
 }

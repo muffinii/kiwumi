@@ -2,11 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/controller");
 
-router.get("/", (req, res) => { // 첫 페이지
-    res.render('Main');
-});
-
-// router.get("/", controller.Main);
+router.get("/", controller.main);
 
 router.get("/Main", (req, res) => {
     res.render("Main");

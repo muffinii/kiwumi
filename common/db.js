@@ -5,7 +5,7 @@ const db = {
     host : '192.168.14.121',
     user : 'kiwumi',
     password : 'kiwumi!@',
-    database : 'kiwumidb'
+    database : 'kiwumi'
 };
 
 const pool = mysql.createPool(db);
