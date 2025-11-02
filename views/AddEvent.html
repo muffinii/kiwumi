@@ -68,21 +68,21 @@
                 <p class="text-slate-600 mb-4 text-sm sm:text-base">개인적인 스케줄을 달력에 등록하고 관리하세요.</p>
 
                 <div class="bg-slate-100 p-3 rounded-lg flex flex-col h-[80%]">
-                    <form id="add-event-form" class="flex flex-col h-full p-2 space-y-4">
+                    <form id="add-event-form" method="post" action="/AddEvent" class="flex flex-col h-full p-2 space-y-4">
                         <div>
                             <label for="event-title" class="block text-sm font-medium text-slate-700">일정명</label>
-                            <input type="text" id="event-title" placeholder="예: 팀 프로젝트 회의"
+                            <input type="text" id="event-title" name="title" placeholder="예: 팀 프로젝트 회의"
                                 class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label for="event-date" class="block text-sm font-medium text-slate-700">날짜</label>
-                                <input type="date" id="event-date"
+                                <input type="date" id="event-date" name="event_date"
                                     class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
                             </div>
                             <div>
-                                <label for="event-time" class="block text-sm font-medium text-slate-700">시간</label>
-                                <input type="time" id="event-time"
+                                <label for="event-time" class="block text-sm font-medium text-slate-700">시간 (선택)</label>
+                                <input type="time" id="event-time" name="event_time"
                                     class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
                             </div>
                         </div>
@@ -102,6 +102,7 @@
                                     class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
                                     title="노랑"></div>
                             </div>
+                            <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
                         </div>
                         <div class="mt-auto pt-4">
                             <button type="submit"
@@ -188,6 +189,7 @@
             const addEventForm = document.getElementById('add-event-form');
             const eventColorOptions = document.getElementById('event-color-options');
 
+            const eventColorHidden = document.getElementById('event-color');
             if (eventColorOptions) {
                 eventColorOptions.addEventListener('click', (e) => {
                     if (e.target.classList.contains('event-color-option')) {
@@ -197,34 +199,54 @@
                         });
                         // Add selection to the clicked option
                         e.target.classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
+                        if (eventColorHidden) eventColorHidden.value = e.target.dataset.color || 'bg-red-200';
                     }
                 });
             }
 
             if (addEventForm) {
-                addEventForm.addEventListener('submit', (e) => {
+                addEventForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const selectedColorEl = eventColorOptions.querySelector('.ring-sub-blue');
                     const titleInput = document.getElementById('event-title');
                     const dateInput = document.getElementById('event-date');
                     const timeInput = document.getElementById('event-time');
 
-                    if (!titleInput.value || !dateInput.value || !timeInput.value || !selectedColorEl) {
-                        showConfirmation('add-event-confirm', '모든 필드를 채워주세요!');
+                    if (!titleInput.value || !dateInput.value || !selectedColorEl) {
+                        alert('제목, 날짜, 색상은 필수입니다!');
                         return;
                     }
 
-                    const color = selectedColorEl.dataset.color;
-                    console.log(`Adding event: ${titleInput.value} on ${dateInput.value} at ${timeInput.value} with color: ${color}`);
-                    showConfirmation('add-event-confirm', '성공적으로 추가되었습니다!');
+                    // x-www-form-urlencoded로 전송
+                    const params = new URLSearchParams();
+                    params.set('title', titleInput.value);
+                    params.set('event_date', dateInput.value);
+                    params.set('event_time', timeInput.value || ''); // 빈 문자열도 허용
+                    params.set('event_color', selectedColorEl.dataset.color || 'bg-red-200');
 
-                    // 폼 리셋 및 색상 선택 초기화
-                    addEventForm.reset();
-                    eventColorOptions.querySelectorAll('.event-color-option').forEach(opt => {
-                        opt.classList.remove('ring-2', 'ring-offset-2', 'ring-sub-blue');
-                    });
-                    // 첫 번째 색상(빨강)을 기본값으로 다시 선택
-                    eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
+                    try {
+                        const resp = await fetch('/AddEvent', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+                            body: params.toString()
+                        });
+                        const data = await resp.json();
+                        if (data && data.ok) {
+                            alert('성공적으로 추가되었습니다!');
+                            // 입력 초기화
+                            addEventForm.reset();
+                            eventColorOptions.querySelectorAll('.event-color-option').forEach(opt => {
+                                opt.classList.remove('ring-2', 'ring-offset-2', 'ring-sub-blue');
+                            });
+                            eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
+                            if (eventColorHidden) eventColorHidden.value = 'bg-red-200';
+                        } else {
+                            alert(data && data.message ? data.message : '추가 실패');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('서버 오류');
+                    }
                 });
             }
 

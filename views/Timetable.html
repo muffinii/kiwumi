@@ -91,82 +91,31 @@
                     <div class="flex-grow">
                         <div id="timetable-grid">
                             <div class="p-2">시간</div>
-                            <div class="p-2">월</div>
-                            <div class="p-2">화</div>
-                            <div class="p-2">수</div>
-                            <div class="p-2">목</div>
-                            <div class="p-2">금</div>
-                            
-                            <div class="p-2 text-xs">1교시<br><span class="text-slate-500">09:00</span></div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-blue-100 p-1">
-                                <span class="font-bold text-xs text-sub-blue break-words">자료구조</span><span class="text-[10px] text-slate-600">공학관 101호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-blue-100 p-1">
-                                <span class="font-bold text-xs text-sub-blue break-words">자료구조</span><span class="text-[10px] text-slate-600">공학관 101호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            
-                            <div class="p-2 text-xs">2교시<br><span class="text-slate-500">10:00</span></div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-blue-100 p-1">
-                                <span class="font-bold text-xs text-sub-blue break-words">자료구조</span><span class="text-[10px] text-slate-600">공학관 101호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-blue-100 p-1">
-                                <span class="font-bold text-xs text-sub-blue break-words">자료구조</span><span class="text-[10px] text-slate-600">공학관 101호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            
-                            <div class="p-2 text-xs">3교시<br><span class="text-slate-500">11:00</span></div>
-                            <div class="timetable-slot border rounded bg-red-100 p-1">
-                                <span class="font-bold text-xs text-main-red break-words">웹프로그래밍</span><span class="text-[10px] text-slate-600">정보관 303호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-red-100 p-1">
-                                <span class="font-bold text-xs text-main-red break-words">웹프로그래밍</span><span class="text-[10px] text-slate-600">정보관 303호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            
-                            <div class="p-2 text-xs">4교시<br><span class="text-slate-500">12:00</span></div>
-                            <div class="timetable-slot border rounded bg-red-100 p-1">
-                                <span class="font-bold text-xs text-main-red break-words">웹프로그래밍</span><span class="text-[10px] text-slate-600">정보관 303호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-red-100 p-1">
-                                <span class="font-bold text-xs text-main-red break-words">웹프로그래밍</span><span class="text-[10px] text-slate-600">정보관 303호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            
-                            <div class="p-2 text-xs">5교시<br><span class="text-slate-500">14:00</span></div>
-                            <div class="timetable-slot border rounded bg-green-100 p-1">
-                                <span class="font-bold text-xs text-green-800 break-words">운영체제</span><span class="text-[10px] text-slate-600">공학관 208호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-green-100 p-1">
-                                <span class="font-bold text-xs text-green-800 break-words">운영체제</span><span class="text-[10px] text-slate-600">공학관 208호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-yellow-100 p-1">
-                                <span class="font-bold text-xs text-yellow-800 break-words">교양영어</span><span class="text-[10px] text-slate-600">어문관 401호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            
-                            <div class="p-2 text-xs">6교시<br><span class="text-slate-500">15:00</span></div>
-                            <div class="timetable-slot border rounded bg-green-100 p-1">
-                                <span class="font-bold text-xs text-green-800 break-words">운영체제</span><span class="text-[10px] text-slate-600">공학관 208호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            <div class="timetable-slot border rounded bg-green-100 p-1">
-                                <span class="font-bold text-xs text-green-800 break-words">운영체제</span><span class="text-[10px] text-slate-600">공학관 208호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-yellow-100 p-1">
-                                <span class="font-bold text-xs text-yellow-800 break-words">교양영어</span><span class="text-[10px] text-slate-600">어문관 401호</span>
-                            </div>
-                            <div class="timetable-slot border rounded bg-white"></div>
-                            
+                            {% for d in dayNames %}
+                            <div class="p-2">{{ d }}</div>
+                            {% endfor %}
+                            {% if rows and rows.length > 0 %}
+                                {% for r in rows %}
+                                    <div class="p-2 text-xs">{{ r.period }}교시<br><span class="text-slate-500">{{ r.time }}</span></div>
+                                    {% for c in r.cells %}
+                                        {% if c %}
+                                        <div class="timetable-slot border rounded {{ c.color }} p-1">
+                                            <span class="font-bold text-xs break-words">{{ c.title }}</span>
+                                            {% if c.location %}<span class="text-[10px] text-slate-600">{{ c.location }}</span>{% endif %}
+                                        </div>
+                                        {% else %}
+                                        <div class="timetable-slot border rounded bg-white"></div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            {% else %}
+                                {% for i in [1,2,3,4,5,6,7,8] %}
+                                    <div class="p-2 text-xs">{{ i }}교시<br><span class="text-slate-500">&nbsp;</span></div>
+                                    {% for j in [1,2,3,4,5] %}
+                                    <div class="timetable-slot border rounded bg-white"></div>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
                         </div>
                     </div>
                     

@@ -110,21 +110,21 @@
             <section>
                 <h2 class="text-lg font-bold mb-3 text-slate-700">최근 공지사항</h2>
                 <div class="section-card space-y-2">
-                    <a href="#" class="block p-2 rounded-md hover:bg-slate-50">
-                        <p class="font-bold text-sm truncate"><span class="font-extrabold text-main-red">[학사]</span>
-                            2025학년도 2학기 재학생 등록 안내</p>
-                        <p class="text-xs text-slate-400 text-right">2025-08-20</p>
-                    </a>
-                    <a href="#" class="block p-2 rounded-md hover:bg-slate-50">
-                        <p class="font-bold text-sm truncate"><span class="font-extrabold text-sub-blue">[장학]</span> 교내
-                            성적우수장학금 신청 안내</p>
-                        <p class="text-xs text-slate-400 text-right">2025-08-19</p>
-                    </a>
-                    <a href="#" class="block p-2 rounded-md hover:bg-slate-50">
-                        <p class="font-bold text-sm truncate"><span class="font-extrabold text-purple-600">[채용]</span>
-                            OO기업 2025 하반기 신입사원 채용 공고</p>
-                        <p class="text-xs text-slate-400 text-right">2025-08-18</p>
-                    </a>
+                    {% if announcements and announcements.length > 0 %}
+                        {% for a in announcements %}
+                        <a href="#" class="block p-2 rounded-md hover:bg-slate-50">
+                            <p class="font-bold text-sm truncate">
+                                {% set catClass = 'text-slate-600' %}
+                                {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set catClass = 'text-purple-600' %}{% endif %}
+                                <span class="font-extrabold {{ catClass }}">[{{ a.category or '일반' }}]</span>
+                                {{ a.title }}
+                            </p>
+                            <p class="text-xs text-slate-400 text-right">{{ a.created_at }}</p>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-slate-500 p-4 text-sm">공지사항이 없습니다.</p>
+                    {% endif %}
                 </div>
             </section>
         </main>

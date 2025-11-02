@@ -28,6 +28,11 @@ router.get("/Calculator", controller.calculator);
 router.get("/Timetable", controller.timetable);
 router.get("/MyPage", controller.myPage);
 router.get("/AddEvent", controller.addEvent);
+router.post("/AddEvent", controller.createPersonalEvent);
+router.get("/AddClass", controller.addClass);
+router.post("/AddClass", controller.addClassProc);
+// 개인 일정 API
+router.get("/api/events", controller.getPersonalEventsApi);
 
 module.exports = {
     router

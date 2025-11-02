@@ -44,7 +44,7 @@
     <div class="app-container">
         
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Timetable.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Timetable" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center pr-12">수업 추가</h1>
@@ -52,12 +52,12 @@
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
             
-            <form class="section-card p-6">
+            <form class="section-card p-6" method="post" action="/AddClass">
                 
                 <h2 class="text-xl font-bold mb-5">새로운 수업 정보 입력</h2>
                 
                 <div class="space-y-4 mb-6">
-                    <input type="text" placeholder="과목 이름 (예: 운영체제)" class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
+                    <input type="text" name="title" placeholder="과목 이름 (예: 운영체제)" required class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
                     
                     <div class="flex space-x-3">
                         <input type="number" placeholder="학점 (예: 3)" min="1" max="5" class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
@@ -69,17 +69,17 @@
                 
                 <div id="time-slot-container" class="space-y-3">
                     <div class="flex items-center space-x-2 border p-3 rounded-lg bg-white">
-                        <select class="p-2 border rounded text-sm bg-slate-50">
+                        <select name="day" class="p-2 border rounded text-sm bg-slate-50">
                             <option value="월">월</option>
                             <option value="화">화</option>
                             <option value="수">수</option>
                             <option value="목">목</option>
                             <option value="금">금</option>
                         </select>
-                        <input type="time" value="09:00" class="p-2 border rounded text-sm bg-slate-50">
+                        <input type="time" name="start_time" value="09:00" class="p-2 border rounded text-sm bg-slate-50">
                         <span>~</span>
-                        <input type="time" value="10:00" class="p-2 border rounded text-sm bg-slate-50">
-                        <input type="text" placeholder="장소 (예: 공학관 101호)" class="flex-grow p-2 border rounded text-sm bg-slate-50">
+                        <input type="time" name="end_time" value="10:00" class="p-2 border rounded text-sm bg-slate-50">
+                        <input type="text" name="place" placeholder="장소 (예: 공학관 101호)" class="flex-grow p-2 border rounded text-sm bg-slate-50">
                         <button type="button" class="text-red-500 hover:text-red-700 p-1 remove-slot-btn">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
@@ -93,11 +93,20 @@
                 <h3 class="text-lg font-bold mb-3 border-t pt-4 mt-6">표시 설정</h3>
                 
                 <div class="space-y-4 mb-6">
-                    <div class="flex items-center justify-between">
-                        <label class="text-slate-700">과목 색상</label>
-                        <input type="color" value="#ed2024" class="w-12 h-8 rounded-md border p-1">
+                    <div>
+                        <label class="text-slate-700 block mb-2">과목 색상</label>
+                        <input type="hidden" name="class_color" id="class_color" value="bg-blue-100">
+                        <div id="colorPalette" class="flex gap-2">
+                            <button type="button" data-color="bg-blue-100" class="w-8 h-8 rounded border-2 border-sub-blue bg-blue-100"></button>
+                            <button type="button" data-color="bg-red-100" class="w-8 h-8 rounded border bg-red-100"></button>
+                            <button type="button" data-color="bg-green-100" class="w-8 h-8 rounded border bg-green-100"></button>
+                            <button type="button" data-color="bg-yellow-100" class="w-8 h-8 rounded border bg-yellow-100"></button>
+                            <button type="button" data-color="bg-purple-100" class="w-8 h-8 rounded border bg-purple-100"></button>
+                            <button type="button" data-color="bg-pink-100" class="w-8 h-8 rounded border bg-pink-100"></button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">한 색상을 선택하세요. 선택된 색상은 진하게 테두리 표시됩니다.</p>
                     </div>
-                    <textarea placeholder="선택 사항: 수업 관련 메모나 특이사항" rows="3" class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition"></textarea>
+                    <textarea placeholder="선택 사항: 수업 관련 메모나 특이사항 (저장은 아직 미지원)" rows="3" class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition"></textarea>
                 </div>
 
                 <button type="submit" class="w-full bg-main-red text-white p-3 rounded-lg font-bold text-lg hover:bg-red-700 transition shadow-lg">
@@ -109,23 +118,23 @@
 
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-                <a href="/Main.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/Main" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     <span class="text-xs mt-1">홈</span>
                 </a>
-                <a href="/Calendar.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/Calendar" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/AnnouncementGuest.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/AnnouncementGuest" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
-                <a href="/Timetable.html" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                <a href="/Timetable" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
                     <span class="text-xs mt-1">시간표</span>
                 </a>
-                <a href="/MyPage.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/MyPage" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span class="text-xs mt-1">마이페이지</span>
                 </a>
@@ -137,20 +146,22 @@
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('time-slot-container');
             const addBtn = document.getElementById('add-slot-btn');
+            const colorPalette = document.getElementById('colorPalette');
+            const colorHidden = document.getElementById('class_color');
 
             const slotTemplate = `
                 <div class="flex items-center space-x-2 border p-3 rounded-lg bg-white">
-                    <select class="p-2 border rounded text-sm bg-slate-50">
+                    <select name="day" class="p-2 border rounded text-sm bg-slate-50">
                         <option value="월">월</option>
                         <option value="화">화</option>
                         <option value="수">수</option>
                         <option value="목">목</option>
                         <option value="금">금</option>
                     </select>
-                    <input type="time" value="09:00" class="p-2 border rounded text-sm bg-slate-50">
+                    <input type="time" name="start_time" value="09:00" class="p-2 border rounded text-sm bg-slate-50">
                     <span>~</span>
-                    <input type="time" value="10:00" class="p-2 border rounded text-sm bg-slate-50">
-                    <input type="text" placeholder="장소 (예: 공학관 101호)" class="flex-grow p-2 border rounded text-sm bg-slate-50">
+                    <input type="time" name="end_time" value="10:00" class="p-2 border rounded text-sm bg-slate-50">
+                    <input type="text" name="place" placeholder="장소 (예: 공학관 101호)" class="flex-grow p-2 border rounded text-sm bg-slate-50">
                     <button type="button" class="text-red-500 hover:text-red-700 p-1 remove-slot-btn">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -174,6 +185,21 @@
                         alert('최소한 하나의 수업 시간은 입력해야 합니다.');
                     }
                 }
+            });
+
+            // 색상 팔레트 선택 토글
+            colorPalette.addEventListener('click', (e) => {
+                const btn = e.target.closest('button[data-color]');
+                if (!btn) return;
+                const color = btn.getAttribute('data-color');
+                colorHidden.value = color;
+                // 선택 표시 업데이트
+                Array.from(colorPalette.querySelectorAll('button[data-color]')).forEach(b => {
+                    b.classList.remove('border-2','border-sub-blue');
+                    b.classList.add('border');
+                });
+                btn.classList.remove('border');
+                btn.classList.add('border-2','border-sub-blue');
             });
         });
     </script>
