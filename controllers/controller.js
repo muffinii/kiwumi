@@ -3,6 +3,9 @@ const common = require('../common/common');
 
 const main = async (req, res) => {
     try {
+        const user = req.session && req.session.user;
+        
+        // 공지사항 가져오기
         const list = await model.getRecentAnnouncements(5);
         const announcements = list.map(a => ({
             ...a,
@@ -15,7 +18,65 @@ const main = async (req, res) => {
                 return `${y}-${m}-${day}`;
             })()
         }));
-        res.render('Main', { announcements });
+
+        // 오늘의 일정 가져오기 (로그인한 경우에만)
+        let todaySchedule = [];
+        if (user) {
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const dayOfWeek = now.getDay(); // 0=일, 1=월, ..., 6=토
+            
+            // 개인 일정 가져오기
+            const personalEvents = await model.getTodayPersonalEvents(user.pkid, today);
+            
+            // 시간표 가져오기 (월~금만)
+            let timetableEntries = [];
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                timetableEntries = await model.getTodayTimetable(user.pkid, dayOfWeek);
+            }
+
+            // 교시를 시간으로 변환하는 함수
+            const periodToTime = (period) => {
+                // 모든 교시를 1시간 간격으로 (1교시=09:00부터)
+                const base = new Date(2000, 0, 1, 9, 0, 0);
+                base.setMinutes(base.getMinutes() + (period - 1) * 60);
+                return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
+            };
+
+            // 개인 일정 추가
+            personalEvents.forEach(e => {
+                todaySchedule.push({
+                    title: e.title,
+                    time: e.time || '',
+                    location: '',
+                    color: e.color,
+                    type: 'event'
+                });
+            });
+
+            // 시간표 수업 추가
+            timetableEntries.forEach(e => {
+                const startTime = periodToTime(e.start_period);
+                const endPeriod = e.end_period + 1; // 종료 교시의 다음 교시 시작 시간
+                const endTime = periodToTime(endPeriod);
+                todaySchedule.push({
+                    title: e.title,
+                    time: `${startTime} - ${endTime}`,
+                    location: e.location || '',
+                    color: e.color,
+                    type: 'class'
+                });
+            });
+
+            // 시간 순으로 정렬
+            todaySchedule.sort((a, b) => {
+                const timeA = a.time.split(' - ')[0] || a.time || '99:99';
+                const timeB = b.time.split(' - ')[0] || b.time || '99:99';
+                return timeA.localeCompare(timeB);
+            });
+        }
+
+        res.render('Main', { announcements, todaySchedule, userName: user ? user.name : '키우미' });
     } catch (err) {
         console.error(err);
         res.status(500).send("500 Error");
@@ -127,26 +188,18 @@ const timetable = async (req, res) => {
 
         const entries = await model.getTimetableByUser(user.pkid);
 
-        // 최대 교시 결정 (데이터가 없으면 기본 8교시까지 표시)
-        let maxPeriod = Math.min(15, Math.max(8, ...(entries.map(e => e.end_period)), 0));
+        // 최대 교시 결정 (데이터가 없으면 기본 8교시까지 표시, 최대 10교시)
+        let maxPeriod = Math.min(10, Math.max(8, ...(entries.map(e => e.end_period)), 0));
         if (!isFinite(maxPeriod) || maxPeriod <= 0) maxPeriod = 8;
 
         // 교시별 시작 시각 계산 함수
         const periodStartLabel = (p) => {
-            // 1교시=09:00, 2~8교시는 1시간 간격, 9교시부터는 50분 간격
-            if (p <= 8) {
-                const base = new Date(2000,0,1,9,0,0);
-                base.setMinutes(base.getMinutes() + (p-1)*60);
-                const hh = String(base.getHours()).padStart(2,'0');
-                const mm = String(base.getMinutes()).padStart(2,'0');
-                return `${hh}:${mm}`;
-            } else {
-                const base = new Date(2000,0,1,17,0,0);
-                base.setMinutes(base.getMinutes() + (p-9)*50);
-                const hh = String(base.getHours()).padStart(2,'0');
-                const mm = String(base.getMinutes()).padStart(2,'0');
-                return `${hh}:${mm}`;
-            }
+            // 모든 교시를 1시간 간격으로 (1교시=09:00부터)
+            const base = new Date(2000,0,1,9,0,0);
+            base.setMinutes(base.getMinutes() + (p-1)*60);
+            const hh = String(base.getHours()).padStart(2,'0');
+            const mm = String(base.getMinutes()).padStart(2,'0');
+            return `${hh}:${mm}`;
         };
 
         // 행(교시)별 셀 구성: 월(1)~금(5)
@@ -261,24 +314,18 @@ const addClass = (req, res) => {
     }
 }
 
-// 시간 문자열을 교시로 변환하는 헬퍼 (규칙: 1~8교시=1시간 간격 09:00 시작, 9교시부터 50분 간격 17:00 시작)
+// 시간 문자열을 교시로 변환하는 헬퍼 (모든 교시 1시간 간격)
 const timeToPeriod = (hhmm) => {
     const m = /^([0-2]?\d):(\d{2})$/.exec(hhmm || '');
     if (!m) return null;
     const h = parseInt(m[1], 10), min = parseInt(m[2], 10);
-    // 09:00 ~ 16:00 정시 => 1~8교시 시작
-    if (h >= 9 && h <= 16) {
-        if (min !== 0) return null; // 교시 경계만 허용
-        return (h - 9) + 1; // 9시=>1교시
-    }
-    // 17:00 이후 => 50분 간격
-    if (h >= 17 && h <= 22) {
-        const totalMin = (h - 17) * 60 + min; // 17:00 기준 경과 분
-        if (totalMin % 50 !== 0) return null;
-        const k = totalMin / 50; // 0,1,2,...
-        const p = 9 + k;
-        if (p < 9 || p > 15) return null;
-        return p;
+    
+    // 09:00부터 시작, 1시간 간격으로 10교시까지
+    if (h >= 9 && h < 19) {  // 9시~18시
+        if (min !== 0) return null; // 정시만 허용
+        const period = (h - 9) + 1; // 9시=>1교시, 10시=>2교시, ...
+        if (period < 1 || period > 10) return null;
+        return period;
     }
     return null;
 }
@@ -317,7 +364,7 @@ const addClassProc = async (req, res) => {
             const epStart = timeToPeriod(et); // 종료 시각이 다음 교시의 시작이면 ep = epStart - 1
             if (sp == null || epStart == null) continue;
             const ep = epStart - 1;
-            if (ep < sp || sp < 1 || ep > 15) continue;
+            if (ep < sp || sp < 1 || ep > 10) continue; // 10교시까지만
 
             const location = common.reqeustFilter(place[i] || '', 100, false, '');
             await model.addTimetableEntry(user.pkid, dNum, sp, ep, title, location, class_color);

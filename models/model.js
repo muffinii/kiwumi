@@ -47,7 +47,7 @@ const getRecentAnnouncements = async (limit = 5) => {
 }
 
     const ensurePersonalEventsTable = async () => {
-        const sql = `
+        const createSql = `
             CREATE TABLE IF NOT EXISTS personal_events (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_pkid INT NOT NULL,
@@ -59,7 +59,16 @@ const getRecentAnnouncements = async (limit = 5) => {
                 INDEX idx_user_date (user_pkid, event_date)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `;
-        await db.runSql(sql);
+        await db.runSql(createSql);
+        
+        // 기존 테이블의 event_time 컬럼이 NULL을 허용하지 않을 수 있으므로 수정
+        try {
+            const alterSql = `ALTER TABLE personal_events MODIFY event_time TIME NULL;`;
+            await db.runSql(alterSql);
+        } catch (err) {
+            // 이미 NULL이 허용되거나 다른 이유로 실패하면 무시
+            console.log('event_time column alter skipped:', err.message);
+        }
     }
 
     const createPersonalEvent = async (user_pkid, title, event_date, event_time, color) => {
@@ -87,6 +96,32 @@ const getRecentAnnouncements = async (limit = 5) => {
         return rows.map(r => ({ id: r.id, title: r.title, color: r.color, day: r.day, time: r.time }));
     }
 
+    const getTodayPersonalEvents = async (user_pkid, date) => {
+        await ensurePersonalEventsTable();
+        const sql = `
+            SELECT id, title, color, TIME_FORMAT(event_time, '%H:%i') AS time
+            FROM personal_events
+            WHERE user_pkid = ? AND event_date = ?
+            ORDER BY event_time ASC, id ASC;
+        `;
+        const params = [user_pkid, date];
+        const rows = await db.runSql(sql, params);
+        return rows.map(r => ({ id: r.id, title: r.title, color: r.color, time: r.time }));
+    }
+
+    const getTodayTimetable = async (user_pkid, dayOfWeek) => {
+        await ensureTimetableTable();
+        const sql = `
+            SELECT id, start_period, end_period, title, location, color
+            FROM timetable_entries
+            WHERE user_pkid = ? AND day = ?
+            ORDER BY start_period ASC, end_period DESC, id ASC;
+        `;
+        const params = [user_pkid, dayOfWeek];
+        const rows = await db.runSql(sql, params);
+        return rows;
+    }
+
 module.exports = {
     loginCheck,
     getAnnouncements,
@@ -94,6 +129,8 @@ module.exports = {
     createAnnouncement,
     createPersonalEvent,
     getPersonalEventsByMonth,
+    getTodayPersonalEvents,
+    getTodayTimetable,
     // timetable will be appended below
 }
 
