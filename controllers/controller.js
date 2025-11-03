@@ -117,7 +117,14 @@ const main = async (req, res) => {
             });
         }
 
-        res.render('Main', { announcements, todaySchedule, userName: user ? user.name : '키우미' });
+        const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
+
+        res.render('Main', { 
+            announcements, 
+            todaySchedule, 
+            userName: user ? user.name : '키우미',
+            user_role: user_role 
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("500 Error");
