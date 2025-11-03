@@ -24,6 +24,14 @@ router.get("/AnnouncementAdmin", controller.announcementAdmin);
 router.get("/AnnouncementGuest", controller.announcementGuest);
 router.get("/CreateAnnouncement", controller.addAnnouncement);
 router.post("/CreateAnnouncement", controller.createAnnouncement);
+router.get("/ViewAnnouncement/:id", controller.viewAnnouncement);
+router.get("/ViewAnnouncement", controller.viewAnnouncement);
+router.get("/ModifyAnnouncement/:id", controller.modifyAnnouncement);
+router.get("/ModifyAnnouncement", controller.modifyAnnouncement);
+router.post("/ModifyAnnouncement/:id", controller.modifyAnnouncementProc);
+router.post("/ModifyAnnouncement", controller.modifyAnnouncementProc);
+router.post("/DeleteAnnouncement/:id", controller.deleteAnnouncementProc);
+router.post("/DeleteAnnouncement", controller.deleteAnnouncementProc);
 router.get("/Calculator", controller.calculator);
 router.get("/Timetable", controller.timetable);
 router.get("/MyPage", controller.myPage);
@@ -31,6 +39,11 @@ router.get("/AddEvent", controller.addEvent);
 router.post("/AddEvent", controller.createPersonalEvent);
 router.get("/AddClass", controller.addClass);
 router.post("/AddClass", controller.addClassProc);
+router.get("/ViewClass/:id", controller.viewClass);
+router.get("/ViewClass", controller.viewClass);
+router.get("/ModifyClass/:id", controller.modifyClass);
+router.get("/ModifyClass", controller.modifyClass);
+router.get("/Notifications", controller.notifications);
 // 개인 일정 API
 router.get("/api/events", controller.getPersonalEventsApi);
 

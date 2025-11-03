@@ -280,11 +280,11 @@
             const params = new URLSearchParams(window.location.search);
             const classId = params.get('classId');
 
-            document.getElementById('cancel-btn').href = `/ViewClass.html?classId=${classId}`;
+            document.getElementById('cancel-btn').href = `/ViewClass?classId=${classId}`;
 
             if (!classId) {
                 alert('수정할 수업 ID가 없습니다.');
-                window.location.href = '/Timetable.html';
+                window.location.href = '/Timetable';
                 return;
             }
 
@@ -345,7 +345,7 @@
 
                 // 성공 시 다시 상세 페이지로 이동
                 alert('수업 정보가 성공적으로 수정되었습니다.');
-                window.location.href = `/ViewClass.html?classId=${classId}`;
+                window.location.href = `/ViewClass?classId=${classId}`;
 
             } catch (error) {
                 console.error('Error updating data:', error);

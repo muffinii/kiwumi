@@ -2,8 +2,21 @@ const db = require('../common/db');
 
 const loginCheck = async (student_num, student_pw) => {
     try {
-        const sql = "select pkid, name from student where student_num = ? and student_pw = ?;";
+        const sql = "select pkid, name, student_num from student where student_num = ? and student_pw = ?;";
         const params = [student_num, student_pw];
+
+        const result = await db.runSql(sql, params);
+        return result[0];
+    } catch {
+        throw "sql error";
+    }
+}
+
+// 관리자 로그인 체크
+const adminLoginCheck = async (admin_id, admin_pw) => {
+    try {
+        const sql = "select pkid, name, admin_id, role from administrator where admin_id = ? and admin_pw = ?;";
+        const params = [admin_id, admin_pw];
 
         const result = await db.runSql(sql, params);
         return result[0];
@@ -41,6 +54,49 @@ const getRecentAnnouncements = async (limit = 5) => {
         const sql = `SELECT pkid, title, content, category, author_pkid, created_at FROM announcements ORDER BY created_at DESC LIMIT ${lim}`;
         const result = await db.runSql(sql);
         return result;
+    } catch (err) {
+        throw err;
+    }
+}
+
+// 공지 상세 조회
+const getAnnouncementById = async (pkid) => {
+    try {
+        const sql = `
+            SELECT a.pkid, a.title, a.content, a.category, a.author_pkid, a.created_at, s.name as author_name
+            FROM announcements a
+            LEFT JOIN student s ON a.author_pkid = s.pkid
+            WHERE a.pkid = ?;
+        `;
+        const result = await db.runSql(sql, [pkid]);
+        return result[0];
+    } catch (err) {
+        throw err;
+    }
+}
+
+// 공지 수정
+const updateAnnouncement = async (pkid, title, content, category) => {
+    try {
+        const sql = `
+            UPDATE announcements 
+            SET title = ?, content = ?, category = ?
+            WHERE pkid = ?;
+        `;
+        const params = [title, content, category, pkid];
+        const result = await db.runSql(sql, params);
+        return result.affectedRows;
+    } catch (err) {
+        throw err;
+    }
+}
+
+// 공지 삭제
+const deleteAnnouncement = async (pkid) => {
+    try {
+        const sql = "DELETE FROM announcements WHERE pkid = ?;";
+        const result = await db.runSql(sql, [pkid]);
+        return result.affectedRows;
     } catch (err) {
         throw err;
     }
@@ -124,9 +180,13 @@ const getRecentAnnouncements = async (limit = 5) => {
 
 module.exports = {
     loginCheck,
+    adminLoginCheck,
     getAnnouncements,
     getRecentAnnouncements,
+    getAnnouncementById,
     createAnnouncement,
+    updateAnnouncement,
+    deleteAnnouncement,
     createPersonalEvent,
     getPersonalEventsByMonth,
     getTodayPersonalEvents,
@@ -176,6 +236,39 @@ const getTimetableByUser = async (user_pkid) => {
     return rows;
 }
 
+const getTimetableById = async (id, user_pkid) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT id, day, start_period, end_period, title, location, color
+        FROM timetable_entries
+        WHERE id = ? AND user_pkid = ?;
+    `;
+    const result = await db.runSql(sql, [id, user_pkid]);
+    return result[0];
+}
+
+const updateTimetableEntry = async (id, user_pkid, day, start_period, end_period, title, location, color) => {
+    await ensureTimetableTable();
+    const sql = `
+        UPDATE timetable_entries
+        SET day = ?, start_period = ?, end_period = ?, title = ?, location = ?, color = ?
+        WHERE id = ? AND user_pkid = ?;
+    `;
+    const params = [day, start_period, end_period, title, location, color, id, user_pkid];
+    const result = await db.runSql(sql, params);
+    return result.affectedRows;
+}
+
+const deleteTimetableEntry = async (id, user_pkid) => {
+    await ensureTimetableTable();
+    const sql = "DELETE FROM timetable_entries WHERE id = ? AND user_pkid = ?;";
+    const result = await db.runSql(sql, [id, user_pkid]);
+    return result.affectedRows;
+}
+
 module.exports.ensureTimetableTable = ensureTimetableTable;
 module.exports.addTimetableEntry = addTimetableEntry;
 module.exports.getTimetableByUser = getTimetableByUser;
+module.exports.getTimetableById = getTimetableById;
+module.exports.updateTimetableEntry = updateTimetableEntry;
+module.exports.deleteTimetableEntry = deleteTimetableEntry;

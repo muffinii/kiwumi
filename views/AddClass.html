@@ -243,7 +243,7 @@
                 const newClassId = result.classId; 
                 
                 if (newClassId) {
-                    window.location.href = `/ViewClass.html?classId=${newClassId}`;
+                    window.location.href = `/ViewClass?classId=${newClassId}`;
                 } else {
                     alert("ID를 받지 못했습니다. 서버 응답을 확인하세요.");
                 }

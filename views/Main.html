@@ -114,7 +114,7 @@
                 <div class="section-card space-y-2">
                     {% if announcements and announcements.length > 0 %}
                         {% for a in announcements %}
-                        <a href="#" class="block p-2 rounded-md hover:bg-slate-50">
+                        <a href="/ViewAnnouncement/{{ a.pkid }}" class="block p-2 rounded-md hover:bg-slate-50">
                             <p class="font-bold text-sm truncate">
                                 {% set catClass = 'text-slate-600' %}
                                 {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set catClass = 'text-purple-600' %}{% endif %}
@@ -152,7 +152,7 @@
                     </svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/AnnouncementGuest"
+                <a href="/Announcement"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

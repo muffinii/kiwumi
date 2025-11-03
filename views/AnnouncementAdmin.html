@@ -101,7 +101,7 @@
                     {% if announcements and announcements.length > 0 %}
                         {% for a in announcements %}
                             <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition" data-category="{{ a.category or '일반' }}">
-                                <a href="ViewAnnouncement" class="block">
+                                <a href="/ViewAnnouncement/{{ a.pkid }}" class="block">
                                     <p class="font-semibold text-sm flex items-start">
                                         <span class="truncate">
                                             {% set catClass = 'text-slate-600' %}

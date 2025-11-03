@@ -91,56 +91,43 @@ const calendar = (req, res) => {
     }
 }
 
-const announcement = (req, res) => {
+const announcement = async (req, res) => {
     try {
-        res.render('Announcement');
-    } catch {
-        res.status(500).send("500 Error");
+        const user = req.session && req.session.user;
+        const list = await model.getAnnouncements();
+        const formatted = list.map(a => ({
+            ...a,
+            created_at: (() => {
+                const d = new Date(a.created_at);
+                if (isNaN(d)) return '';
+                const y = d.getFullYear();
+                const m = String(d.getMonth()+1).padStart(2,'0');
+                const day = String(d.getDate()).padStart(2,'0');
+                return `${y}-${m}-${day}`;
+            })()
+        }));
+        
+        // 사용자 역할 확인
+        const isAdmin = user && user.isAdmin === true;
+        
+        res.render('Announcement', { 
+            announcements: formatted,
+            isAdmin: isAdmin
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('500 Error');
     }
 }
 
-// 관리자용 공지 목록
+// 관리자용 공지 목록 (호환성을 위해 유지, announcement로 리다이렉트)
 const announcementAdmin = async (req, res) => {
-    try {
-        const list = await model.getAnnouncements();
-        const formatted = list.map(a => ({
-            ...a,
-            created_at: (() => {
-                const d = new Date(a.created_at);
-                if (isNaN(d)) return '';
-                const y = d.getFullYear();
-                const m = String(d.getMonth()+1).padStart(2,'0');
-                const day = String(d.getDate()).padStart(2,'0');
-                return `${y}-${m}-${day}`;
-            })()
-        }));
-        res.render('AnnouncementAdmin', { announcements: formatted });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('500 Error');
-    }
+    res.redirect('/Announcement');
 }
 
-// 게스트용 공지 목록
+// 게스트용 공지 목록 (호환성을 위해 유지, announcement로 리다이렉트)
 const announcementGuest = async (req, res) => {
-    try {
-        const list = await model.getAnnouncements();
-        const formatted = list.map(a => ({
-            ...a,
-            created_at: (() => {
-                const d = new Date(a.created_at);
-                if (isNaN(d)) return '';
-                const y = d.getFullYear();
-                const m = String(d.getMonth()+1).padStart(2,'0');
-                const day = String(d.getDate()).padStart(2,'0');
-                return `${y}-${m}-${day}`;
-            })()
-        }));
-        res.render('AnnouncementGuest', { announcements: formatted });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('500 Error');
-    }
+    res.redirect('/Announcement');
 }
 
 // 공지 생성 처리
@@ -395,21 +382,42 @@ const loginProc = async (req, res) => {
         student_num = common.reqeustFilter(student_num, 20, false);
         student_pw = common.reqeustFilter(student_pw, 20, false);
 
-        const result = await model.loginCheck(student_num, student_pw);
+        // 먼저 학생 계정으로 로그인 시도
+        let result = await model.loginCheck(student_num, student_pw);
+        let isAdmin = false;
+
+        // 학생 계정이 없으면 관리자 계정으로 시도
+        if (!result) {
+            result = await model.adminLoginCheck(student_num, student_pw);
+            isAdmin = true;
+        }
 
         if(result != null) {
             // 로그인처리 ==> 세션 저장
-            req.session.user = {
-                pkid: result.pkid,
-                name: result.name,
-                student_num: student_num
-            };
+            if (isAdmin) {
+                // 관리자 로그인
+                req.session.user = {
+                    pkid: result.pkid,
+                    name: result.name,
+                    admin_id: result.admin_id,
+                    role: result.role,
+                    isAdmin: true
+                };
+            } else {
+                // 학생 로그인
+                req.session.user = {
+                    pkid: result.pkid,
+                    name: result.name,
+                    student_num: result.student_num,
+                    isAdmin: false
+                };
+            }
 
             // 로그인 성공 시 메인으로 리다이렉트
             common.alertAndGo(res, '로그인 되었습니다.', '/');
         } else {
             // 아이디 또는 비번이 틀린 경우
-            res.send('<script>alert("학번 또는 비밀번호가 잘못되었습니다."); location.href="/Login";</script>');
+            res.send('<script>alert("아이디 또는 비밀번호가 잘못되었습니다."); location.href="/Login";</script>');
         }
     } catch {
         res.status(500).send("500 Error");
@@ -425,6 +433,164 @@ const logout = (req, res) => {
     })
 }
 
+// 공지 상세보기
+const viewAnnouncement = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        const pkid = req.params.id || req.query.id;
+        if (!pkid) return res.status(400).send('공지 ID가 필요합니다.');
+        
+        const announcement = await model.getAnnouncementById(pkid);
+        if (!announcement) return res.status(404).send('공지를 찾을 수 없습니다.');
+        
+        // 날짜 포맷팅
+        const d = new Date(announcement.created_at);
+        if (!isNaN(d)) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            announcement.created_at = `${y}-${m}-${day}`;
+        }
+        
+        // 관리자 여부 확인
+        const isAdmin = user && user.isAdmin === true;
+        
+        res.render('ViewAnnouncement', { announcement, isAdmin });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("500 Error");
+    }
+}
+
+// 공지 수정 페이지
+const modifyAnnouncement = async (req, res) => {
+    try {
+        const pkid = req.params.id || req.query.id;
+        if (!pkid) return res.status(400).send('공지 ID가 필요합니다.');
+        
+        const announcement = await model.getAnnouncementById(pkid);
+        if (!announcement) return res.status(404).send('공지를 찾을 수 없습니다.');
+        
+        res.render('ModifyAnnouncement', { announcement });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("500 Error");
+    }
+}
+
+// 공지 수정 처리
+const modifyAnnouncementProc = async (req, res) => {
+    try {
+        const pkid = req.params.id || req.body.pkid;
+        let { title, content, category } = req.body;
+        
+        if (!pkid) return res.status(400).send('공지 ID가 필요합니다.');
+        
+        title = common.reqeustFilter(title, 255, false);
+        content = common.reqeustFilter(content, 5000, false);
+        category = common.reqeustFilter(category, 50, false);
+        
+        const affected = await model.updateAnnouncement(pkid, title, content, category);
+        if (affected === 0) return res.status(404).send('공지를 찾을 수 없습니다.');
+        
+        common.alertAndGo(res, '공지가 수정되었습니다.', '/Announcement');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('500 Error');
+    }
+}
+
+// 공지 삭제 처리
+const deleteAnnouncementProc = async (req, res) => {
+    try {
+        const pkid = req.params.id || req.body.pkid;
+        if (!pkid) return res.status(400).send('공지 ID가 필요합니다.');
+        
+        const affected = await model.deleteAnnouncement(pkid);
+        if (affected === 0) return res.status(404).send('공지를 찾을 수 없습니다.');
+        
+        common.alertAndGo(res, '공지가 삭제되었습니다.', '/Announcement');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('500 Error');
+    }
+}
+
+// 수업 상세보기
+const viewClass = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.redirect('/Login');
+        
+        const id = req.params.id || req.query.id;
+        if (!id) return res.status(400).send('수업 ID가 필요합니다.');
+        
+        const classInfo = await model.getTimetableById(id, user.pkid);
+        if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
+        
+        // 요일 변환
+        const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
+        classInfo.dayName = dayMap[classInfo.day] || '';
+        
+        // 교시를 시간으로 변환
+        const periodToTime = (period) => {
+            const base = new Date(2000, 0, 1, 9, 0, 0);
+            base.setMinutes(base.getMinutes() + (period - 1) * 60);
+            return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
+        };
+        
+        classInfo.start_time = periodToTime(classInfo.start_period);
+        classInfo.end_time = periodToTime(classInfo.end_period + 1);
+        
+        res.render('ViewClass', { classInfo });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("500 Error");
+    }
+}
+
+// 수업 수정 페이지
+const modifyClass = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.redirect('/Login');
+        
+        const id = req.params.id || req.query.id;
+        if (!id) return res.status(400).send('수업 ID가 필요합니다.');
+        
+        const classInfo = await model.getTimetableById(id, user.pkid);
+        if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
+        
+        // 요일 변환
+        const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
+        classInfo.dayName = dayMap[classInfo.day] || '';
+        
+        // 교시를 시간으로 변환
+        const periodToTime = (period) => {
+            const base = new Date(2000, 0, 1, 9, 0, 0);
+            base.setMinutes(base.getMinutes() + (period - 1) * 60);
+            return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
+        };
+        
+        classInfo.start_time = periodToTime(classInfo.start_period);
+        classInfo.end_time = periodToTime(classInfo.end_period + 1);
+        
+        res.render('ModifyClass', { classInfo });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("500 Error");
+    }
+}
+
+// 알림 페이지
+const notifications = (req, res) => {
+    try {
+        res.render('Notifications');
+    } catch {
+        res.status(500).send("500 Error");
+    }
+}
+
 module.exports = {
     main,
     calendar,
@@ -433,6 +599,10 @@ module.exports = {
     announcementGuest,
     addAnnouncement,
     createAnnouncement,
+    viewAnnouncement,
+    modifyAnnouncement,
+    modifyAnnouncementProc,
+    deleteAnnouncementProc,
     calculator,
     timetable,
     myPage,
@@ -441,6 +611,9 @@ module.exports = {
     getPersonalEventsApi,
     addClass,
     addClassProc,
+    viewClass,
+    modifyClass,
+    notifications,
     login,
     loginProc,
     logout
