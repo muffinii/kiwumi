@@ -16,6 +16,7 @@ app.use(express.urlencoded({
 }));
 
 app.use("/assets", express.static(__dirname + "/views/assets"));
+app.use("/uploads", express.static(__dirname + "/uploads")); // 업로드된 파일 제공
 
 // Session 사용 설정
 const session = require('express-session');

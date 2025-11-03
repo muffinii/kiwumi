@@ -1,5 +1,46 @@
 const model = require('../models/model');
 const common = require('../common/common');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Multer 설정: 파일 저장 위치 및 파일명 설정
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, '../uploads/students');
+        // 디렉토리가 없으면 생성
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // 파일명: 학번_timestamp.확장자 (예: 202512345_1699999999999.jpg)
+        const user = req.session.user;
+        const studentNum = user.student_num || user.pkid;
+        const ext = path.extname(file.originalname);
+        cb(null, `${studentNum}_${Date.now()}${ext}`);
+    }
+});
+
+// 파일 필터: 이미지 파일만 허용
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+        return cb(null, true);
+    } else {
+        cb(new Error('이미지 파일만 업로드 가능합니다 (jpg, jpeg, png, gif)'));
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB 제한
+    fileFilter: fileFilter
+});
 
 const main = async (req, res) => {
     try {
@@ -219,7 +260,11 @@ const timetable = async (req, res) => {
 
 const myPage = (req, res) => {
     try {
-        res.render('MyPage');
+        const user = req.session.user;
+        if (!user) {
+            return common.alertAndGo(res, '로그인이 필요합니다.', '/Login');
+        }
+        res.render('MyPage', { user });
     } catch {
         res.status(500).send("500 Error");
     }
@@ -409,6 +454,8 @@ const loginProc = async (req, res) => {
                     pkid: result.pkid,
                     name: result.name,
                     student_num: result.student_num,
+                    photo_url: result.photo_url,
+                    tuition_paid: result.tuition_paid,
                     isAdmin: false
                 };
             }
@@ -431,6 +478,33 @@ const logout = (req, res) => {
         }
         common.alertAndGo(res, '로그아웃 되었습니다.', '/');
     })
+}
+
+// 사진 업로드 처리
+const uploadPhotoProc = async (req, res) => {
+    try {
+        const user = req.session.user;
+        if (!user || !user.pkid) {
+            return res.status(401).send('<script>alert("로그인이 필요합니다."); location.href="/Login";</script>');
+        }
+
+        // multer가 처리한 파일 정보
+        if (!req.file) {
+            return res.send('<script>alert("파일이 업로드되지 않았습니다."); history.back();</script>');
+        }
+
+        // 파일 경로를 DB에 저장 (웹 경로)
+        const photoUrl = `/uploads/students/${req.file.filename}`;
+        await model.updateStudentPhoto(user.pkid, photoUrl);
+
+        // 세션 업데이트
+        req.session.user.photo_url = photoUrl;
+
+        common.alertAndGo(res, '사진이 업로드되었습니다.', '/MyPage');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('<script>alert("사진 업로드 중 오류가 발생했습니다."); history.back();</script>');
+    }
 }
 
 // 공지 상세보기
@@ -606,6 +680,7 @@ module.exports = {
     calculator,
     timetable,
     myPage,
+    uploadPhotoProc,
     addEvent,
     createPersonalEvent,
     getPersonalEventsApi,
@@ -616,5 +691,6 @@ module.exports = {
     notifications,
     login,
     loginProc,
-    logout
+    logout,
+    upload
 }

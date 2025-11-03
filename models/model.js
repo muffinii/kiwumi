@@ -1,8 +1,21 @@
 const db = require('../common/db');
 
+// student 테이블에 photo_url 컬럼 추가
+const ensureStudentPhotoColumn = async () => {
+    try {
+        const alterSql = `ALTER TABLE student ADD COLUMN IF NOT EXISTS photo_url VARCHAR(500) NULL;`;
+        await db.runSql(alterSql);
+    } catch (err) {
+        // MySQL 5.x에서는 IF NOT EXISTS를 지원하지 않으므로 에러 무시
+        if (!err.message.includes('Duplicate column name')) {
+            console.log('photo_url column alter skipped:', err.message);
+        }
+    }
+}
+
 const loginCheck = async (student_num, student_pw) => {
     try {
-        const sql = "select pkid, name, student_num from student where student_num = ? and student_pw = ?;";
+        const sql = "select pkid, name, student_num, photo_url, tuition_paid from student where student_num = ? and student_pw = ?;";
         const params = [student_num, student_pw];
 
         const result = await db.runSql(sql, params);
@@ -178,6 +191,31 @@ const deleteAnnouncement = async (pkid) => {
         return rows;
     }
 
+// 학생 사진 URL 업데이트
+const updateStudentPhoto = async (user_pkid, photo_url) => {
+    try {
+        await ensureStudentPhotoColumn();
+        const sql = "UPDATE student SET photo_url = ? WHERE pkid = ?;";
+        const params = [photo_url, user_pkid];
+        const result = await db.runSql(sql, params);
+        return result.affectedRows;
+    } catch (err) {
+        throw err;
+    }
+}
+
+// 학생 정보 조회 (사진 포함)
+const getStudentInfo = async (user_pkid) => {
+    try {
+        const sql = "SELECT pkid, name, student_num, photo_url, tuition_paid FROM student WHERE pkid = ?;";
+        const params = [user_pkid];
+        const result = await db.runSql(sql, params);
+        return result[0];
+    } catch (err) {
+        throw err;
+    }
+}
+
 module.exports = {
     loginCheck,
     adminLoginCheck,
@@ -191,6 +229,8 @@ module.exports = {
     getPersonalEventsByMonth,
     getTodayPersonalEvents,
     getTodayTimetable,
+    updateStudentPhoto,
+    getStudentInfo,
     // timetable will be appended below
 }
 

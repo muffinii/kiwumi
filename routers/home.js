@@ -35,6 +35,7 @@ router.post("/DeleteAnnouncement", controller.deleteAnnouncementProc);
 router.get("/Calculator", controller.calculator);
 router.get("/Timetable", controller.timetable);
 router.get("/MyPage", controller.myPage);
+router.post("/UploadPhoto", controller.upload.single('student_photo'), controller.uploadPhotoProc);
 router.get("/AddEvent", controller.addEvent);
 router.post("/AddEvent", controller.createPersonalEvent);
 router.get("/AddClass", controller.addClass);
