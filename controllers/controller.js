@@ -455,7 +455,7 @@ const loginProc = async (req, res) => {
                     name: result.name,
                     student_num: result.student_num,
                     photo_url: result.photo_url,
-                    tuition_paid: result.tuition_paid,
+                    is_fee_paid: result.is_fee_paid,
                     isAdmin: false
                 };
             }

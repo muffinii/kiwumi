@@ -15,7 +15,7 @@ const ensureStudentPhotoColumn = async () => {
 
 const loginCheck = async (student_num, student_pw) => {
     try {
-        const sql = "select pkid, name, student_num, photo_url, tuition_paid from student where student_num = ? and student_pw = ?;";
+        const sql = "select pkid, name, student_num, photo_url, is_fee_paid from student where student_num = ? and student_pw = ?;";
         const params = [student_num, student_pw];
 
         const result = await db.runSql(sql, params);

@@ -88,9 +88,9 @@
                 
                 <div class="border-t mt-4 pt-4 w-full text-center">
                     <p class="text-sm text-slate-500 mb-1">학생경비 납부여부</p>
-                    {% if user.tuition_paid %}
+                    {% if user.is_fee_paid %}
                     <div class="inline-flex items-center bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M20 6 9 17l-5-5"></path></svg>
                         납부 완료
                     </div>
                     {% else %}
