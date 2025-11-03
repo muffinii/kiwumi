@@ -101,7 +101,7 @@
                     {% if announcements and announcements.length > 0 %}
                         {% for a in announcements %}
                             <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition" data-category="{{ a.category or '일반' }}">
-                                <a href="#" class="block">
+                                <a href="ViewAnnouncement" class="block">
                                     <p class="font-semibold text-sm flex items-start">
                                         <span class="truncate">
                                             {% set catClass = 'text-slate-600' %}
@@ -120,7 +120,8 @@
 
             </div>
         </main>
-        
+
+        {% if user_role == 'admin' %}
         <a href="/CreateAnnouncement"
             class="admin-float-btn bg-sub-blue text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-800 transition">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -130,6 +131,7 @@
                 </path>
             </svg>
         </a>
+        {% endif %}
 
         <nav class="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
