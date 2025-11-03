@@ -95,20 +95,22 @@
                 </div>
             </section>
 
-            <section class="mb-8">
-                <h2 class="text-lg font-bold mb-3 text-slate-700">빠른 메뉴</h2>
-                <div>
-                    <a href="/Calculator" class="block group">
-                        <div class="section-card block">
-                            <p class="text-sm font-semibold text-slate-500 mb-2">학점 현황</p>
-                            <p class="font-bold text-2xl text-sub-blue">3.85 <span
-                                    class="text-base text-slate-400 font-medium">/ 4.5</span></p>
-                            <p class="text-xs text-slate-400 mt-1">총 78학점 이수</p>
-                        </div>
-                    </a>
-                </div>
-            </section>
-
+            {% if user_role == 'admin' %}
+                <section class="mb-8">
+                    <h2 class="text-lg font-bold mb-3 text-slate-700">빠른 메뉴</h2>
+                    <div>
+                        <a href="/Calculator" class="block group">
+                            <div class="section-card block">
+                                <p class="text-sm font-semibold text-slate-500 mb-2">학점 현황</p>
+                                <p class="font-bold text-2xl text-sub-blue">3.85 <span
+                                        class="text-base text-slate-400 font-medium">/ 4.5</span></p>
+                                <p class="text-xs text-slate-400 mt-1">총 78학점 이수</p>
+                            </div>
+                        </a>
+                    </div>
+                </section>
+            {% endif %}
+            
             <section>
                 <h2 class="text-lg font-bold mb-3 text-slate-700">최근 공지사항</h2>
                 <div class="section-card space-y-2">
@@ -165,17 +167,19 @@
                     </svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
-                <a href="/Timetable"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-                        <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-                        <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-                        <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-                    </svg>
-                    <span class="text-xs mt-1">시간표</span>
-                </a>
+                {% if user_role == 'admin' %}
+                    <a href="/Timetable"
+                        class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+                            <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+                            <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+                            <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+                        </svg>
+                        <span class="text-xs mt-1">시간표</span>
+                    </a>
+                {% endif %}
                 <a href="/MyPage"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
