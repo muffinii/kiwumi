@@ -324,7 +324,8 @@ const myPage = (req, res) => {
         if (!user) {
             return common.alertAndGo(res, '로그인이 필요합니다.', '/Login');
         }
-        res.render('MyPage', { user });
+        const user_role = user.isAdmin ? 'admin' : 'student';
+        res.render('MyPage', { user, user_role });
     } catch {
         res.status(500).send("500 Error");
     }
@@ -516,6 +517,7 @@ const loginProc = async (req, res) => {
                     student_num: result.student_num,
                     photo_url: result.photo_url,
                     is_fee_paid: result.is_fee_paid,
+                    major: result.major,
                     isAdmin: false
                 };
             }

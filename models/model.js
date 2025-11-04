@@ -15,7 +15,7 @@ const ensureStudentPhotoColumn = async () => {
 
 const loginCheck = async (student_num, student_pw) => {
     try {
-        const sql = "select pkid, name, student_num, photo_url, is_fee_paid from student where student_num = ? and student_pw = ?;";
+        const sql = "select pkid, name, student_num, photo_url, is_fee_paid, major from student where student_num = ? and student_pw = ?;";
         const params = [student_num, student_pw];
 
         const result = await db.runSql(sql, params);
@@ -207,7 +207,7 @@ const updateStudentPhoto = async (user_pkid, photo_url) => {
 // 학생 정보 조회 (사진 포함)
 const getStudentInfo = async (user_pkid) => {
     try {
-        const sql = "SELECT pkid, name, student_num, photo_url, is_fee_paid FROM student WHERE pkid = ?;";
+        const sql = "SELECT pkid, name, student_num, photo_url, is_fee_paid, major FROM student WHERE pkid = ?;";
         const params = [user_pkid];
         const result = await db.runSql(sql, params);
         return result[0];
