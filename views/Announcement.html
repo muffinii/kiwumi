@@ -97,31 +97,21 @@
 
                 <div id="announcement-filters" class="flex flex-wrap gap-2 mb-4">
                     <a href="/AnnouncementAdmin?category=all" data-filter="all"
-                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
-                        전체
-                    </a>
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">전체</a>
                     <a href="/AnnouncementAdmin?category=학사" data-filter="학사"
-                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
-                        학사
-                    </a>
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">학사</a>
                     <a href="/AnnouncementAdmin?category=장학" data-filter="장학"
-                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
-                        장학
-                    </a>
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">장학</a>
                     <a href="/AnnouncementAdmin?category=채용" data-filter="채용"
-                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
-                        채용
-                    </a>
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">채용</a>
                     <a href="/AnnouncementAdmin?category=일반" data-filter="일반"
-                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
-                        일반
-                    </a>
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">일반</a>
                 </div>
-
+                
                 <ul id="announcement-list" class="space-y-3 flex-grow overflow-y-auto">
                     {% if announcements and announcements.length > 0 %}
                     {% for a in announcements %}
-                    <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition">
+                    <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition">>
                         <a href="/ViewAnnouncement/{{ a.pkid }}" class="block">
                             <p class="font-semibold text-sm flex justify-between items-start">
                                 <span class="truncate">
@@ -141,6 +131,65 @@
                     <li class="text-center text-slate-500 p-4 text-sm">공지사항이 없습니다.</li>
                     {% endif %}
                 </ul>
+
+                <!-- 페이지네이션 -->
+                <!-- 백엔드에서 'pagination' 객체 전달해주세요...
+            (pagination 객체 예시는 제미나이가 설명해준 거 카톡으로 일단 보내둘.)-->
+                {% if pagination and pagination.total_pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-6 flex justify-center">
+                    <ul class="flex items-center -space-x-px h-10 text-base">
+                        {% if pagination.has_prev %}
+                        <li>
+                            <!-- 페이지 이동 시, 현재 필터와 검색어를 URL에 유지하도록 함. -->
+                            <a href="/AnnouncementAdmin?page={{ pagination.current_page - 1 }}&category={{ current_category }}&search_query={{ current_search }}"
+                                class="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-slate-500 bg-white border border-e-0 border-slate-300 rounded-s-lg hover:bg-slate-100 hover:text-slate-700">
+                                <span class="sr-only">Previous</span>
+                                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 6 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M5 1 1 5l4 4" />
+                                </svg>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in pagination.pages_to_show %}
+                        {% if page_num == '...' %}
+                        <li>
+                            <span
+                                class="flex items-center justify-center px-4 h-10 leading-tight text-slate-500 bg-white border border-slate-300">...</span>
+                        </li>
+                        {% else %}
+                        <li>
+                            <a href="/AnnouncementAdmin?page={{ page_num }}&category={{ current_category }}&search_query={{ current_search }}"
+                                class="flex items-center justify-center px-4 h-10 leading-tight 
+                               {% if page_num == pagination.current_page %} 
+                                   text-main-red border-main-red bg-red-50 hover:bg-red-100 hover:text-main-red 
+                               {% else %} 
+                                   text-slate-500 bg-white border border-slate-300 hover:bg-slate-100 hover:text-slate-700 
+                               {% endif %}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if pagination.has_next %}
+                        <li>
+                            <a href="/AnnouncementAdmin?page={{ pagination.current_page + 1 }}&category={{ current_category }}&search_query={{ current_search }}"
+                                class="flex items-center justify-center px-4 h-10 leading-tight text-slate-500 bg-white border border-slate-300 rounded-e-lg hover:bg-slate-100 hover:text-slate-700">
+                                <span class="sr-only">Next</span>
+                                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 6 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="m1 9 4-4-4-4" />
+                                </svg>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                    </ul>
+                </nav>
+                {% endif %}
 
             </div>
         </main>
@@ -250,6 +299,8 @@
                 // 카테고리를 바꿔도 검색어가 사라지지 않도록.
                 if (currentSearch) {
                     link.href = `/AnnouncementAdmin?category=${linkCategory}&search_query=${encodeURIComponent(currentSearch)}`;
+                } else {
+                    link.href = `/AnnouncementAdmin?category=${linkCategory}`;
                 }
             });
         });
