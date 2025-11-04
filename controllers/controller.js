@@ -42,6 +42,40 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+// 공지사항 첨부파일용 Multer 설정
+const announcementStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, '../uploads/announcements');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const timestamp = Date.now();
+        const ext = path.extname(file.originalname);
+        const basename = path.basename(file.originalname, ext);
+        cb(null, `${timestamp}_${basename}${ext}`);
+    }
+});
+
+const announcementFileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|hwp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    
+    if (extname) {
+        return cb(null, true);
+    } else {
+        cb(new Error('허용되지 않는 파일 형식입니다.'));
+    }
+};
+
+const uploadAnnouncement = multer({
+    storage: announcementStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 제한
+    fileFilter: announcementFileFilter
+});
+
 const main = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -59,6 +93,41 @@ const main = async (req, res) => {
                 return `${y}-${m}-${day}`;
             })()
         }));
+
+        // 학점 현황 가져오기 (학생인 경우에만)
+        let gpaInfo = null;
+        if (user && !user.isAdmin) {
+            const grades = await model.getGradesByUser(user.pkid);
+            
+            const gradeToPoint = (grade) => {
+                const map = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0.0 };
+                return map[grade] ?? null;
+            };
+
+            let totalEarnedCredits = 0;
+            let gpaCredits = 0;
+            let totalPoints = 0;
+
+            grades.forEach(g => {
+                const point = gradeToPoint(g.grade);
+                const credit = g.credits || 0;
+
+                if (point !== null) {
+                    gpaCredits += credit;
+                    totalPoints += point * credit;
+                }
+
+                if (g.grade !== 'F') {
+                    totalEarnedCredits += credit;
+                }
+            });
+
+            const overallGPA = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : '0.00';
+            gpaInfo = {
+                gpa: overallGPA,
+                totalCredits: totalEarnedCredits
+            };
+        }
 
         // 오늘의 일정 가져오기 (로그인한 경우에만)
         let todaySchedule = [];
@@ -123,7 +192,8 @@ const main = async (req, res) => {
             announcements, 
             todaySchedule, 
             userName: user ? user.name : '키우미',
-            user_role: user_role 
+            user_role: user_role,
+            gpaInfo: gpaInfo
         });
     } catch (err) {
         console.error(err);
@@ -190,8 +260,21 @@ const createAnnouncement = async (req, res) => {
         content = common.reqeustFilter(content, 5000, false);
         category = common.reqeustFilter(category, 50, false);
 
-        const id = await model.createAnnouncement(title, content, author_pkid, category);
-        common.alertAndGo(res, '공지 등록 완료', '/AnnouncementAdmin');
+        // 첨부파일 정보 JSON으로 저장
+        let attachments = null;
+        if (req.files && req.files.length > 0) {
+            console.log('업로드된 파일:', req.files); // 디버깅 로그
+            attachments = JSON.stringify(req.files.map(file => ({
+                filename: file.filename,
+                originalname: file.originalname,
+                size: file.size,
+                path: `/uploads/announcements/${file.filename}`
+            })));
+            console.log('저장할 attachments:', attachments); // 디버깅 로그
+        }
+
+        const id = await model.createAnnouncement(title, content, author_pkid, category, attachments);
+        common.alertAndGo(res, '공지 등록 완료', '/Announcement');
     } catch (err) {
         console.error(err);
         res.status(500).send('500 Error');
@@ -241,6 +324,7 @@ const timetable = async (req, res) => {
                 const found = entries.find(e => e.day === d && e.start_period <= p && e.end_period >= p);
                 if (found) {
                     cells.push({
+                        id: found.id,
                         title: found.title,
                         location: found.location || '',
                         color: found.color || 'bg-white',
@@ -303,11 +387,43 @@ const timetable = async (req, res) => {
             semesters[key].courses.push(g);
         });
 
+        // 학기별 GPA 계산
+        const semesterStats = Object.values(semesters).map(s => {
+            let semGpaCredits = 0;
+            let semTotalPoints = 0;
+            let semMajorGpaCredits = 0;
+            let semMajorTotalPoints = 0;
+
+            s.courses.forEach(c => {
+                const point = gradeToPoint(c.grade);
+                const credit = c.credits || 0;
+
+                if (point !== null) {
+                    semGpaCredits += credit;
+                    semTotalPoints += point * credit;
+
+                    if (c.is_major) {
+                        semMajorGpaCredits += credit;
+                        semMajorTotalPoints += point * credit;
+                    }
+                }
+            });
+
+            const semesterGPA = semGpaCredits > 0 ? (semTotalPoints / semGpaCredits).toFixed(2) : '0.00';
+            const semesterMajorGPA = semMajorGpaCredits > 0 ? (semMajorTotalPoints / semMajorGpaCredits).toFixed(2) : '0.00';
+
+            return {
+                ...s,
+                semesterGPA: parseFloat(semesterGPA),
+                semesterMajorGPA: parseFloat(semesterMajorGPA)
+            };
+        });
+
         // 5. 템플릿에 모든 데이터 전달
         res.render('Timetable', { 
             rows, 
             dayNames,
-            semesters: Object.values(semesters),
+            semesters: semesterStats,
             overallGPA: overallGPA,
             majorGPA: majorGPA,
             totalCredits: totalEarnedCredits // 총 취득 학점으로 전달
@@ -429,9 +545,10 @@ const addClassProc = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return common.alertAndGo(res, '로그인이 필요합니다.', '/Login');
 
-        let { title, class_color } = req.body;
+        let { title, class_color, memo } = req.body;
         title = common.reqeustFilter(title, 100, false);
         class_color = common.reqeustFilter(class_color || 'bg-blue-100', 30, false);
+        memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
 
         // 다중 슬롯 필드 (배열로 수신)
         let day = req.body.day || [];
@@ -460,7 +577,7 @@ const addClassProc = async (req, res) => {
             if (ep < sp || sp < 1 || ep > 10) continue; // 10교시까지만
 
             const location = common.reqeustFilter(place[i] || '', 100, false, '');
-            await model.addTimetableEntry(user.pkid, dNum, sp, ep, title, location, class_color);
+            await model.addTimetableEntry(user.pkid, dNum, sp, ep, title, location, class_color, memo);
             saved++;
         }
 
@@ -661,12 +778,15 @@ const viewClass = async (req, res) => {
         const id = req.params.id || req.query.id;
         if (!id) return res.status(400).send('수업 ID가 필요합니다.');
         
-        const classInfo = await model.getTimetableById(id, user.pkid);
-        if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
+        // 먼저 해당 ID의 수업 정보를 가져와서 과목명을 확인
+        const mainClassInfo = await model.getTimetableById(id, user.pkid);
+        if (!mainClassInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
+        
+        // 같은 과목명의 모든 시간표 항목 가져오기
+        const allClassTimes = await model.getTimetablesByTitle(mainClassInfo.title, user.pkid);
         
         // 요일 변환
         const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
-        classInfo.dayName = dayMap[classInfo.day] || '';
         
         // 교시를 시간으로 변환
         const periodToTime = (period) => {
@@ -675,8 +795,23 @@ const viewClass = async (req, res) => {
             return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
         };
         
-        classInfo.start_time = periodToTime(classInfo.start_period);
-        classInfo.end_time = periodToTime(classInfo.end_period + 1);
+        // 모든 시간대에 대해 요일과 시간 정보 추가
+        const timeSlots = allClassTimes.map(slot => ({
+            id: slot.id,
+            dayName: dayMap[slot.day] || '',
+            start_time: periodToTime(slot.start_period),
+            end_time: periodToTime(slot.end_period + 1),
+            location: slot.location || ''
+        }));
+        
+        // 기본 정보는 첫 번째 항목 사용
+        const classInfo = {
+            id: mainClassInfo.id,
+            title: mainClassInfo.title,
+            color: mainClassInfo.color,
+            memo: mainClassInfo.memo,
+            timeSlots: timeSlots
+        };
         
         res.render('ViewClass', { classInfo });
     } catch (err) {
@@ -754,5 +889,6 @@ module.exports = {
     login,
     loginProc,
     logout,
-    upload
+    upload,
+    uploadAnnouncement
 }

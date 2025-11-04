@@ -54,9 +54,9 @@
                 </svg>
             </a>
 
-            <h1 id="class-title-header" class="text-xl font-bold text-slate-800 flex-grow text-center">수업 상세</h1>
+            <h1 id="class-title-header" class="text-xl font-bold text-slate-800 flex-grow text-center">{{ classInfo.title }}</h1>
 
-            <a id="modify-btn" href="/ModifyClass"
+            <a id="modify-btn" href="/ModifyClass/{{ classInfo.id }}"
                 class="px-4 py-2 text-sub-blue font-bold rounded-md hover:bg-blue-50 transition-colors">
                 수정
             </a>
@@ -66,22 +66,13 @@
 
             <div id="class-detail-card" class="section-card p-6 mb-6">
 
-                <p class="text-sm font-semibold text-slate-500 mb-2">과목 ID: <span id="class-id">N/A</span></p>
-                <h2 id="class-title" class="text-3xl font-extrabold text-slate-800 mb-2">수업명 로딩 중...</h2>
-                <p id="class-professor" class="text-lg text-slate-600 mb-4">담당 교수: N/A</p>
+                <p class="text-sm font-semibold text-slate-500 mb-2">과목 ID: <span id="class-id">{{ classInfo.id }}</span></p>
+                <h2 id="class-title" class="text-3xl font-extrabold text-slate-800 mb-2">{{ classInfo.title }}</h2>
 
-                <div class="flex flex-wrap gap-4 text-sm font-medium border-t pt-4">
-                    <div>
-                        <p class="text-slate-500">학점</p>
-                        <p id="class-credits" class="text-sub-blue font-bold">N/A</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500">유형</p>
-                        <p class="text-main-red font-bold">전공</p>
-                    </div>
+                <div class="flex flex-wrap gap-4 text-sm font-medium border-t pt-4 mt-4">
                     <div>
                         <p class="text-slate-500">색상</p>
-                        <div id="class-color-indicator" class="w-6 h-6 rounded mt-1 border border-slate-300"></div>
+                        <div id="class-color-indicator" class="w-6 h-6 rounded mt-1 border border-slate-300 {{ classInfo.color }}"></div>
                     </div>
                 </div>
 
@@ -89,82 +80,28 @@
 
             <div class="section-card p-6">
                 <h3 class="text-xl font-bold mb-4">수업 시간 및 강의실</h3>
-                <div id="class-slots" class="space-y-3">
-                    <p class="text-center text-slate-500">시간표 정보가 로딩되지 않았습니다.</p>
+                <div class="space-y-3 mb-4">
+                    {% for slot in classInfo.timeSlots %}
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <p class="font-bold text-sm">{{ slot.dayName }} {{ slot.start_time }} ~ {{ slot.end_time }}</p>
+                        <p class="text-xs text-slate-600">{{ slot.location or '장소 정보 없음' }}</p>
+                    </div>
+                    {% endfor %}
                 </div>
+                
+                {% if classInfo.memo %}
+                <div class="border-t pt-4 mt-4">
+                    <h3 class="text-lg font-bold mb-2">메모</h3>
+                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                        <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ classInfo.memo }}</p>
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
         </main>
 
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', async function () {
-            // URL에서 classId를 가져오기
-            const params = new URLSearchParams(window.location.search);
-            const classId = params.get('classId');
-
-            if (!classId) {
-                document.getElementById('class-title').textContent = '오류: 수업 ID를 찾을 수 없습니다.';
-                if (modifyButton) modifyButton.style.display = 'none'; // ID 없으면 수정 버튼 숨김
-                return;
-            }
-
-            if (modifyButton) {
-                modifyButton.href = `/ModifyClass?classId=${classId}`;
-            }
-
-            try {
-                // '/api/classes/' 나중에 수정 ㄱ
-                const response = await fetch(`/api/classes/${classId}`);
-
-                if (!response.ok) {
-                    throw new Error('수업 정보를 불러오는 데 실패했습니다.');
-                }
-
-                const classData = await response.json();
-
-                // (서버가 아래와 같은 형식으로 데이터를 반환한다고 가정)
-                // {
-                //    title: "운영체제",
-                //    professor: "김교수",
-                //    credits: "3",
-                //    color: "bg-blue-100",
-                //    slots: [
-                //      { day: "월", startTime: "11:00", endTime: "13:00", place: "정보관 303호" }
-                //    ]
-                // }    < team서윤의 도움을 받았는데.. 뭐라는지 이해가 가시나요?
-
-                // 받은 데이터로 페이지 내용을 채우기
-                document.getElementById('class-id').textContent = classId;
-                document.getElementById('class-title').textContent = classData.title;
-                document.getElementById('class-title-header').textContent = classData.title;
-                document.getElementById('class-credits').textContent = classData.credits + '학점';
-                document.getElementById('class-professor').textContent = '담당 교수: ' + classData.professor;
-                document.getElementById('class-color-indicator').className = 'w-6 h-6 rounded mt-1 border border-slate-300 ' + classData.color;
-
-                const slotsContainer = document.getElementById('class-slots');
-                slotsContainer.innerHTML = '';
-
-                if (classData.slots && classData.slots.length > 0) {
-                    classData.slots.forEach(slot => {
-                        const slotDiv = document.createElement('div');
-                        slotDiv.className = 'bg-slate-50 p-3 rounded-lg border border-slate-200';
-                        slotDiv.innerHTML = `
-                        <p class="font-bold text-sm">${slot.day} ${slot.startTime} ~ ${slot.endTime}</p>
-                        <p class="text-xs text-slate-600">${slot.place}</p>
-                    `;
-                        slotsContainer.appendChild(slotDiv);
-                    });
-                } else {
-                    slotsContainer.innerHTML = '<p class="text-center text-slate-500">시간표 정보가 입력되지 않았습니다.</p>';
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('class-title').textContent = '데이터 로딩 중 오류 발생';
-            }
-        });
-    </script>
 </body>
 
 </html>

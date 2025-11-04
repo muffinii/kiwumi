@@ -107,7 +107,7 @@
                             <button type="button" data-color="bg-pink-100" class="w-8 h-8 rounded border bg-pink-100"></button>
                         </div>
                     </div>
-                    <textarea placeholder="선택 사항: 수업 관련 메모나 특이사항 (저장은 아직 미지원)" rows="3" class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition"></textarea>
+                    <textarea name="memo" placeholder="선택 사항: 수업 관련 메모나 특이사항" rows="3" class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition"></textarea>
                 </div>
 
                 <button type="submit" class="w-full bg-main-red text-white p-3 rounded-lg font-bold text-lg hover:bg-red-700 transition shadow-lg">
@@ -204,61 +204,14 @@
                 btn.classList.remove('border');
                 btn.classList.add('border-2','border-sub-blue');
             });
-        });
-            // 여기부터가 수정사항입니다!!!!!!!!!!!!!! 깃허브가 알아서 알려주는 것 같지만 일단.. VS로 긁어와서 작업할 수도 있으니깐 ^^;;
-        // 폼 제출 시 데이터와 ID를 URL로 전달
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault(); 
-            const formData = new FormData(form);
-            
-            const data = Object.fromEntries(formData.entries());
-            
-            const slots = [];
-            container.querySelectorAll('.flex.flex-wrap.items-center').forEach(slotDiv => {
-                const day = slotDiv.querySelector('select[name="day"]').value;
-                const startTime = slotDiv.querySelector('input[name="start_time"]').value;
-                const endTime = slotDiv.querySelector('input[name="end_time"]').value;
-                const place = slotDiv.querySelector('input[name="place"]').value;
-                slots.push({ day, startTime, endTime, place });
+
+            // 초기 색상 선택 표시
+            Array.from(colorPalette.querySelectorAll('button[data-color]')).forEach(b => {
+                if (b.getAttribute('data-color') === colorHidden.value) {
+                    b.classList.remove('border');
+                    b.classList.add('border-2', 'border-sub-blue');
+                }
             });
-            
-            data.slots = slots;
-            
-            try {
-                // '/api/classes' 나중에 실제 백엔드 주소로 변경하기
-                const response = await fetch('/api/classes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                if (!response.ok) {
-                    throw new Error('서버 저장에 실패했습니다.');
-                }
-
-                // 서버로부터 저장된 ID가 포함된 응답을 받기
-                const result = await response.json();
-                const newClassId = result.classId; 
-                
-                if (newClassId) {
-                    window.location.href = `/ViewClass?classId=${newClassId}`;
-                } else {
-                    alert("ID를 받지 못했습니다. 서버 응답을 확인하세요.");
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                alert('수업 추가 중 오류가 발생했습니다.');
-            }
-        });
-
-        Array.from(colorPalette.querySelectorAll('button[data-color]')).forEach(b => {
-            if (b.getAttribute('data-color') === colorHidden.value) {
-                b.classList.remove('border');
-                b.classList.add('border-2', 'border-sub-blue');
-            }
         });
     </script>
 </body>

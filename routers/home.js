@@ -23,7 +23,7 @@ router.get("/Announcement", controller.announcement);
 router.get("/AnnouncementAdmin", controller.announcementAdmin);
 router.get("/AnnouncementGuest", controller.announcementGuest);
 router.get("/CreateAnnouncement", controller.addAnnouncement);
-router.post("/CreateAnnouncement", controller.createAnnouncement);
+router.post("/CreateAnnouncement", controller.uploadAnnouncement.array('attachment_file', 5), controller.createAnnouncement);
 router.get("/ViewAnnouncement/:id", controller.viewAnnouncement);
 router.get("/ViewAnnouncement", controller.viewAnnouncement);
 router.get("/ModifyAnnouncement/:id", controller.modifyAnnouncement);

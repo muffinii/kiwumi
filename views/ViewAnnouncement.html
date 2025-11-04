@@ -89,6 +89,42 @@
                 </p>
                 
                 <div id="announcement-content" class="text-slate-700 leading-relaxed min-h-[300px] whitespace-pre-wrap">{{ announcement.content | escape }}</div>
+                
+                <!-- 첨부파일 섹션 -->
+                {% if announcement.attachments %}
+                <div class="mt-6 pt-4 border-t border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-700 mb-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"></path>
+                        </svg>
+                        첨부파일
+                    </h3>
+                    <div class="space-y-2">
+                        {% set files = announcement.attachments | fromJson %}
+                        {% if files and files.length > 0 %}
+                            {% for file in files %}
+                            <a href="{{ file.path }}" download="{{ file.originalname }}" class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-lg transition">
+                                <div class="flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sub-blue">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span class="text-sm font-medium text-slate-700">{{ file.originalname }}</span>
+                                </div>
+                                <span class="text-xs text-slate-400">{{ (file.size / 1024) | round(1) }} KB</span>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-sm text-slate-500">첨부파일을 불러올 수 없습니다.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="mt-4 p-2 bg-red-50 text-xs text-red-600">
+                    첨부파일이 없습니다 (attachments가 null 또는 빈 값)
+                </div>
+                {% endif %}
+                
                 {% else %}
                 <h2 class="text-2xl font-bold text-slate-800 mt-2 mb-3">공지사항을 찾을 수 없습니다.</h2>
                 {% endif %}

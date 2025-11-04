@@ -5,10 +5,19 @@ const app = express();
 app.set('view engine', 'html');
 
 // View Engine 설정
-nunjucks.configure('views', {
+const env = nunjucks.configure('views', {
     express: app,
     watch: true
-})
+});
+
+// JSON 파싱 필터 추가
+env.addFilter('fromJson', function(str) {
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        return [];
+    }
+});
 
 // post 데이터 받기
 app.use(express.urlencoded({

@@ -50,10 +50,10 @@ const getAnnouncements = async () => {
 }
 
 // 공지 생성
-const createAnnouncement = async (title, content, author_pkid, category = '일반') => {
+const createAnnouncement = async (title, content, author_pkid, category = '일반', attachments = null) => {
     try {
-        const sql = "INSERT INTO announcements (title, content, category, author_pkid, created_at) VALUES (?, ?, ?, ?, NOW());";
-        const params = [title, content, category, author_pkid];
+        const sql = "INSERT INTO announcements (title, content, category, author_pkid, attachments, created_at) VALUES (?, ?, ?, ?, ?, NOW());";
+        const params = [title, content, category, author_pkid, attachments];
         const result = await db.runSql(sql, params);
         return result.insertId;
     } catch (err) {
@@ -76,7 +76,7 @@ const getRecentAnnouncements = async (limit = 5) => {
 const getAnnouncementById = async (pkid) => {
     try {
         const sql = `
-            SELECT a.pkid, a.title, a.content, a.category, a.author_pkid, a.created_at, s.name as author_name
+            SELECT a.pkid, a.title, a.content, a.category, a.author_pkid, a.created_at, a.attachments, s.name as author_name
             FROM announcements a
             LEFT JOIN student s ON a.author_pkid = s.pkid
             WHERE a.pkid = ?;
@@ -265,20 +265,28 @@ const ensureTimetableTable = async () => {
             title VARCHAR(100) NOT NULL,
             location VARCHAR(100) NULL,
             color VARCHAR(32) NOT NULL DEFAULT 'bg-blue-100',
+            memo TEXT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_user_day (user_pkid, day)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
     await db.runSql(sql);
+    
+    // memo 컬럼 추가 (기존 테이블에 없는 경우)
+    try {
+        await db.runSql('ALTER TABLE timetable_entries ADD COLUMN memo TEXT NULL;');
+    } catch (err) {
+        // 컬럼이 이미 존재하면 무시
+    }
 }
 
-const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color) => {
+const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color, memo = null) => {
     await ensureTimetableTable();
     const sql = `
-        INSERT INTO timetable_entries (user_pkid, day, start_period, end_period, title, location, color)
-        VALUES (?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO timetable_entries (user_pkid, day, start_period, end_period, title, location, color, memo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    const params = [user_pkid, day, start_period, end_period, title, location, color];
+    const params = [user_pkid, day, start_period, end_period, title, location, color, memo];
     const result = await db.runSql(sql, params);
     return result.insertId;
 }
@@ -298,12 +306,25 @@ const getTimetableByUser = async (user_pkid) => {
 const getTimetableById = async (id, user_pkid) => {
     await ensureTimetableTable();
     const sql = `
-        SELECT id, day, start_period, end_period, title, location, color
+        SELECT id, day, start_period, end_period, title, location, color, memo
         FROM timetable_entries
         WHERE id = ? AND user_pkid = ?;
     `;
     const result = await db.runSql(sql, [id, user_pkid]);
     return result[0];
+}
+
+// 같은 과목명의 모든 시간표 항목 가져오기
+const getTimetablesByTitle = async (title, user_pkid) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT id, day, start_period, end_period, title, location, color, memo
+        FROM timetable_entries
+        WHERE title = ? AND user_pkid = ?
+        ORDER BY day ASC, start_period ASC;
+    `;
+    const result = await db.runSql(sql, [title, user_pkid]);
+    return result;
 }
 
 const updateTimetableEntry = async (id, user_pkid, day, start_period, end_period, title, location, color) => {
@@ -329,5 +350,6 @@ module.exports.ensureTimetableTable = ensureTimetableTable;
 module.exports.addTimetableEntry = addTimetableEntry;
 module.exports.getTimetableByUser = getTimetableByUser;
 module.exports.getTimetableById = getTimetableById;
+module.exports.getTimetablesByTitle = getTimetablesByTitle;
 module.exports.updateTimetableEntry = updateTimetableEntry;
 module.exports.deleteTimetableEntry = deleteTimetableEntry;

@@ -278,9 +278,9 @@
 
         document.addEventListener('DOMContentLoaded', async function () {
             const params = new URLSearchParams(window.location.search);
-            const classId = params.get('classId');
+            const classId = params.get('classId') || params.get('id');
 
-            document.getElementById('cancel-btn').href = `/ViewClass?classId=${classId}`;
+            document.getElementById('cancel-btn').href = `/ViewClass/${classId}`;
 
             if (!classId) {
                 alert('수정할 수업 ID가 없습니다.');
@@ -345,7 +345,7 @@
 
                 // 성공 시 다시 상세 페이지로 이동
                 alert('수업 정보가 성공적으로 수정되었습니다.');
-                window.location.href = `/ViewClass?classId=${classId}`;
+                window.location.href = `/ViewClass/${classId}`;
 
             } catch (error) {
                 console.error('Error updating data:', error);

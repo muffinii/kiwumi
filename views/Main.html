@@ -102,9 +102,15 @@
                         <a href="/Calculator" class="block group">
                             <div class="section-card block">
                                 <p class="text-sm font-semibold text-slate-500 mb-2">학점 현황</p>
-                                <p class="font-bold text-2xl text-sub-blue">3.85 <span
+                                {% if gpaInfo %}
+                                <p class="font-bold text-2xl text-sub-blue">{{ gpaInfo.gpa }} <span
                                         class="text-base text-slate-400 font-medium">/ 4.5</span></p>
-                                <p class="text-xs text-slate-400 mt-1">총 78학점 이수</p>
+                                <p class="text-xs text-slate-400 mt-1">총 {{ gpaInfo.totalCredits }}학점 이수</p>
+                                {% else %}
+                                <p class="font-bold text-2xl text-sub-blue">0.00 <span
+                                        class="text-base text-slate-400 font-medium">/ 4.5</span></p>
+                                <p class="text-xs text-slate-400 mt-1">총 0학점 이수</p>
+                                {% endif %}
                             </div>
                         </a>
                     </div>
