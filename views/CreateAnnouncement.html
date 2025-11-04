@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <script>
+        // Tailwind configuration and custom colors maintained
         tailwind.config = {
             theme: {
                 extend: {
@@ -34,7 +35,8 @@
 
         .section-card {
             background-color: white;
-            padding: 1rem;
+            padding: 1.5rem;
+            /* p-6 */
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
@@ -49,8 +51,8 @@
 
         .form-field:focus {
             outline: none;
-            border-color: #003875;
-            box-shadow: 0 0 0 1px #003875;
+            border-color: #ed2024;
+            box-shadow: 0 0 0 1px #ed2024;
         }
     </style>
 </head>
@@ -73,7 +75,9 @@
 
         <main class="flex-grow px-4 py-4 overflow-y-auto">
 
-            <form class="section-card p-6 flex flex-col h-full" action="/CreateAnnouncement" method="post">
+            <!-- ▼▼▼ 1. [핵심] 'enctype' 속성 추가 ▼▼▼ -->
+            <form class="section-card p-6 flex flex-col h-full" action="/CreateAnnouncement" method="post"
+                enctype="multipart/form-data">
 
                 <div class="space-y-4 flex-grow flex flex-col">
 
@@ -101,19 +105,64 @@
                             class="form-field bg-slate-50 flex-grow"></textarea>
                     </div>
 
+                    <!-- 파일 첨부 -->
+                    <div>
+                        <label for="file-upload" class="block text-sm font-medium text-slate-700 mb-1">첨부파일 (선택)</label>
+                        <label for="file-upload"
+                            class="flex items-center space-x-2 w-full p-3 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="text-slate-500">
+                                <path
+                                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49">
+                                </path>
+                            </svg>
+                            <span class="text-sm font-medium text-slate-600">파일 첨부 (이미지, PDF 등)</span>
+                        </label>
+                        <input id="file-upload" name="attachment_file" type="file" class="hidden" multiple
+                            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.hwp">
+                        <div id="file-list" class="mt-2 text-sm text-slate-500 space-y-1"></div>
+                    </div>
+
                 </div>
 
                 <div class="mt-6">
-                        <button type="submit"
-                            class="w-full bg-sub-blue text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-lg">
-                            게시하기
-                        </button>
+                    <button type="submit"
+                        class="w-full bg-main-red text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-lg">
+                        게시하기
+                    </button>
                 </div>
             </form>
 
         </main>
 
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('file-upload');
+            const fileListDisplay = document.getElementById('file-list');
+
+            fileInput.addEventListener('change', function (e) {
+                fileListDisplay.innerHTML = '';
+                if (fileInput.files.length === 0) {
+                    return;
+                }
+
+                // 1-3개일 경우 파일 이름 표시
+                Array.from(fileInput.files).forEach(file => {
+                    const fileItem = document.createElement('p');
+                    fileItem.className = 'flex items-center space-x-1';
+                    fileItem.innerHTML = `
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>${file.name}</span> 
+                    <span class="text-slate-400">(${(file.size / 1024).toFixed(1)} KB)</span>
+                `;
+                    fileListDisplay.appendChild(fileItem);
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>
