@@ -52,7 +52,7 @@
         /* 관리자 버튼 스타일 */
         .admin-float-btn {
             position: fixed;
-            bottom: 80px; /* 네비게이션바 위에 위치 */
+            bottom: 80px;    /* 네비게이션바 위에 위치 */
             right: 20px;
             width: 56px;
             height: 56px;
@@ -80,33 +80,55 @@
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
             <div id="announcements-section">
 
+                <form action="/AnnouncementAdmin" method="GET" class="relative mb-4">
+                    <input type="text" id="search-input" name="search_query" placeholder="공지사항 제목, 내용 검색..."
+                        class="w-full py-3 pl-10 pr-4 text-sm rounded-full bg-white shadow-sm border border-slate-200 focus:outline-none focus:border-sub-blue focus:ring-1 focus:ring-sub-blue">
+
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+
+                    <input type="hidden" id="category-hidden-input" name="category" value="all">
+                </form>
+
                 <div id="announcement-filters" class="flex flex-wrap gap-2 mb-4">
-                    <button class="filter-btn active px-3 py-1 text-sm bg-main-red text-white rounded-full shadow-sm"
-                        data-filter="all">전체</button>
-                    <button
-                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
-                        data-filter="학사">학사</button>
-                    <button
-                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
-                        data-filter="장학">장학</button>
-                    <button
-                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
-                        data-filter="채용">채용</button>
-                    <button
-                        class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
-                        data-filter="일반">일반</button>
+                    <a href="/AnnouncementAdmin?category=all" data-filter="all"
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
+                        전체
+                    </a>
+                    <a href="/AnnouncementAdmin?category=학사" data-filter="학사"
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
+                        학사
+                    </a>
+                    <a href="/AnnouncementAdmin?category=장학" data-filter="장학"
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
+                        장학
+                    </a>
+                    <a href="/AnnouncementAdmin?category=채용" data-filter="채용"
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
+                        채용
+                    </a>
+                    <a href="/AnnouncementAdmin?category=일반" data-filter="일반"
+                        class="filter-btn px-3 py-1 text-sm rounded-full shadow-sm">
+                        일반
+                    </a>
                 </div>
 
                 <ul id="announcement-list" class="space-y-3 flex-grow overflow-y-auto">
                     {% if announcements and announcements.length > 0 %}
                     {% for a in announcements %}
-                    <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition"
-                        data-category="{{ a.category or '일반' }}">
+                    <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition">
                         <a href="/ViewAnnouncement/{{ a.pkid }}" class="block">
                             <p class="font-semibold text-sm flex justify-between items-start">
                                 <span class="truncate">
                                     {% set catClass = 'text-slate-600' %}
-                                    {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set catClass = 'text-purple-600' %}{% endif %}
+                                    {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category
+                                    == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set
+                                    catClass = 'text-purple-600' %}{% endif %}
                                     <span class="font-bold {{ catClass }}">[{{ a.category or '일반' }}]</span>
                                     {{ a.title }}
                                 </span>
@@ -157,8 +179,7 @@
                     </svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/Announcement"
-                    class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                <a href="/Announcement" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M8 6h13"></path>
@@ -171,17 +192,17 @@
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
                 {% if user_role != 'admin' %}
-                    <a href="/Timetable"
-                        class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-                            <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-                            <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-                            <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-                        </svg>
-                        <span class="text-xs mt-1">시간표</span>
-                    </a>
+                <a href="/Timetable"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+                        <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+                        <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+                        <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+                    </svg>
+                    <span class="text-xs mt-1">시간표</span>
+                </a>
                 {% endif %}
                 <a href="/MyPage"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
@@ -197,30 +218,39 @@
     </div>
 
     <script>
-        // Filter server-rendered announcements by category (cards)
         document.addEventListener('DOMContentLoaded', function () {
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const items = document.querySelectorAll('#announcement-list .announcement-item');
 
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('active', 'bg-main-red', 'text-white');
-                        btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
-                    });
-                    button.classList.add('active', 'bg-main-red', 'text-white');
-                    button.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+            const params = new URLSearchParams(window.location.search);
 
-                    const filter = button.dataset.filter;
-                    items.forEach(item => {
-                        const cat = item.getAttribute('data-category') || '';
-                        if (filter === 'all' || filter === cat) {
-                            item.style.display = '';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                });
+            const currentCategory = params.get('category') || 'all';
+            const currentSearch = params.get('search_query') || '';
+
+            // 페이지가 리로드되어도 검색어가 남도록 햇어요
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = currentSearch;
+            }
+
+            // 검색 시 현재 필터 카테고리도 함께 전송하기
+            const hiddenCategoryInput = document.getElementById('category-hidden-input');
+            if (hiddenCategoryInput) {
+                hiddenCategoryInput.value = currentCategory;
+            }
+
+            const filterLinks = document.querySelectorAll('.filter-btn');
+            filterLinks.forEach(link => {
+                const linkCategory = link.dataset.filter;
+
+                if (linkCategory === currentCategory) {
+                    link.classList.add('active', 'bg-main-red', 'text-white');
+                } else {
+                    link.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+                }
+
+                // 카테고리를 바꿔도 검색어가 사라지지 않도록.
+                if (currentSearch) {
+                    link.href = `/AnnouncementAdmin?category=${linkCategory}&search_query=${encodeURIComponent(currentSearch)}`;
+                }
             });
         });
     </script>
