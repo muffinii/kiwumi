@@ -207,10 +207,28 @@ const updateStudentPhoto = async (user_pkid, photo_url) => {
 // 학생 정보 조회 (사진 포함)
 const getStudentInfo = async (user_pkid) => {
     try {
-        const sql = "SELECT pkid, name, student_num, photo_url, tuition_paid FROM student WHERE pkid = ?;";
+        const sql = "SELECT pkid, name, student_num, photo_url, is_fee_paid FROM student WHERE pkid = ?;";
         const params = [user_pkid];
         const result = await db.runSql(sql, params);
         return result[0];
+    } catch (err) {
+        throw err;
+    }
+}
+
+// 특정 학생의 모든 학점 기록 조회
+const getGradesByUser = async (student_pkid) => {
+    try {
+        // 년도와 학기 순으로 정렬하여 가져옵니다.
+        const sql = `
+            SELECT year, semester, course_name, credits, grade, is_major 
+            FROM grades 
+            WHERE student_pkid = ? 
+            ORDER BY year, semester;
+        `;
+        const params = [student_pkid];
+        const result = await db.runSql(sql, params);
+        return result;
     } catch (err) {
         throw err;
     }
@@ -231,6 +249,7 @@ module.exports = {
     getTodayTimetable,
     updateStudentPhoto,
     getStudentInfo,
+    getGradesByUser,
     // timetable will be appended below
 }
 

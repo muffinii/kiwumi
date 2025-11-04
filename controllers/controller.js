@@ -221,29 +221,23 @@ const timetable = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return res.redirect('/Login');
 
+        // 1. 기존 시간표 데이터 가져오기
         const entries = await model.getTimetableByUser(user.pkid);
-
-        // 최대 교시 결정 (데이터가 없으면 기본 8교시까지 표시, 최대 10교시)
+        
         let maxPeriod = Math.min(10, Math.max(8, ...(entries.map(e => e.end_period)), 0));
         if (!isFinite(maxPeriod) || maxPeriod <= 0) maxPeriod = 8;
-
-        // 교시별 시작 시각 계산 함수
         const periodStartLabel = (p) => {
-            // 모든 교시를 1시간 간격으로 (1교시=09:00부터)
             const base = new Date(2000,0,1,9,0,0);
             base.setMinutes(base.getMinutes() + (p-1)*60);
             const hh = String(base.getHours()).padStart(2,'0');
             const mm = String(base.getMinutes()).padStart(2,'0');
             return `${hh}:${mm}`;
         };
-
-        // 행(교시)별 셀 구성: 월(1)~금(5)
         const dayNames = ['월','화','수','목','금'];
         const rows = [];
         for (let p = 1; p <= maxPeriod; p++) {
             const cells = [];
             for (let d = 1; d <= 5; d++) {
-                // 해당 교시 범위에 포함되는 강의가 있는지 찾기 (가장 먼저 매칭되는 하나 표시)
                 const found = entries.find(e => e.day === d && e.start_period <= p && e.end_period >= p);
                 if (found) {
                     cells.push({
@@ -258,7 +252,66 @@ const timetable = async (req, res) => {
             rows.push({ period: p, time: periodStartLabel(p), cells });
         }
 
-        res.render('Timetable', { rows, dayNames });
+        // 2. 학점 데이터 가져오기
+        const grades = await model.getGradesByUser(user.pkid);
+
+        // 3. 학점 계산 로직 수정
+        const gradeToPoint = (grade) => {
+            const map = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0.0 };
+            return map[grade] ?? null; // P/F 과목 등을 위해 null 반환
+        };
+
+        let totalEarnedCredits = 0; // 총 취득 학점 (P/F 포함, F 제외)
+        let gpaCredits = 0;         // 전체 평점 계산에 사용될 학점 (A+~F)
+        let totalPoints = 0;        // 전체 (학점 * 점수) 합계
+
+        let majorGpaCredits = 0;    // 전공 평점 계산에 사용될 학점 (A+~F, 전공만)
+        let majorTotalPoints = 0;   // 전공 (학점 * 점수) 합계
+
+        grades.forEach(g => {
+            const point = gradeToPoint(g.grade);
+            const credit = g.credits || 0;
+
+            // 전체 평점 계산 (A+~F 포함, P는 제외)
+            if (point !== null) {
+                gpaCredits += credit;
+                totalPoints += point * credit;
+            }
+
+            // 전공 평점 계산 (is_major == 1인 과목만, P 제외)
+            if (g.is_major && point !== null) {
+                majorGpaCredits += credit;
+                majorTotalPoints += point * credit;
+            }
+
+            // 총 취득 학점 계산 (F 제외, P 포함 규칙 적용)
+            if (g.grade !== 'F') {
+                totalEarnedCredits += credit;
+            }
+        });
+
+        const overallGPA = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : '0.00';
+        const majorGPA = majorGpaCredits > 0 ? (majorTotalPoints / majorGpaCredits).toFixed(2) : '0.00';
+
+        // 4. 학기별로 데이터 그룹화
+        const semesters = {};
+        grades.forEach(g => {
+            const key = `${g.year}-${g.semester}`;
+            if (!semesters[key]) {
+                semesters[key] = { year: g.year, semester: g.semester, courses: [] };
+            }
+            semesters[key].courses.push(g);
+        });
+
+        // 5. 템플릿에 모든 데이터 전달
+        res.render('Timetable', { 
+            rows, 
+            dayNames,
+            semesters: Object.values(semesters),
+            overallGPA: overallGPA,
+            majorGPA: majorGPA,
+            totalCredits: totalEarnedCredits // 총 취득 학점으로 전달
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("500 Error");

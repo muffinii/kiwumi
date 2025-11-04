@@ -93,7 +93,7 @@
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
             <h1 class="text-xl font-bold text-slate-800">시간표</h1>
-            <a href="/Notifications.html"
+            <a href="/Notifications"
                 class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -160,8 +160,8 @@
                         <a href="/Calculator"
                             class="bg-white rounded-lg shadow p-3 text-center block transition-transform group-hover:scale-[1.02]">
                             <p class="text-slate-500 text-sm">총 평균/취득 학점</p>
-                            <p class="text-lg font-bold text-sub-blue"><span id="gpa-summary-timetable">3.85</span> /
-                                <span id="credits-summary-timetable">78</span>학점</p>
+                            <p class="text-lg font-bold text-sub-blue"><span id="gpa-summary-timetable">{{ overallGPA }}</span> /
+                                <span id="credits-summary-timetable">{{ totalCredits }}</span>학점</p>
                             <p class="text-xs text-slate-400 mt-1">클릭하여 성적 입력하기 &rarr;</p>
                         </a>
                     </div>
@@ -172,17 +172,56 @@
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <div class="bg-white rounded-lg shadow p-3 text-center">
                                 <p class="text-slate-500 text-sm">전체 평균 (4.5)</p>
-                                <p id="overall-gpa" class="text-lg font-bold text-sub-blue">0.00</p>
+                                <p id="overall-gpa" class="text-lg font-bold text-sub-blue">{{ overallGPA }}</p>
                             </div>
                             <div class="bg-white rounded-lg shadow p-3 text-center">
                                 <p class="text-slate-500 text-sm">전공 평균 (4.5)</p>
-                                <p id="major-gpa" class="text-lg font-bold text-sub-blue">0.00</p>
+                                <p id="major-gpa" class="text-lg font-bold text-sub-blue">{{ majorGPA }}</p>
                             </div>
                         </div>
 
                         <div id="grade-chart-container"
                             class="w-full h-48 bg-white p-4 rounded-lg shadow flex justify-center items-center">
                             <p class="text-slate-400">성적 그래프 로딩 중...</p>
+                        </div>
+                    </div>
+
+                    <!-- 학기별 성적 상세 목록: 요약 아래에 유지 표시 -->
+                    <div id="grade-list-section" class="mt-4 pt-3 border-t border-slate-200">
+                        <div class="space-y-4">
+                            {% if semesters and semesters.length > 0 %}
+                                {% for s in semesters %}
+                                <div class="bg-white rounded-lg shadow p-4">
+                                    <h5 class="font-bold text-md mb-2">{{ s.year }}년 {{ s.semester }}학기</h5>
+                                    <table class="w-full text-sm text-left">
+                                        <thead class="text-xs text-slate-500 uppercase bg-slate-50">
+                                            <tr>
+                                                <th class="px-4 py-2">과목명</th>
+                                                <th class="px-2 py-2 text-center">학점</th>
+                                                <th class="px-2 py-2 text-center">성적</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for c in s.courses %}
+                                            <tr class="border-b">
+                                                <td class="px-4 py-2 font-medium">
+                                                    {% if c.is_major %}<span class="text-sub-blue font-bold">[전공]</span>{% endif %}
+                                                    {{ c.course_name }}
+                                                </td>
+                                                <td class="px-2 py-2 text-center">{{ c.credits }}</td>
+                                                <td class="px-2 py-2 text-center font-semibold">{{ c.grade }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="bg-white rounded-lg shadow p-6 text-center">
+                                    <p class="text-slate-500">입력된 성적 정보가 없습니다.</p>
+                                    <a href="/Calculator" class="mt-2 inline-block text-sm text-sub-blue font-semibold">성적 입력하러 가기 &rarr;</a>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -214,110 +253,6 @@
         </nav>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            async function fetchGradeData() {
-                const response = await fetch('/api/grades/summary');
-
-                if (!response.ok) {
-                    throw new Error('Server response not ok');
-                }
-
-                const data = await response.json();
-                return data;
-
-                /* 백엔드는 이 형식의 JSON을 반환해야 한다고 하네요:
-                {
-                    "overallGPA": 3.85, 
-                    "majorGPA": 4.05,
-                    "totalCredits": 78,
-                    "maxCredits": 108,
-                    "semesters": [
-                        { "semester": "1-1", "gpa": 3.5 },
-                        { "semester": "1-2", "gpa": 3.8 },
-                        { "semester": "2-1", "gpa": 4.0 },
-                        { "semester": "2-2", "gpa": 3.7 },
-                        { "semester": "3-1", "gpa": 4.1 }
-                    ]
-                }
-                */
-            }
-
-            function renderGradeChart(data) {
-                const chartContainer = document.getElementById('grade-chart-container');
-                const gpaOverallEl = document.getElementById('overall-gpa');
-                const gpaMajorEl = document.getElementById('major-gpa');
-
-                if (!chartContainer || !gpaOverallEl || !gpaMajorEl) return;
-
-                gpaOverallEl.textContent = data.overallGPA.toFixed(2);  // 전체 학점
-                gpaMajorEl.textContent = data.majorGPA.toFixed(2);  // 전공만 따로,.
-
-                chartContainer.innerHTML = '';
-
-                const svgWidth = 320;
-                const svgHeight = 150;
-                const padding = 20;
-                const chartWidth = svgWidth - padding * 2;
-                const chartHeight = svgHeight - padding * 2;
-                const maxGPA = 4.5;
-
-                // 유효한 학기 데이터만 필터링
-                const semesters = data.semesters.filter(s => s.gpa > 0);
-                if (semesters.length === 0) {
-                    chartContainer.innerHTML = '<p class="text-slate-400">표시할 성적 데이터가 없습니다.</p>';
-                    return;
-                }
-
-                // X축 Y축 좌표 계산
-                const xStep = semesters.length > 1 ? chartWidth / (semesters.length - 1) : chartWidth / 2;
-                const points = semesters.map((sem, i) => {
-                    const x = padding + (i * xStep);
-                    const y = padding + chartHeight - (sem.gpa / maxGPA * chartHeight);
-                    return { x, y, sem };
-                });
-
-                const pointsString = points.map(p => `${p.x},${p.y}`).join(' ');
-
-                let svgHTML = `<svg width="100%" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
-
-                // Y축 가이드라인 (4.5 / 2.25)
-                svgHTML += `<line x1="${padding}" y1="${padding}" x2="${svgWidth - padding}" y2="${padding}" class="chart-grid-line" />`;
-                svgHTML += `<line x1="${padding}" y1="${padding + chartHeight / 2}" x2="${svgWidth - padding}" y2="${padding + chartHeight / 2}" class="chart-grid-line" />`;
-
-                // X축 (0점 라인)
-                svgHTML += `<line x1="${padding}" y1="${padding + chartHeight}" x2="${svgWidth - padding}" y2="${padding + chartHeight}" stroke="#e2e8f0" />`;
-
-                // Y축 라벨
-                svgHTML += `<text x="${padding - 5}" y="${padding + 5}" class="chart-label" text-anchor="end">4.5</text>`;
-                svgHTML += `<text x="${padding - 5}" y="${padding + chartHeight / 2}" class="chart-label" text-anchor="end">2.25</text>`;
-
-                // 성적 라인
-                svgHTML += `<polyline class="chart-line" points="${pointsString}" />`;
-
-                // 각 점 및 X축 라벨
-                points.forEach(p => {
-                    svgHTML += `<circle class="chart-dot" cx="${p.x}" cy="${p.y}" r="4" title="${p.sem.semester}: ${p.sem.sem.gpa.toFixed(2)}" />`;
-                    svgHTML += `<text class="chart-label" x="${p.x}" y="${svgHeight - 5}">${p.sem.semester}</text>`;
-                });
-
-                svgHTML += `</svg>`;
-                chartContainer.innerHTML = svgHTML;
-            }
-
-            fetchGradeData().then(data => {
-                if (data && data.semesters) {
-                    renderGradeChart(data);
-                } else {
-                    document.getElementById('grade-chart-container').innerHTML = '<p class="text-slate-400">성적 데이터가 없습니다.</p>';
-                }
-            }).catch(error => {
-                // fetch 자체가 실패했을 때 (네트워크 오류, 서버 다운 등)
-                console.error('Error fetching grade data:', error);
-                document.getElementById('grade-chart-container').innerHTML = '<p class="text-red-500">성적을 불러오지 못했습니다. (서버 연결 확인 필요)</p>';
-            });
-        });
-    </script>
 </body>
 
 </html>
