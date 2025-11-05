@@ -39,6 +39,45 @@
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
+
+        /* 수정/삭제 드롭다운 */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 8px;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+            width: 120px;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+            /* slate-100 */
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: #334155;
+            /* text-slate-700 */
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f5f9;
+            /* bg-slate-100 */
+        }
+
+        .dropdown-item.delete {
+            color: #ed2024;
+            /* main-red */
+        }
     </style>
 </head>
 
@@ -47,32 +86,52 @@
     <div class="app-container">
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Timetable" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Timetable.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m15 18-6-6 6-6" />
                 </svg>
             </a>
 
-            <h1 id="class-title-header" class="text-xl font-bold text-slate-800 flex-grow text-center">{{ classInfo.title }}</h1>
+            <h1 id="class-title-header" class="text-xl font-bold text-slate-800 flex-grow text-center">수업 상세</h1>
 
-            <a id="modify-btn" href="/ModifyClass/{{ classInfo.id }}"
-                class="px-4 py-2 text-sub-blue font-bold rounded-md hover:bg-blue-50 transition-colors">
-                수정
-            </a>
+            <div class="relative w-12 h-10 flex items-center justify-end">
+                <button id="menu-toggle" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
+                </button>
+
+                <div id="dropdown-menu" class="dropdown-menu">
+                    <a id="modify-link" href="#" class="dropdown-item">수정하기</a>
+                    <button id="delete-btn" class="dropdown-item delete w-full text-left">삭제하기</button>
+                </div>
+            </div>
         </header>
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
 
             <div id="class-detail-card" class="section-card p-6 mb-6">
 
-                <p class="text-sm font-semibold text-slate-500 mb-2">과목 ID: <span id="class-id">{{ classInfo.id }}</span></p>
-                <h2 id="class-title" class="text-3xl font-extrabold text-slate-800 mb-2">{{ classInfo.title }}</h2>
+                <p class="text-sm font-semibold text-slate-500 mb-2">과목 ID: <span id="class-id">N/A</span></p>
+                <h2 id="class-title" class="text-3xl font-extrabold text-slate-800 mb-2">수업명 로딩 중...</h2>
+                <p id="class-professor" class="text-lg text-slate-600 mb-4">담당 교수: N/A</p>
 
-                <div class="flex flex-wrap gap-4 text-sm font-medium border-t pt-4 mt-4">
+                <div class="flex flex-wrap gap-4 text-sm font-medium border-t pt-4">
+                    <div>
+                        <p class="text-slate-500">학점</p>
+                        <p id="class-credits" class="text-sub-blue font-bold">N/A</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500">유형</p>
+                        <p class="text-main-red font-bold">전공</p>
+                    </div>
                     <div>
                         <p class="text-slate-500">색상</p>
-                        <div id="class-color-indicator" class="w-6 h-6 rounded mt-1 border border-slate-300 {{ classInfo.color }}"></div>
+                        <div id="class-color-indicator" class="w-6 h-6 rounded mt-1 border border-slate-300"></div>
                     </div>
                 </div>
 
@@ -80,28 +139,127 @@
 
             <div class="section-card p-6">
                 <h3 class="text-xl font-bold mb-4">수업 시간 및 강의실</h3>
-                <div class="space-y-3 mb-4">
-                    {% for slot in classInfo.timeSlots %}
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                        <p class="font-bold text-sm">{{ slot.dayName }} {{ slot.start_time }} ~ {{ slot.end_time }}</p>
-                        <p class="text-xs text-slate-600">{{ slot.location or '장소 정보 없음' }}</p>
-                    </div>
-                    {% endfor %}
+                <div id="class-slots" class="space-y-3">
+                    <p class="text-center text-slate-500">시간표 정보가 로딩되지 않았습니다.</p>
                 </div>
-                
-                {% if classInfo.memo %}
-                <div class="border-t pt-4 mt-4">
-                    <h3 class="text-lg font-bold mb-2">메모</h3>
-                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                        <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ classInfo.memo }}</p>
-                    </div>
-                </div>
-                {% endif %}
             </div>
 
         </main>
 
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const params = new URLSearchParams(window.location.search);
+            const classId = params.get('classId');
+
+            // 드롭다운 메뉴 관련 요소
+            const menuToggle = document.getElementById('menu-toggle');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            const modifyLink = document.getElementById('modify-link');
+            const deleteBtn = document.getElementById('delete-btn');
+
+            if (!classId) {
+                document.getElementById('class-title').textContent = '오류: 수업 ID를 찾을 수 없습니다.';
+                if (menuToggle) menuToggle.style.display = 'none'; // ID 없으면 메뉴 버튼 숨김
+                return;
+            }
+
+            // --- 2. 관리자 메뉴 기능 설정 (버튼이 존재할 경우) ---
+            if (menuToggle && dropdownMenu && modifyLink && deleteBtn) {
+
+                // 2A. 수정 버튼에 올바른 링크 설정
+                modifyLink.href = `/ModifyClass.html?classId=${classId}`;
+
+                // 2B. 메뉴 토글 기능
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 이벤트가 body로 전파되는 것 중지
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                // 2C. 삭제 버튼 기능 (DB 삭제 요청)
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // 이벤트 전파 중지
+                    dropdownMenu.classList.remove('show'); // 메뉴 닫기
+
+                    // 사용자 확인
+                    if (confirm("삭제한 수업 정보는 복구할 수 없습니다.\n정말로 삭제하시겠습니까?")) {
+                        try {
+                            // 실제 백엔드 DB 삭제 API 호출
+                            const response = await fetch(`/api/classes/${classId}`, {
+                                method: 'DELETE'
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('삭제에 실패했습니다. (서버 응답 오류)');
+                            }
+
+                            alert('수업이 삭제되었습니다.');
+                            window.location.href = '/Timetable.html'; // 시간표 목록으로 이동
+
+                        } catch (error) {
+                            console.error('Delete error:', error);
+                            alert('삭제 중 오류가 발생했습니다.');
+                        }
+                    }
+                });
+            }
+
+            // 2D. 화면 아무 곳이나 클릭하면 메뉴 닫기
+            document.addEventListener('click', () => {
+                if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+                    dropdownMenu.classList.remove('show');
+                }
+            });
+
+            // --- 3. (기존 로직) 페이지 데이터 불러오기 ---
+            try {
+                // 백엔드 API에 해당 ID의 수업 정보를 요청 (GET)
+                const response = await fetch(`/api/classes/${classId}`);
+
+                if (!response.ok) {
+                    throw new Error('수업 정보를 불러오는 데 실패했습니다.');
+                }
+
+                const classData = await response.json();
+
+                // (백엔드 응답 예시)
+                // {
+                //    title: "운영체제", professor: "김교수", credits: "3", color: "bg-blue-100",
+                //    slots: [ { day: "월", startTime: "11:00", endTime: "13:00", place: "정보관 303호" } ]
+                // }
+
+                // 받은 데이터로 페이지 내용 채우기
+                document.getElementById('class-id').textContent = classId;
+                document.getElementById('class-title').textContent = classData.title;
+                document.getElementById('class-title-header').textContent = classData.title;
+                document.getElementById('class-credits').textContent = classData.credits + '학점';
+                document.getElementById('class-professor').textContent = '담당 교수: ' + classData.professor;
+                document.getElementById('class-color-indicator').className = 'w-6 h-6 rounded mt-1 border border-slate-300 ' + classData.color;
+
+                // 시간표 슬롯 렌더링
+                const slotsContainer = document.getElementById('class-slots');
+                slotsContainer.innerHTML = ''; // 비워주기
+
+                if (classData.slots && classData.slots.length > 0) {
+                    classData.slots.forEach(slot => {
+                        const slotDiv = document.createElement('div');
+                        slotDiv.className = 'bg-slate-50 p-3 rounded-lg border border-slate-200';
+                        slotDiv.innerHTML = `
+                        <p class="font-bold text-sm">${slot.day} ${slot.startTime} ~ ${slot.endTime}</p>
+                        <p class="text-xs text-slate-600">${slot.place}</p>
+                    `;
+                        slotsContainer.appendChild(slotDiv);
+                    });
+                } else {
+                    slotsContainer.innerHTML = '<p class="text-center text-slate-500">시간표 정보가 입력되지 않았습니다.</p>';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('class-title').textContent = '데이터 로딩 중 오류 발생';
+            }
+        });
+    </script>
 </body>
 
 </html>
