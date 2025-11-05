@@ -864,6 +864,127 @@ const notifications = (req, res) => {
     }
 }
 
+// 시간표 단일 조회 API (JSON)
+const getClassApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+        
+        const id = req.params.id;
+        if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
+        
+        // 해당 수업 정보 가져오기
+        const classInfo = await model.getTimetableById(id, user.pkid);
+        if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
+        
+        // 같은 과목명의 모든 시간표 슬롯 가져오기
+        const allSlots = await model.getTimetablesByTitle(classInfo.title, user.pkid);
+        
+        // 요일 변환
+        const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
+        
+        // 교시를 시간으로 변환
+        const periodToTime = (period) => {
+            const base = new Date(2000, 0, 1, 9, 0, 0);
+            base.setMinutes(base.getMinutes() + (period - 1) * 60);
+            return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
+        };
+        
+        // 슬롯 데이터 변환
+        const slots = allSlots.map(slot => ({
+            id: slot.id,
+            day: dayMap[slot.day] || '',
+            startTime: periodToTime(slot.start_period),
+            endTime: periodToTime(slot.end_period + 1),
+            place: slot.location || ''
+        }));
+        
+        return res.json({
+            ok: true,
+            title: classInfo.title,
+            color: classInfo.color || 'bg-blue-100',
+            memo: classInfo.memo || '',
+            slots: slots
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
+// 시간표 수정 API (JSON)
+const updateClassApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+        
+        const id = req.params.id;
+        if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
+        
+        let { title, class_color, memo, slots } = req.body;
+        
+        title = common.reqeustFilter(title, 100, false);
+        class_color = common.reqeustFilter(class_color || 'bg-blue-100', 30, false);
+        memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
+        
+        if (!slots || !Array.isArray(slots) || slots.length === 0) {
+            return res.status(400).json({ ok: false, message: '최소 하나의 시간 슬롯이 필요합니다.' });
+        }
+        
+        // 시간을 교시로 변환하는 함수
+        const timeToPeriod = (hhmm) => {
+            const m = /^([0-2]?\d):(\d{2})$/.exec(hhmm || '');
+            if (!m) return null;
+            const hh = parseInt(m[1], 10);
+            const mm = parseInt(m[2], 10);
+            const totalMinutes = hh * 60 + mm;
+            const baseMinutes = 9 * 60;
+            const period = Math.floor((totalMinutes - baseMinutes) / 60) + 1;
+            return (period >= 1 && period <= 20) ? period : null;
+        };
+        
+        const dayMap = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5 };
+        
+        // 기존 같은 과목명의 모든 시간표 삭제
+        const oldClass = await model.getTimetableById(id, user.pkid);
+        if (!oldClass) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
+        
+        const allOldSlots = await model.getTimetablesByTitle(oldClass.title, user.pkid);
+        for (const slot of allOldSlots) {
+            await model.deleteTimetableEntry(slot.id, user.pkid);
+        }
+        
+        // 새로운 슬롯들 추가
+        for (const slot of slots) {
+            const day = dayMap[slot.day];
+            const start_period = timeToPeriod(slot.startTime);
+            const end_period = timeToPeriod(slot.endTime);
+            
+            if (!day || !start_period || !end_period) {
+                return res.status(400).json({ ok: false, message: '잘못된 시간 형식입니다.' });
+            }
+            
+            const location = common.reqeustFilter(slot.place || '', 100, false, '');
+            
+            await model.addTimetableEntry(
+                user.pkid,
+                day,
+                start_period,
+                end_period - 1, // end_period는 실제 마지막 교시
+                title,
+                location,
+                class_color,
+                memo
+            );
+        }
+        
+        return res.json({ ok: true, message: '수업이 수정되었습니다.' });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
 module.exports = {
     main,
     calendar,
@@ -887,6 +1008,8 @@ module.exports = {
     addClassProc,
     viewClass,
     modifyClass,
+    getClassApi,
+    updateClassApi,
     notifications,
     login,
     loginProc,

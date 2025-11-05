@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>키우미 | 시간표 수정/title>
-        <script src="https://cdn.tailwindcss.com"></script>
+    <title>키우미 | 시간표 수정</title>
+    <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap"
             rel="stylesheet">
         <script>
@@ -62,20 +62,13 @@
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
 
-            <form class="section-card p-6" method="post" action="/AddClass">
+            <form id="modify-form" class="section-card p-6">
 
                 <h2 class="text-xl font-bold mb-5">수업 정보</h2>
 
                 <div class="space-y-4 mb-6">
-                    <input type="text" name="title" placeholder="과목 이름 (예: 운영체제)" required
+                    <input type="text" id="title" name="title" placeholder="과목 이름 (예: 운영체제)" required
                         class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
-
-                    <div class="flex space-x-3">
-                        <input type="number" placeholder="학점 (예: 3)" min="1" max="5"
-                            class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
-                        <input type="text" placeholder="담당 교수"
-                            class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
-                    </div>
                 </div>
 
                 <h3 class="text-lg font-bold mb-3 border-t pt-4">수업 시간 설정</h3>
@@ -134,7 +127,7 @@
                                 class="w-8 h-8 rounded border bg-pink-100"></button>
                         </div>
                     </div>
-                    <textarea placeholder="선택 사항: 수업 관련 메모나 특이사항 (저장은 아직 미지원)" rows="3"
+                    <textarea id="memo" name="memo" placeholder="선택 사항: 수업 관련 메모나 특이사항" rows="3"
                         class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition"></textarea>
                 </div>
 
@@ -278,11 +271,9 @@
 
         document.addEventListener('DOMContentLoaded', async function () {
             const params = new URLSearchParams(window.location.search);
-            const classId = params.get('classId') || params.get('id');
+            const classId = params.get('id') || window.location.pathname.split('/').pop();
 
-            document.getElementById('cancel-btn').href = `/ViewClass/${classId}`;
-
-            if (!classId) {
+            if (!classId || classId === 'ModifyClass') {
                 alert('수정할 수업 ID가 없습니다.');
                 window.location.href = '/Timetable';
                 return;
@@ -294,11 +285,11 @@
                 if (!response.ok) throw new Error('데이터 로딩 실패');
 
                 const data = await response.json();
+                if (!data.ok) throw new Error(data.message || '데이터 로딩 실패');
 
                 // 폼에 데이터 채우기
                 document.getElementById('title').value = data.title || '';
-                document.getElementById('credits').value = data.credits || '';
-                document.getElementById('professor').value = data.professor || '';
+                document.getElementById('memo').value = data.memo || '';
                 colorHidden.value = data.color || 'bg-blue-100';
                 updateColorSelection();
 
@@ -318,11 +309,11 @@
 
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const params = new URLSearchParams(window.location.search);
-            const classId = params.get('classId');
+            const classId = window.location.pathname.split('/').pop();
 
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
+            const title = document.getElementById('title').value;
+            const memo = document.getElementById('memo').value;
+            const color = colorHidden.value;
 
             const slots = [];
             container.querySelectorAll('.flex.flex-wrap.items-center').forEach(slotDiv => {
@@ -332,7 +323,13 @@
                 const place = slotDiv.querySelector('input[name="place"]').value;
                 slots.push({ day, startTime, endTime, place });
             });
-            data.slots = slots;
+
+            const data = {
+                title,
+                class_color: color,
+                memo,
+                slots
+            };
 
             try {
                 const response = await fetch(`/api/classes/${classId}`, {
@@ -341,15 +338,19 @@
                     body: JSON.stringify(data)
                 });
 
-                if (!response.ok) throw new Error('수정 실패');
+                const result = await response.json();
+                
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.message || '수정 실패');
+                }
 
-                // 성공 시 다시 상세 페이지로 이동
+                // 성공 시 시간표 페이지로 이동
                 alert('수업 정보가 성공적으로 수정되었습니다.');
-                window.location.href = `/ViewClass/${classId}`;
+                window.location.href = '/Timetable';
 
             } catch (error) {
                 console.error('Error updating data:', error);
-                alert('수정 중 오류가 발생했습니다.');
+                alert('수정 중 오류가 발생했습니다: ' + error.message);
             }
         });
     </script>
