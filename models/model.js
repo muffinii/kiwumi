@@ -288,6 +288,8 @@ const ensureTimetableTable = async () => {
             location VARCHAR(100) NULL,
             color VARCHAR(32) NOT NULL DEFAULT 'bg-blue-100',
             memo TEXT NULL,
+            professor VARCHAR(100) NULL,
+            credits TINYINT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_user_day (user_pkid, user_type, day)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -300,15 +302,29 @@ const ensureTimetableTable = async () => {
     } catch (err) {
         // 컬럼이 이미 존재하면 무시
     }
+    
+    // professor 컬럼 추가 (기존 테이블에 없는 경우)
+    try {
+        await db.runSql('ALTER TABLE timetable_entries ADD COLUMN professor VARCHAR(100) NULL;');
+    } catch (err) {
+        // 컬럼이 이미 존재하면 무시
+    }
+    
+    // credits 컬럼 추가 (기존 테이블에 없는 경우)
+    try {
+        await db.runSql('ALTER TABLE timetable_entries ADD COLUMN credits TINYINT NULL;');
+    } catch (err) {
+        // 컬럼이 이미 존재하면 무시
+    }
 }
 
-const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color, memo = null) => {
+const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color, memo = null, professor = null, credits = null) => {
     await ensureTimetableTable();
     const sql = `
-        INSERT INTO timetable_entries (user_pkid, user_type, day, start_period, end_period, title, location, color, memo)
-        VALUES (?, 'student', ?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO timetable_entries (user_pkid, user_type, day, start_period, end_period, title, location, color, memo, professor, credits)
+        VALUES (?, 'student', ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    const params = [user_pkid, day, start_period, end_period, title, location, color, memo];
+    const params = [user_pkid, day, start_period, end_period, title, location, color, memo, professor, credits];
     const result = await db.runSql(sql, params);
     return result.insertId;
 }
@@ -328,7 +344,7 @@ const getTimetableByUser = async (user_pkid) => {
 const getTimetableById = async (id, user_pkid) => {
     await ensureTimetableTable();
     const sql = `
-        SELECT id, day, start_period, end_period, title, location, color, memo
+        SELECT id, day, start_period, end_period, title, location, color, memo, professor, credits
         FROM timetable_entries
         WHERE id = ? AND user_pkid = ? AND user_type = 'student';
     `;
@@ -340,7 +356,7 @@ const getTimetableById = async (id, user_pkid) => {
 const getTimetablesByTitle = async (title, user_pkid) => {
     await ensureTimetableTable();
     const sql = `
-        SELECT id, day, start_period, end_period, title, location, color, memo
+        SELECT id, day, start_period, end_period, title, location, color, memo, professor, credits
         FROM timetable_entries
         WHERE title = ? AND user_pkid = ? AND user_type = 'student'
         ORDER BY day ASC, start_period ASC;

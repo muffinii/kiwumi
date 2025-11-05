@@ -553,10 +553,12 @@ const addClassProc = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return common.alertAndGo(res, '로그인이 필요합니다.', '/Login');
 
-        let { title, class_color, memo } = req.body;
+        let { title, class_color, memo, professor, credits } = req.body;
         title = common.reqeustFilter(title, 100, false);
         class_color = common.reqeustFilter(class_color || 'bg-blue-100', 30, false);
         memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
+        professor = professor ? common.reqeustFilter(professor, 100, false, '') : null;
+        credits = credits ? parseInt(credits, 10) : null;
 
         // 다중 슬롯 필드 (배열로 수신)
         let day = req.body.day || [];
@@ -585,7 +587,7 @@ const addClassProc = async (req, res) => {
             if (ep < sp || sp < 1 || ep > 10) continue; // 10교시까지만
 
             const location = common.reqeustFilter(place[i] || '', 100, false, '');
-            await model.addTimetableEntry(user.pkid, dNum, sp, ep, title, location, class_color, memo);
+            await model.addTimetableEntry(user.pkid, dNum, sp, ep, title, location, class_color, memo, professor, credits);
             saved++;
         }
 
@@ -819,6 +821,8 @@ const viewClass = async (req, res) => {
             title: mainClassInfo.title,
             color: mainClassInfo.color,
             memo: mainClassInfo.memo,
+            professor: mainClassInfo.professor,
+            credits: mainClassInfo.credits,
             timeSlots: timeSlots
         };
         
@@ -911,6 +915,8 @@ const getClassApi = async (req, res) => {
             title: classInfo.title,
             color: classInfo.color || 'bg-blue-100',
             memo: classInfo.memo || '',
+            professor: classInfo.professor || '',
+            credits: classInfo.credits || '',
             slots: slots
         });
     } catch (err) {
@@ -928,11 +934,13 @@ const updateClassApi = async (req, res) => {
         const id = req.params.id;
         if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
         
-        let { title, class_color, memo, slots } = req.body;
+        let { title, class_color, memo, professor, credits, slots } = req.body;
         
         title = common.reqeustFilter(title, 100, false);
         class_color = common.reqeustFilter(class_color || 'bg-blue-100', 30, false);
         memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
+        professor = professor ? common.reqeustFilter(professor, 100, false, '') : null;
+        credits = credits ? parseInt(credits, 10) : null;
         
         if (!slots || !Array.isArray(slots) || slots.length === 0) {
             return res.status(400).json({ ok: false, message: '최소 하나의 시간 슬롯이 필요합니다.' });
@@ -981,11 +989,39 @@ const updateClassApi = async (req, res) => {
                 title,
                 location,
                 class_color,
-                memo
+                memo,
+                professor,
+                credits
             );
         }
         
         return res.json({ ok: true, message: '수업이 수정되었습니다.' });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
+// 시간표 삭제 API (JSON)
+const deleteClassApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+        
+        const id = req.params.id;
+        if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
+        
+        // 해당 수업 정보 가져오기
+        const classInfo = await model.getTimetableById(id, user.pkid);
+        if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
+        
+        // 같은 과목명의 모든 시간표 슬롯 삭제
+        const allSlots = await model.getTimetablesByTitle(classInfo.title, user.pkid);
+        for (const slot of allSlots) {
+            await model.deleteTimetableEntry(slot.id, user.pkid);
+        }
+        
+        return res.json({ ok: true, message: '수업이 삭제되었습니다.' });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ ok: false, message: '서버 오류' });
@@ -1017,6 +1053,7 @@ module.exports = {
     modifyClass,
     getClassApi,
     updateClassApi,
+    deleteClassApi,
     notifications,
     login,
     loginProc,

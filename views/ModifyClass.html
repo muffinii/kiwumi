@@ -69,6 +69,11 @@
                 <div class="space-y-4 mb-6">
                     <input type="text" id="title" name="title" placeholder="과목 이름 (예: 운영체제)" required
                         class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
+                    
+                    <div class="flex space-x-3">
+                        <input type="number" id="credits" name="credits" placeholder="학점 (예: 3)" min="1" max="5" class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
+                        <input type="text" id="professor" name="professor" placeholder="담당 교수" class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
+                    </div>
                 </div>
 
                 <h3 class="text-lg font-bold mb-3 border-t pt-4">수업 시간 설정</h3>
@@ -290,6 +295,8 @@
                 // 폼에 데이터 채우기
                 document.getElementById('title').value = data.title || '';
                 document.getElementById('memo').value = data.memo || '';
+                document.getElementById('professor').value = data.professor || '';
+                document.getElementById('credits').value = data.credits || '';
                 colorHidden.value = data.color || 'bg-blue-100';
                 updateColorSelection();
 
@@ -313,6 +320,8 @@
 
             const title = document.getElementById('title').value;
             const memo = document.getElementById('memo').value;
+            const professor = document.getElementById('professor').value;
+            const credits = document.getElementById('credits').value;
             const color = colorHidden.value;
 
             const slots = [];
@@ -328,6 +337,8 @@
                 title,
                 class_color: color,
                 memo,
+                professor,
+                credits,
                 slots
             };
 

@@ -50,6 +50,7 @@ router.get("/api/events", controller.getPersonalEventsApi);
 // 시간표 API
 router.get("/api/classes/:id", controller.getClassApi);
 router.put("/api/classes/:id", controller.updateClassApi);
+router.delete("/api/classes/:id", controller.deleteClassApi);
 
 module.exports = {
     router
