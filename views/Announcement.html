@@ -185,7 +185,7 @@
                     </svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
-                {% if user_role != 'admin' %}
+                {% if user_role == 'student' %}
                 <a href="/Timetable"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
