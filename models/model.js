@@ -13,15 +13,31 @@ const ensureStudentPhotoColumn = async () => {
     }
 }
 
-const loginCheck = async (student_num, student_pw) => {
+const loginCheck = async (identifier, student_pw) => {
+    // identifier: 학번 또는 아이디(학생용)
     try {
-        const sql = "select pkid, name, student_num, photo_url, is_fee_paid, major from student where student_num = ? and student_pw = ?;";
-        const params = [student_num, student_pw];
-
+        // 우선 student_id(아이디) 컬럼이 있다고 가정하고 학번/아이디 둘 다 매칭 시도
+        const sql = `
+            SELECT pkid, name, student_num, photo_url, is_fee_paid, major
+            FROM student
+            WHERE (student_num = ? OR student_id = ?) AND student_pw = ?;
+        `;
+        const params = [identifier, identifier, student_pw];
         const result = await db.runSql(sql, params);
         return result[0];
-    } catch {
-        throw "sql error";
+    } catch (err) {
+        // 호환성: student_id 컬럼이 없는 기존 스키마면 학번만으로 재시도
+        if (String(err.message || '').includes('Unknown column') || String(err.sqlMessage || '').includes('Unknown column')) {
+            const fallbackSql = `
+                SELECT pkid, name, student_num, photo_url, is_fee_paid, major
+                FROM student
+                WHERE student_num = ? AND student_pw = ?;
+            `;
+            const fallbackParams = [identifier, student_pw];
+            const result = await db.runSql(fallbackSql, fallbackParams);
+            return result[0];
+        }
+        throw err;
     }
 }
 
