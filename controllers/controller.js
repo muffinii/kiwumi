@@ -137,11 +137,12 @@ const main = async (req, res) => {
             const dayOfWeek = now.getDay(); // 0=일, 1=월, ..., 6=토
             
             // 개인 일정 가져오기
-            const personalEvents = await model.getTodayPersonalEvents(user.pkid, today);
+            const userType = user.isAdmin ? 'admin' : 'student';
+            const personalEvents = await model.getTodayPersonalEvents(user.pkid, userType, today);
             
-            // 시간표 가져오기 (월~금만)
+            // 시간표 가져오기 (학생만, 월~금만)
             let timetableEntries = [];
-            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            if (!user.isAdmin && dayOfWeek >= 1 && dayOfWeek <= 5) {
                 timetableEntries = await model.getTodayTimetable(user.pkid, dayOfWeek);
             }
 
@@ -304,8 +305,8 @@ const timetable = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return res.redirect('/Login');
 
-        // 1. 기존 시간표 데이터 가져오기
-        const entries = await model.getTimetableByUser(user.pkid);
+        // 1. 기존 시간표 데이터 가져오기 (관리자는 빈 배열)
+        const entries = user.isAdmin ? [] : await model.getTimetableByUser(user.pkid);
         
         let maxPeriod = Math.min(10, Math.max(8, ...(entries.map(e => e.end_period)), 0));
         if (!isFinite(maxPeriod) || maxPeriod <= 0) maxPeriod = 8;
@@ -336,8 +337,8 @@ const timetable = async (req, res) => {
             rows.push({ period: p, time: periodStartLabel(p), cells });
         }
 
-        // 2. 학점 데이터 가져오기
-        const grades = await model.getGradesByUser(user.pkid);
+        // 2. 학점 데이터 가져오기 (관리자는 빈 배열)
+        const grades = user.isAdmin ? [] : await model.getGradesByUser(user.pkid);
 
         // 3. 학점 계산 로직 수정
         const gradeToPoint = (grade) => {
@@ -487,7 +488,7 @@ const createPersonalEvent = async (req, res) => {
             return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
         }
 
-        const id = await model.createPersonalEvent(user.pkid, title, event_date, event_time, event_color);
+        const id = await model.createPersonalEvent(user.pkid, user.isAdmin ? 'admin' : 'student', title, event_date, event_time, event_color);
         return res.json({ ok: true, id });
     } catch (err) {
         console.error(err);
@@ -507,7 +508,8 @@ const getPersonalEventsApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '잘못된 파라미터' });
         }
 
-        const rows = await model.getPersonalEventsByMonth(user.pkid, year, month);
+        const userType = user.isAdmin ? 'admin' : 'student';
+        const rows = await model.getPersonalEventsByMonth(user.pkid, userType, year, month);
         return res.json({ ok: true, events: rows });
     } catch (err) {
         console.error(err);

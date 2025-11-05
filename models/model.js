@@ -120,76 +120,81 @@ const deleteAnnouncement = async (pkid) => {
             CREATE TABLE IF NOT EXISTS personal_events (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_pkid INT NOT NULL,
+                user_type ENUM('student', 'admin') NOT NULL DEFAULT 'student',
                 title VARCHAR(255) NOT NULL,
                 event_date DATE NOT NULL,
                 event_time TIME NULL,
                 color VARCHAR(32) NOT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_user_date (user_pkid, event_date)
+                INDEX idx_user_date (user_pkid, user_type, event_date)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `;
         await db.runSql(createSql);
-        
-        // 기존 테이블의 event_time 컬럼이 NULL을 허용하지 않을 수 있으므로 수정
-        try {
-            const alterSql = `ALTER TABLE personal_events MODIFY event_time TIME NULL;`;
-            await db.runSql(alterSql);
-        } catch (err) {
-            // 이미 NULL이 허용되거나 다른 이유로 실패하면 무시
-            console.log('event_time column alter skipped:', err.message);
-        }
     }
 
-    const createPersonalEvent = async (user_pkid, title, event_date, event_time, color) => {
+    const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color) => {
         await ensurePersonalEventsTable();
         const sql = `
-            INSERT INTO personal_events (user_pkid, title, event_date, event_time, color)
-            VALUES (?, ?, ?, ?, ?);
+            INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color)
+            VALUES (?, ?, ?, ?, ?, ?);
         `;
-        const params = [user_pkid, title, event_date, event_time, color];
+        const params = [user_pkid, user_type, title, event_date, event_time, color];
         const result = await db.runSql(sql, params);
         return result.insertId;
     }
 
-    const getPersonalEventsByMonth = async (user_pkid, year, month1to12) => {
-        await ensurePersonalEventsTable();
-        const ym = `${year}-${String(month1to12).padStart(2,'0')}`;
-        const sql = `
-            SELECT id, title, color, DAY(event_date) AS day, TIME_FORMAT(event_time, '%H:%i') AS time
-            FROM personal_events
-            WHERE user_pkid = ? AND DATE_FORMAT(event_date, '%Y-%m') = ?
-            ORDER BY event_date ASC, event_time ASC, id ASC;
-        `;
-        const params = [user_pkid, ym];
-        const rows = await db.runSql(sql, params);
-        return rows.map(r => ({ id: r.id, title: r.title, color: r.color, day: r.day, time: r.time }));
-    }
-
-    const getTodayPersonalEvents = async (user_pkid, date) => {
+    const getPersonalEventsByMonth = async (user_pkid, user_type, year, month1to12) => {
         await ensurePersonalEventsTable();
         const sql = `
-            SELECT id, title, color, TIME_FORMAT(event_time, '%H:%i') AS time
+            SELECT DAY(event_date) as day, title, color, TIME_FORMAT(event_time, '%H:%i') as time
             FROM personal_events
-            WHERE user_pkid = ? AND event_date = ?
-            ORDER BY event_time ASC, id ASC;
+            WHERE user_pkid = ? AND user_type = ? AND YEAR(event_date) = ? AND MONTH(event_date) = ?
+            ORDER BY event_date, event_time;
         `;
-        const params = [user_pkid, date];
-        const rows = await db.runSql(sql, params);
-        return rows.map(r => ({ id: r.id, title: r.title, color: r.color, time: r.time }));
-    }
-
-    const getTodayTimetable = async (user_pkid, dayOfWeek) => {
-        await ensureTimetableTable();
-        const sql = `
-            SELECT id, start_period, end_period, title, location, color
-            FROM timetable_entries
-            WHERE user_pkid = ? AND day = ?
-            ORDER BY start_period ASC, end_period DESC, id ASC;
-        `;
-        const params = [user_pkid, dayOfWeek];
+        const params = [user_pkid, user_type, year, month1to12];
         const rows = await db.runSql(sql, params);
         return rows;
     }
+
+// 시간표 조회
+const getTimetablesByPkid = async (user_pkid) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT id, day, start_period, end_period, title, location, color, memo
+        FROM timetable_entries
+        WHERE user_pkid = ? AND user_type = 'student'
+        ORDER BY day ASC, start_period ASC, end_period DESC, id ASC;
+    `;
+    const params = [user_pkid];
+    const rows = await db.runSql(sql, params);
+    return rows;
+}
+
+const getTodayTimetable = async (user_pkid, dayOfWeek) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT id, start_period, end_period, title, location, color
+        FROM timetable_entries
+        WHERE user_pkid = ? AND user_type = 'student' AND day = ?
+        ORDER BY start_period ASC, end_period DESC, id ASC;
+    `;
+    const params = [user_pkid, dayOfWeek];
+    const rows = await db.runSql(sql, params);
+    return rows;
+}
+
+const getTodayPersonalEvents = async (user_pkid, user_type, date) => {
+    await ensurePersonalEventsTable();
+    const sql = `
+        SELECT id, title, color, TIME_FORMAT(event_time, '%H:%i') AS time
+        FROM personal_events
+        WHERE user_pkid = ? AND user_type = ? AND event_date = ?
+        ORDER BY event_time ASC, id ASC;
+    `;
+    const params = [user_pkid, user_type, date];
+    const rows = await db.runSql(sql, params);
+    return rows.map(r => ({ id: r.id, title: r.title, color: r.color, time: r.time }));
+}
 
 // 학생 사진 URL 업데이트
 const updateStudentPhoto = async (user_pkid, photo_url) => {
@@ -259,6 +264,7 @@ const ensureTimetableTable = async () => {
         CREATE TABLE IF NOT EXISTS timetable_entries (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_pkid INT NOT NULL,
+            user_type ENUM('student', 'admin') NOT NULL DEFAULT 'student',
             day TINYINT NOT NULL, -- 1=Mon .. 5=Fri
             start_period TINYINT NOT NULL,
             end_period TINYINT NOT NULL,
@@ -267,7 +273,7 @@ const ensureTimetableTable = async () => {
             color VARCHAR(32) NOT NULL DEFAULT 'bg-blue-100',
             memo TEXT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_user_day (user_pkid, day)
+            INDEX idx_user_day (user_pkid, user_type, day)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
     await db.runSql(sql);
@@ -283,8 +289,8 @@ const ensureTimetableTable = async () => {
 const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color, memo = null) => {
     await ensureTimetableTable();
     const sql = `
-        INSERT INTO timetable_entries (user_pkid, day, start_period, end_period, title, location, color, memo)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO timetable_entries (user_pkid, user_type, day, start_period, end_period, title, location, color, memo)
+        VALUES (?, 'student', ?, ?, ?, ?, ?, ?, ?);
     `;
     const params = [user_pkid, day, start_period, end_period, title, location, color, memo];
     const result = await db.runSql(sql, params);
@@ -296,7 +302,7 @@ const getTimetableByUser = async (user_pkid) => {
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color
         FROM timetable_entries
-        WHERE user_pkid = ?
+        WHERE user_pkid = ? AND user_type = 'student'
         ORDER BY day ASC, start_period ASC, end_period DESC, id ASC;
     `;
     const rows = await db.runSql(sql, [user_pkid]);
@@ -308,7 +314,7 @@ const getTimetableById = async (id, user_pkid) => {
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color, memo
         FROM timetable_entries
-        WHERE id = ? AND user_pkid = ?;
+        WHERE id = ? AND user_pkid = ? AND user_type = 'student';
     `;
     const result = await db.runSql(sql, [id, user_pkid]);
     return result[0];
@@ -320,7 +326,7 @@ const getTimetablesByTitle = async (title, user_pkid) => {
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color, memo
         FROM timetable_entries
-        WHERE title = ? AND user_pkid = ?
+        WHERE title = ? AND user_pkid = ? AND user_type = 'student'
         ORDER BY day ASC, start_period ASC;
     `;
     const result = await db.runSql(sql, [title, user_pkid]);
@@ -332,7 +338,7 @@ const updateTimetableEntry = async (id, user_pkid, day, start_period, end_period
     const sql = `
         UPDATE timetable_entries
         SET day = ?, start_period = ?, end_period = ?, title = ?, location = ?, color = ?
-        WHERE id = ? AND user_pkid = ?;
+        WHERE id = ? AND user_pkid = ? AND user_type = 'student';
     `;
     const params = [day, start_period, end_period, title, location, color, id, user_pkid];
     const result = await db.runSql(sql, params);
@@ -341,7 +347,7 @@ const updateTimetableEntry = async (id, user_pkid, day, start_period, end_period
 
 const deleteTimetableEntry = async (id, user_pkid) => {
     await ensureTimetableTable();
-    const sql = "DELETE FROM timetable_entries WHERE id = ? AND user_pkid = ?;";
+    const sql = "DELETE FROM timetable_entries WHERE id = ? AND user_pkid = ? AND user_type = 'student';";
     const result = await db.runSql(sql, [id, user_pkid]);
     return result.affectedRows;
 }
