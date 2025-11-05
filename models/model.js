@@ -13,6 +13,36 @@ const ensureStudentPhotoColumn = async () => {
     }
 }
 
+// administrator 테이블에 필요한 컬럼 추가
+const ensureAdminColumns = async () => {
+    try {
+        // photo_url 컬럼 추가
+        await db.runSql('ALTER TABLE administrator ADD COLUMN photo_url VARCHAR(500) NULL;');
+    } catch (err) {
+        if (!err.message.includes('Duplicate column name')) {
+            console.log('administrator photo_url column alter skipped:', err.message);
+        }
+    }
+    
+    try {
+        // employee_num 컬럼 추가 (사번)
+        await db.runSql('ALTER TABLE administrator ADD COLUMN employee_num VARCHAR(50) NULL;');
+    } catch (err) {
+        if (!err.message.includes('Duplicate column name')) {
+            console.log('administrator employee_num column alter skipped:', err.message);
+        }
+    }
+    
+    try {
+        // department 컬럼 추가 (부서)
+        await db.runSql('ALTER TABLE administrator ADD COLUMN department VARCHAR(100) NULL;');
+    } catch (err) {
+        if (!err.message.includes('Duplicate column name')) {
+            console.log('administrator department column alter skipped:', err.message);
+        }
+    }
+}
+
 const loginCheck = async (identifier, student_pw) => {
     // identifier: 학번 또는 아이디(학생용)
     try {
@@ -44,7 +74,8 @@ const loginCheck = async (identifier, student_pw) => {
 // 관리자 로그인 체크
 const adminLoginCheck = async (admin_id, admin_pw) => {
     try {
-        const sql = "select pkid, name, admin_id, role from administrator where admin_id = ? and admin_pw = ?;";
+        await ensureAdminColumns();
+        const sql = "SELECT pkid, name, admin_id, role, photo_url, employee_num, department FROM administrator WHERE admin_id = ? AND admin_pw = ?;";
         const params = [admin_id, admin_pw];
 
         const result = await db.runSql(sql, params);
@@ -225,6 +256,19 @@ const updateStudentPhoto = async (user_pkid, photo_url) => {
     }
 }
 
+// 관리자 사진 URL 업데이트
+const updateAdminPhoto = async (user_pkid, photo_url) => {
+    try {
+        await ensureAdminColumns();
+        const sql = "UPDATE administrator SET photo_url = ? WHERE pkid = ?;";
+        const params = [photo_url, user_pkid];
+        const result = await db.runSql(sql, params);
+        return result.affectedRows;
+    } catch (err) {
+        throw err;
+    }
+}
+
 // 학생 정보 조회 (사진 포함)
 const getStudentInfo = async (user_pkid) => {
     try {
@@ -269,6 +313,7 @@ module.exports = {
     getTodayPersonalEvents,
     getTodayTimetable,
     updateStudentPhoto,
+    updateAdminPhoto,
     getStudentInfo,
     getGradesByUser,
     // timetable will be appended below

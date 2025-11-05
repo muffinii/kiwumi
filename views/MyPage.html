@@ -97,19 +97,21 @@
                 </div>
 
                 <p class="mt-4 text-2xl font-bold">{{ user.name }}</p>
+                {% if user_role == 'admin' %}
+                <p class="text-slate-500">{{ user.department or '부서 정보 없음' }}</p>
+                {% else %}
                 <p class="text-slate-500">{{ user.major or '학과 정보 없음' }}</p>
+                {% endif %}
 
                 <div class="border-t my-4 w-full"></div>
 
                 {% if user_role == 'admin' %}
                 <p class="text-sm text-slate-500">사번</p>
-                <p class="font-mono text-lg font-semibold">{{ user.employee_num}}</p>
+                <p class="font-mono text-lg font-semibold">{{ user.employee_num or '사번 정보 없음' }}</p>
                 {% else %}
                 <p class="text-sm text-slate-500">학번</p>
                 <p class="font-mono text-lg font-semibold">{{ user.student_num }}</p>
                 {% endif %}
-                <img src="https://placehold.co/180x50/333/FFF?text=BARCODE" alt="Barcode" class="mt-4" width="180px">
-
                 <img src="https://placehold.co/180x50/333/FFF?text=BARCODE" alt="Barcode" class="mt-4" width="180px">
 
                 {% if user_role == 'student' %}

@@ -7,7 +7,10 @@ const fs = require('fs');
 // Multer 설정: 파일 저장 위치 및 파일명 설정
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../uploads/students');
+        const user = req.session.user;
+        const uploadDir = user && user.isAdmin 
+            ? path.join(__dirname, '../uploads/admin')
+            : path.join(__dirname, '../uploads/students');
         // 디렉토리가 없으면 생성
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -17,9 +20,11 @@ const storage = multer.diskStorage({
     filename: function (req, file, cb) {
         // 파일명: 학번_timestamp.확장자 (예: 202512345_1699999999999.jpg)
         const user = req.session.user;
-        const studentNum = user.student_num || user.pkid;
+        const identifier = user.isAdmin 
+            ? (user.employee_num || user.admin_id || user.pkid)
+            : (user.student_num || user.pkid);
         const ext = path.extname(file.originalname);
-        cb(null, `${studentNum}_${Date.now()}${ext}`);
+        cb(null, `${identifier}_${Date.now()}${ext}`);
     }
 });
 
@@ -634,6 +639,9 @@ const loginProc = async (req, res) => {
                     name: result.name,
                     admin_id: result.admin_id,
                     role: result.role,
+                    photo_url: result.photo_url,
+                    employee_num: result.employee_num,
+                    department: result.department,
                     isAdmin: true
                 };
             } else {
@@ -683,8 +691,14 @@ const uploadPhotoProc = async (req, res) => {
         }
 
         // 파일 경로를 DB에 저장 (웹 경로)
-        const photoUrl = `/uploads/students/${req.file.filename}`;
-        await model.updateStudentPhoto(user.pkid, photoUrl);
+        let photoUrl;
+        if (user.isAdmin) {
+            photoUrl = `/uploads/admin/${req.file.filename}`;
+            await model.updateAdminPhoto(user.pkid, photoUrl);
+        } else {
+            photoUrl = `/uploads/students/${req.file.filename}`;
+            await model.updateStudentPhoto(user.pkid, photoUrl);
+        }
 
         // 세션 업데이트
         req.session.user.photo_url = photoUrl;
