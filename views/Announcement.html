@@ -115,7 +115,9 @@
                     {% if announcements and announcements.length > 0 %}
                     {% for a in announcements %}
                     <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition"
-                        data-category="{{ a.category or '일반' }}">
+                        data-category="{{ a.category or '일반' }}"
+                        data-title="{{ a.title }}"
+                        data-content="{{ a.content or '' }}">
                         <a href="/ViewAnnouncement/{{ a.pkid }}" class="block">
                             <p class="font-semibold text-sm flex justify-between items-start">
                                 <span class="truncate">
@@ -215,12 +217,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             const filterButtons = document.querySelectorAll('.filter-btn');
             const searchInput = document.getElementById('search-input');
-            const listContainer = document.getElementById('announcement-list');
-
-            if (listContainer) {
-                listContainer.classList.remove('space-y-3');
-            }
-
             const items = document.querySelectorAll('#announcement-list .announcement-item');
 
             let currentFilter = 'all';  // 현재 선택된 카테고리
@@ -231,13 +227,14 @@
 
                 items.forEach(item => {
                     const category = item.getAttribute('data-category') || '일반';
-                    const itemText = item.textContent.toLowerCase();
+                    const title = (item.getAttribute('data-title') || '').toLowerCase();
+                    const content = (item.getAttribute('data-content') || '').toLowerCase();
+                    
+                    // 제목과 내용을 합쳐서 검색
+                    const searchableText = title + ' ' + content;
 
                     const categoryMatch = (currentFilter === 'all' || currentFilter === category);
-
-                    const searchMatch = (currentSearch === '' || itemText.includes(currentSearch));
-
-                    item.classList.add('mb-3');
+                    const searchMatch = (currentSearch === '' || searchableText.includes(currentSearch));
 
                     // 카테고리랑 검색어 다 만족하면 보여주고, 아니면 숨김
                     if (categoryMatch && searchMatch) {
