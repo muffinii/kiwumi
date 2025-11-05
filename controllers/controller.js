@@ -204,7 +204,9 @@ const main = async (req, res) => {
 
 const calendar = (req, res) => {
     try {
-        res.render('Calendar');
+        const user = req.session && req.session.user;
+        const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
+        res.render('Calendar', { user_role });
     } catch {
         res.status(500).send("500 Error");
     }
@@ -228,10 +230,12 @@ const announcement = async (req, res) => {
         
         // 사용자 역할 확인
         const isAdmin = user && user.isAdmin === true;
+        const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
         
         res.render('Announcement', { 
             announcements: formatted,
-            isAdmin: isAdmin
+            isAdmin: isAdmin,
+            user_role: user_role
         });
     } catch (err) {
         console.error(err);
@@ -450,7 +454,9 @@ const myPage = (req, res) => {
 
 const addEvent = (req, res) => {
     try {
-        res.render('AddEvent');
+        const user = req.session && req.session.user;
+        const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
+        res.render('AddEvent', { user_role });
     } catch {
         res.status(500).send("500 Error");
     }
@@ -709,8 +715,9 @@ const viewAnnouncement = async (req, res) => {
         
         // 관리자 여부 확인
         const isAdmin = user && user.isAdmin === true;
+        const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
         
-        res.render('ViewAnnouncement', { announcement, isAdmin });
+        res.render('ViewAnnouncement', { announcement, isAdmin, user_role });
     } catch (err) {
         console.error(err);
         res.status(500).send("500 Error");
