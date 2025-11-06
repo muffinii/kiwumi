@@ -5,6 +5,8 @@ const controller = require("../controllers/controller");
 // 로그인 관련 라우트는 세션 검사 없이 접근 가능
 router.get("/Login", controller.login);
 router.post("/Login", controller.loginProc);
+router.get("/Join", controller.join);
+router.post("/api/auth/register", controller.registerProc);
 router.get("/Logout", controller.logout);
 
 // 인증 미들웨어: 세션에 user가 없으면 로그인 페이지로 이동

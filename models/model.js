@@ -85,6 +85,92 @@ const adminLoginCheck = async (admin_id, admin_pw) => {
     }
 }
 
+// 회원가입: 이름과 학번으로 사전 등록된 학생 확인
+const checkPreRegisteredStudent = async (name, student_num) => {
+    try {
+        const sql = `
+            SELECT pkid, name, student_num, major
+            FROM student
+            WHERE name = ? AND student_num = ?;
+        `;
+        const params = [name, student_num];
+        const result = await db.runSql(sql, params);
+        return result[0]; // 있으면 학생 정보 반환, 없으면 undefined
+    } catch (err) {
+        console.error('사전 등록 확인 오류:', err);
+        throw err;
+    }
+}
+
+// 회원가입: 이미 가입된 계정인지 확인 (regdate 또는 실제 이메일 존재 여부로 판단)
+const checkStudentAlreadyRegistered = async (student_pkid) => {
+    try {
+        const sql = `
+            SELECT student_id, email
+            FROM student
+            WHERE pkid = ? 
+              AND email NOT LIKE '%@temp.placeholder' 
+              AND student_id != 'temp_id';
+        `;
+        const params = [student_pkid];
+        const result = await db.runSql(sql, params);
+        return result.length > 0; // 실제 이메일이 있으면 이미 가입된 것으로 판단
+    } catch (err) {
+        console.error('가입 여부 확인 오류:', err);
+        throw err;
+    }
+}
+
+// 회원가입: 아이디 중복 체크
+const checkUsernameExists = async (username) => {
+    try {
+        const sql = `
+            SELECT pkid
+            FROM student
+            WHERE student_id = ? AND student_id != 'temp_id';
+        `;
+        const params = [username];
+        const result = await db.runSql(sql, params);
+        return result.length > 0; // 이미 있으면 true
+    } catch (err) {
+        console.error('아이디 중복 확인 오류:', err);
+        throw err;
+    }
+}
+
+// 회원가입: 이메일 중복 체크
+const checkEmailExists = async (email) => {
+    try {
+        const sql = `
+            SELECT pkid
+            FROM student
+            WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
+        `;
+        const params = [email];
+        const result = await db.runSql(sql, params);
+        return result.length > 0; // 이미 있으면 true
+    } catch (err) {
+        console.error('이메일 중복 확인 오류:', err);
+        throw err;
+    }
+}
+
+// 회원가입: 학생 정보 업데이트 (student_id, student_pw, email, phone_number 등)
+const updateStudentRegistration = async (student_pkid, username, password, email, phone) => {
+    try {
+        const sql = `
+            UPDATE student
+            SET student_id = ?, student_pw = ?, email = ?, phone_number = ?
+            WHERE pkid = ?;
+        `;
+        const params = [username, password, email, phone, student_pkid];
+        await db.runSql(sql, params);
+    } catch (err) {
+        console.error('학생 정보 업데이트 오류:', err);
+        throw err;
+    }
+}
+
 // 공지 목록 조회
 const getAnnouncements = async () => {
     try {
@@ -341,6 +427,11 @@ const getGradesByUser = async (student_pkid) => {
 module.exports = {
     loginCheck,
     adminLoginCheck,
+    checkPreRegisteredStudent,
+    checkStudentAlreadyRegistered,
+    checkUsernameExists,
+    checkEmailExists,
+    updateStudentRegistration,
     getAnnouncements,
     getRecentAnnouncements,
     getAnnouncementById,
