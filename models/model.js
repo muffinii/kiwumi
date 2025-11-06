@@ -263,15 +263,22 @@ const deleteAnnouncement = async (pkid) => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `;
         await db.runSql(createSql);
+
+        // memo 컬럼 추가 (기존 테이블에 없는 경우 안전하게 추가)
+        try {
+            await db.runSql('ALTER TABLE personal_events ADD COLUMN memo TEXT NULL AFTER color;');
+        } catch (err) {
+            // 이미 존재하면 무시
+        }
     }
 
-    const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color) => {
+    const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color, memo = null) => {
         await ensurePersonalEventsTable();
         const sql = `
-            INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color, memo)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
-        const params = [user_pkid, user_type, title, event_date, event_time, color];
+        const params = [user_pkid, user_type, title, event_date, event_time, color, memo];
         const result = await db.runSql(sql, params);
         return result.insertId;
     }
@@ -293,8 +300,8 @@ const deleteAnnouncement = async (pkid) => {
 const getPersonalEventById = async (event_id, user_pkid, user_type) => {
     await ensurePersonalEventsTable();
     const sql = `
-        SELECT id, title, DATE_FORMAT(event_date, '%Y-%m-%d') as event_date, 
-               TIME_FORMAT(event_time, '%H:%i') as event_time, color
+     SELECT id, title, DATE_FORMAT(event_date, '%Y-%m-%d') as event_date, 
+         TIME_FORMAT(event_time, '%H:%i') as event_time, color, memo
         FROM personal_events
         WHERE id = ? AND user_pkid = ? AND user_type = ?;
     `;
@@ -315,14 +322,14 @@ const deletePersonalEvent = async (event_id, user_pkid, user_type) => {
 }
 
 // 개인 일정 수정
-const updatePersonalEvent = async (event_id, user_pkid, user_type, title, event_date, event_time, color) => {
+const updatePersonalEvent = async (event_id, user_pkid, user_type, title, event_date, event_time, color, memo = null) => {
     await ensurePersonalEventsTable();
     const sql = `
         UPDATE personal_events
-        SET title = ?, event_date = ?, event_time = ?, color = ?
+        SET title = ?, event_date = ?, event_time = ?, color = ?, memo = ?
         WHERE id = ? AND user_pkid = ? AND user_type = ?;
     `;
-    const params = [title, event_date, event_time, color, event_id, user_pkid, user_type];
+    const params = [title, event_date, event_time, color, memo, event_id, user_pkid, user_type];
     await db.runSql(sql, params);
 }
 

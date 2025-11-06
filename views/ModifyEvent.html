@@ -91,10 +91,14 @@
                                 <div id="event-color-options" class="mt-2 flex space-x-3">
                                     <div data-color="bg-red-200" class="event-color-option w-8 h-8 rounded-full bg-red-200 cursor-pointer"></div>
                                     <div data-color="bg-blue-200" class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"></div>
-                                    <div data-color="bg-green-200" class="event-color-option w-8 h-8 rounded-full bg-green-200 cursor-pointer"></div>
                                     <div data-color="bg-yellow-200" class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"></div>
                                 </div>
                                 <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
+                            </div>
+                            <div>
+                                <label for="event-memo" class="block text-sm font-medium text-slate-700">메모 (선택)</label>
+                                <textarea id="event-memo" name="memo" rows="3" placeholder="메모를 입력하세요"
+                                    class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm"></textarea>
                             </div>
                         </div>
                         
@@ -118,8 +122,9 @@
     const urlType = (params.get('type') || 'personal');
         
         const form = document.getElementById('modify-event-form');
-        const eventColorOptions = document.getElementById('event-color-options');
+    const eventColorOptions = document.getElementById('event-color-options');
         const eventColorHidden = document.getElementById('event-color');
+    const memoInput = document.getElementById('event-memo');
         
         const tabPublic = document.getElementById('tab-public');
         const tabPrivate = document.getElementById('tab-private');
@@ -207,6 +212,7 @@
             } else {
                 document.getElementById('event-date').value = data.event_date || '';
                 document.getElementById('event-time').value = data.event_time || '';
+                if (memoInput) memoInput.value = data.memo || '';
                 
                 // 색상 선택
                 const color = data.color || 'bg-red-200';
@@ -214,9 +220,7 @@
                 const activeColorEl = eventColorOptions.querySelector(`[data-color="${color}"]`);
                 if (activeColorEl) {
                     activeColorEl.classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
-                } else {
-                    eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue'); // 기본값
-                }
+                } // 지원하지 않는 색상(예: 기존 초록)은 선택 표시 없이 유지
             }
 
         } catch (error) {
@@ -261,12 +265,15 @@
                 } else {
                     const dateInput = document.getElementById('event-date').value;
                     const selectedColorEl = eventColorOptions.querySelector('.ring-sub-blue');
-                    if (!titleInput || !dateInput || !selectedColorEl) {
-                        alert('제목, 날짜, 색상은 필수입니다!'); return;
+                    if (!titleInput || !dateInput) {
+                        alert('제목과 날짜는 필수입니다!'); return;
                     }
                     params.set('event_date', dateInput);
                     params.set('event_time', document.getElementById('event-time').value || '');
-                    params.set('event_color', selectedColorEl.dataset.color || 'bg-red-200');
+                    // 색상: 선택된 게 없으면 기존 색상(hidden)을 유지
+                    const chosenColor = selectedColorEl ? (selectedColorEl.dataset.color || 'bg-red-200') : (eventColorHidden.value || 'bg-red-200');
+                    params.set('event_color', chosenColor);
+                    if (memoInput && memoInput.value) params.set('memo', memoInput.value);
                 }
 
                 try {

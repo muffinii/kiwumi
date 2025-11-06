@@ -484,7 +484,7 @@ const createPersonalEvent = async (req, res) => {
         if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
 
         const event_type = (req.body.event_type || 'private').toLowerCase();
-        let { title, event_date, event_time, event_color, start_date, end_date } = req.body;
+    let { title, event_date, event_time, event_color, start_date, end_date, memo } = req.body;
 
         // 간단 검증 및 길이 제한
         title = common.reqeustFilter(title, 255, false);
@@ -508,6 +508,7 @@ const createPersonalEvent = async (req, res) => {
             // private (개인 일정)
             event_date = common.reqeustFilter(event_date, 20, false); // YYYY-MM-DD
             event_color = common.reqeustFilter(event_color, 30, false); // tailwind class like bg-red-200
+            memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
             
             // event_time은 선택 사항 (빈 문자열이면 null로 처리)
             if (event_time && event_time.trim()) {
@@ -528,7 +529,15 @@ const createPersonalEvent = async (req, res) => {
                 return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
             }
 
-            const id = await model.createPersonalEvent(user.pkid, user.isAdmin ? 'admin' : 'student', title, event_date, event_time, event_color);
+            const id = await model.createPersonalEvent(
+                user.pkid,
+                user.isAdmin ? 'admin' : 'student',
+                title,
+                event_date,
+                event_time,
+                event_color,
+                memo
+            );
             return res.json({ ok: true, id });
         }
     } catch (err) {
@@ -619,6 +628,7 @@ const getEventByIdApi = async (req, res) => {
                 event_date: event.event_date,
                 event_time: event.event_time,
                 color: event.color,
+                memo: event.memo,
                 type: 'personal'
             });
         }
@@ -1331,6 +1341,7 @@ async function updateEventApi(req, res) {
 
             let event_date = common.reqeustFilter(req.body.event_date, 20, false);
             let event_time = req.body.event_time;
+            let memo = req.body.memo ? common.reqeustFilter(req.body.memo, 1000, false, '') : null;
             let event_color = common.reqeustFilter(req.body.event_color, 30, false);
             if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
                 return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
@@ -1346,7 +1357,7 @@ async function updateEventApi(req, res) {
             if (!/^bg-(red|blue|green|yellow)-(100|200|300|400|500|600|700|800|900)$/.test(event_color)) {
                 return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
             }
-            await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color);
+            await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color, memo);
             return res.json({ ok: true });
         }
     } catch (err) {

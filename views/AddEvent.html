@@ -155,14 +155,16 @@
                                     <div data-color="bg-blue-200"
                                         class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"
                                         title="파랑"></div>
-                                    <div data-color="bg-green-200"
-                                        class="event-color-option w-8 h-8 rounded-full bg-green-200 cursor-pointer"
-                                        title="초록"></div>
                                     <div data-color="bg-yellow-200"
                                         class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
                                         title="노랑"></div>
                                 </div>
                                 <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
+                            </div>
+                            <div>
+                                <label for="event-memo" class="block text-sm font-medium text-slate-700">메모 (선택)</label>
+                                <textarea id="event-memo" name="memo" rows="3" placeholder="메모를 입력하세요"
+                                    class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm"></textarea>
                             </div>
                         </div>
                         <div class="mt-auto pt-4">
@@ -298,6 +300,7 @@
                     const titleInput = document.getElementById('event-title');
                     const dateInput = document.getElementById('event-date');
                     const timeInput = document.getElementById('event-time');
+                    const memoInput = document.getElementById('event-memo');
                     const startInput = document.getElementById('start-date');
                     const endInput = document.getElementById('end-date');
 
@@ -326,6 +329,7 @@
                         }
                         params.set('event_date', dateInput.value);
                         params.set('event_time', timeInput.value || '');
+                        if (memoInput && memoInput.value) params.set('memo', memoInput.value);
                         params.set('event_color', selectedColorEl.dataset.color || 'bg-red-200');
                     }
                     
@@ -347,16 +351,9 @@
                         const data = await resp.json();
                         
                         if (data && data.ok) {
-                            alert('성공적으로 추가되었습니다!');
-                            addEventForm.reset();
-                            // (색상 선택 초기화)
-                            eventColorOptions.querySelectorAll('.event-color-option').forEach(opt => {
-                                opt.classList.remove('ring-2', 'ring-offset-2', 'ring-sub-blue');
-                            });
-                            eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
-                            if (eventColorHidden) eventColorHidden.value = 'bg-red-200';
-                            // (관리자 탭 초기화)
-                            if(tabPublic) tabPublic.click();
+                            // 성공 시 캘린더로 이동
+                            window.location.href = '/Calendar';
+                            return;
                         } else {
                             alert(data && data.message ? data.message : '추가 실패');
                         }
