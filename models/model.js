@@ -203,6 +203,34 @@ const deleteAnnouncement = async (pkid) => {
         return rows;
     }
 
+// 학사일정 월별 조회
+const getAcademicScheduleByMonth = async (year, month1to12) => {
+    try {
+        const sql = `
+            SELECT id, title, 
+                   DATE_FORMAT(start_date, '%Y-%m-%d') as start_date,
+                   DATE_FORMAT(end_date, '%Y-%m-%d') as end_date,
+                   source_url, campus
+            FROM academic_schedule
+            WHERE (YEAR(start_date) = ? AND MONTH(start_date) = ?)
+               OR (YEAR(end_date) = ? AND MONTH(end_date) = ?)
+               OR (start_date <= ? AND end_date >= ?)
+            ORDER BY start_date ASC;
+        `;
+        // 해당 월의 첫날과 마지막날
+        const firstDay = `${year}-${String(month1to12).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month1to12, 0).getDate();
+        const lastDayStr = `${year}-${String(month1to12).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        
+        const params = [year, month1to12, year, month1to12, lastDayStr, firstDay];
+        const rows = await db.runSql(sql, params);
+        return rows;
+    } catch (err) {
+        console.error('학사일정 조회 오류:', err);
+        return [];
+    }
+}
+
 // 시간표 조회
 const getTimetablesByPkid = async (user_pkid) => {
     await ensureTimetableTable();
@@ -310,6 +338,7 @@ module.exports = {
     deleteAnnouncement,
     createPersonalEvent,
     getPersonalEventsByMonth,
+    getAcademicScheduleByMonth,
     getTodayPersonalEvents,
     getTodayTimetable,
     updateStudentPhoto,

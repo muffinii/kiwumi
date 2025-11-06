@@ -47,6 +47,8 @@ router.get("/ModifyClass", controller.modifyClass);
 router.get("/Notifications", controller.notifications);
 // 개인 일정 API
 router.get("/api/events", controller.getPersonalEventsApi);
+// 학사일정 API
+router.get("/api/academic-schedule", controller.getAcademicScheduleApi);
 // 시간표 API
 router.get("/api/classes/:id", controller.getClassApi);
 router.put("/api/classes/:id", controller.updateClassApi);

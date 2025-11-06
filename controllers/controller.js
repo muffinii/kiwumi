@@ -528,6 +528,23 @@ const getPersonalEventsApi = async (req, res) => {
     }
 }
 
+// 월별 학사일정 조회 API (JSON)
+const getAcademicScheduleApi = async (req, res) => {
+    try {
+        const year = parseInt(req.query.year, 10);
+        const month = parseInt(req.query.month, 10); // 1..12
+        if (!year || !month || month < 1 || month > 12) {
+            return res.status(400).json({ ok: false, message: '잘못된 파라미터' });
+        }
+
+        const rows = await model.getAcademicScheduleByMonth(year, month);
+        return res.json({ ok: true, items: rows });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
 const addClass = (req, res) => {
     try {
         res.render('AddClass');
@@ -1061,6 +1078,7 @@ module.exports = {
     addEvent,
     createPersonalEvent,
     getPersonalEventsApi,
+    getAcademicScheduleApi,
     addClass,
     addClassProc,
     viewClass,

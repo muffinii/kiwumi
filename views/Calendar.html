@@ -140,26 +140,51 @@
         let currentDate = new Date(); // 현재 날짜로 시작
         let selectedDate = null;
 
-        // Manually "crawled" academic schedule from KIWU
-        const crawledScheduleData = {
-            '8_2025': [ // September 2025 (JS month 8)
-                { period: "9.1.(월)", content: "2학기 개강" },
-                { period: "9.1.(월) ~ 9.5.(금)", content: "2학기 수강신청 변경" }
-            ],
-            '9_2025': [ // October 2025 (JS month 9)
-                { period: "10.3.(금)", content: "개천절" },
-                { period: "10.5.(일) ~ 10.7.(화)", content: "추석 연휴" },
-                { period: "10.9.(목)", content: "한글날" },
-                { period: "10.20.(월) ~ 10.24.(금)", content: "2학기 중간고사" }
-            ],
-            '11_2025': [ // December 2025 (JS month 11)
-                { period: "12.8.(월) ~ 12.12.(금)", content: "2학기 기말고사" },
-                { period: "12.22.(월)", content: "동계방학" },
-            ]
-        };
+        // 학사일정은 서버에서 불러옵니다.
+        const academicScheduleCache = {}; // key: `${year}-${monthNumber}` (monthNumber: 1..12)
+
+        function ymKey(year, monthZeroBased) {
+            const m = monthZeroBased + 1;
+            return `${year}-${m}`;
+        }
+        function normalizeYM(year, monthZeroBased) {
+            const d = new Date(year, monthZeroBased, 1);
+            return { y: d.getFullYear(), m: d.getMonth() }; // m: 0..11
+        }
+        function parseISODate(iso) {
+            const [y, mo, d] = (iso || '').split('-').map(Number);
+            return new Date(y, (mo || 1) - 1, d || 1);
+        }
+
+        // 기대하는 응답 형태:
+        // GET /api/academic-schedule?year=2025&month=9
+        // { ok: true, items: [{ id, title, start_date: "YYYY-MM-DD", end_date: "YYYY-MM-DD" }, ...] }
+        async function fetchAcademicSchedule(year, monthZeroBased) {
+            const { y, m } = normalizeYM(year, monthZeroBased);
+            const key = ymKey(y, m);
+            if (academicScheduleCache[key]) return academicScheduleCache[key];
+            try {
+                const resp = await fetch(`/api/academic-schedule?year=${y}&month=${m + 1}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await resp.json();
+                academicScheduleCache[key] = Array.isArray(data?.items) ? data.items : [];
+            } catch (e) {
+                console.error('학사일정 조회 실패', e);
+                academicScheduleCache[key] = [];
+            }
+            return academicScheduleCache[key];
+        }
+
+        async function ensureAcademicForMonthAndPrev(year, monthZeroBased) {
+            await Promise.all([
+                fetchAcademicSchedule(year, monthZeroBased),
+                fetchAcademicSchedule(year, monthZeroBased - 1)
+            ]);
+        }
 
         // 개인 일정은 서버에서 불러옵니다.
-        const personalEventsCache = {}; // key: `${month}_${year}` -> [{day, title, color}]
+        const personalEventsCache = {}; // key: `${month}_${year}` -> [{day, title, color, time}]
 
         async function fetchPersonalEvents(year, month /* 0..11 */) {
             const key = `${month}_${year}`;
@@ -179,27 +204,12 @@
             return personalEventsCache[key];
         }
 
-        function parsePeriod(period, year) {
-            const range = period.split('~').map(s => s.trim());
-            const [startMonth, startDay] = range[0].match(/(\d+)\.(\d+)/).slice(1).map(Number);
-            
-            let endMonth = startMonth;
-            let endDay = startDay;
-
-            if (range.length > 1) {
-                const endMatch = range[1].match(/(\d+)\.(\d+)/);
-                if (endMatch) {
-                    [endMonth, endDay] = endMatch.slice(1).map(Number);
-                } else {
-                    [endDay] = range[1].match(/(\d+)/).slice(1).map(Number);
-                }
-            }
-            return {
-                start: new Date(year, startMonth - 1, startDay),
-                end: new Date(year, endMonth - 1, endDay)
-            };
+        function isDateWithinRange(checkDate, startDate, endDate) {
+            const c = new Date(checkDate); c.setHours(0,0,0,0);
+            const s = new Date(startDate); s.setHours(0,0,0,0);
+            const e = new Date(endDate); e.setHours(0,0,0,0);
+            return c >= s && c <= e;
         }
-
 
         function getEventsForDaySync(day, month, year) {
             const events = [];
@@ -213,21 +223,19 @@
                 }
             });
 
-            // Check crawled academic schedule
-            // Check the current month + 1 to match the "natural" month numbering in crawledScheduleData keys
-            // Also check current month for events spanning across months
-            const academicMonthEvents = crawledScheduleData[`${month + 1}_${year}`] || [];
-            const academicPrevMonthEvents = crawledScheduleData[`${month}_${year}`] || []; 
-            
-            [...academicMonthEvents, ...academicPrevMonthEvents].forEach(event => {
-                const { start, end } = parsePeriod(event.period, year);
-                
-                checkDate.setHours(0, 0, 0, 0);
-                start.setHours(0, 0, 0, 0);
-                end.setHours(0, 0, 0, 0);
+            // Check academic schedule from server
+            const currKey = `${year}-${month + 1}`;
+            const { y: prevY, m: prevM } = normalizeYM(year, month - 1);
+            const prevKey = `${prevY}-${prevM + 1}`;
 
-                if (checkDate >= start && checkDate <= end) {
-                    events.push({ type: 'academic', title: event.content });
+            const academicCurr = academicScheduleCache[currKey] || [];
+            const academicPrev = academicScheduleCache[prevKey] || [];
+
+            [...academicCurr, ...academicPrev].forEach(item => {
+                const start = parseISODate(item.start_date);
+                const end = parseISODate(item.end_date || item.start_date);
+                if (isDateWithinRange(checkDate, start, end)) {
+                    events.push({ type: 'academic', title: item.title });
                 }
             });
 
@@ -291,8 +299,11 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            // 개인 일정 로딩
-            await fetchPersonalEvents(year, month);
+            // 학사일정 및 개인 일정 로딩
+            await Promise.all([
+                ensureAcademicForMonthAndPrev(year, month),
+                fetchPersonalEvents(year, month)
+            ]);
 
             monthYearEl.textContent = `${year}년 ${month + 1}월`;
             calendarGrid.innerHTML = '';
