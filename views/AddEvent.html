@@ -25,13 +25,10 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f8fafc;
-            /* bg-slate-50 */
             color: #1e293b;
-            /* text-slate-800 */
         }
 
         .app-container {
-            /* 화면 꽉차게, 반응형을 위한 기본 설정 */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -43,6 +40,21 @@
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
+
+        /* ▼▼▼ [1. 신규 CSS] 관리자 탭 스타일 ▼▼▼ */
+        .event-tab {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #64748b; /* text-slate-500 */
+            border-bottom: 3px solid transparent;
+            transform: translateY(1px); /* 하단 경계선과 정렬 */
+            cursor: pointer;
+        }
+        .event-tab.active-tab {
+            color: #003875; /* sub-blue */
+            border-bottom-color: #003875;
+        }
+        /* ▲▲▲ CSS 추가 완료 ▲▲▲ */
     </style>
 </head>
 
@@ -52,26 +64,45 @@
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
             <h1 class="text-xl font-bold text-slate-800">일정 추가</h1>
-            <button class="relative p-2 rounded-full hover:bg-slate-200 transition-colors">
+            <a href="/Notifications.html" class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="text-slate-600">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
-            </button>
+                <span class="absolute top-2 right-2 block w-2 h-2 bg-main-red rounded-full"></span>
+            </a>
         </header>
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
             <div id="add-event-section" class="section-card p-4 rounded-lg shadow-md mb-8 h-full min-h-[600px]">
+                
                 {% if user_role == 'admin' %}
-                    <h3 class="text-lg font-bold mb-3">새로운 학사 일정</h3>
-                    {% else %}
+                    <div class="border-b border-slate-200 mb-4">
+                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                            <button id="tab-public" type="button" class="event-tab active-tab">
+                                학사 일정
+                            </button>
+                            <button id="tab-private" type="button" class="event-tab">
+                                개인 일정
+                            </button>
+                        </nav>
+                    </div>
+                    <p id="personal-desc" class="text-slate-600 mb-4 text-sm sm:text-base hidden">
+                        개인적인 스케줄을 달력에 등록하고 관리하세요.
+                    </p>
+                
+                {% else %}
                     <h3 class="text-lg font-bold mb-3">새로운 개인 일정</h3>
                     <p class="text-slate-600 mb-4 text-sm sm:text-base">개인적인 스케줄을 달력에 등록하고 관리하세요.</p>
+                
                 {% endif %}
                 <div class="bg-slate-100 p-3 rounded-lg flex flex-col h-[80%]">
                     <form id="add-event-form" method="post" action="/AddEvent" class="flex flex-col h-full p-2 space-y-4">
+                        
+                        <input type="hidden" id="event-type" name="event_type" 
+                               value="{% if user_role == 'admin' %}public{% else %}private{% endif %}">
                         <div>
                             <label for="event-title" class="block text-sm font-medium text-slate-700">일정명</label>
                             <input type="text" id="event-title" name="title" placeholder="예: 팀 프로젝트 회의"
@@ -108,7 +139,7 @@
                             <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
                         </div>
                         <div class="mt-auto pt-4">
-                            <button type="submit"
+                            <button type="submit" id="submit-button"
                                 class="w-full bg-main-red text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors">추가하기</button>
                             <p id="add-event-confirm" class="text-center text-green-600 font-semibold h-6 mt-2"></p>
                         </div>
@@ -121,56 +152,28 @@
             <div class="flex justify-around h-16 items-start">
                     <a href="/Main"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
+                    <svg ...></svg>
                     <span class="text-xs mt-1">홈</span>
                 </a>
                 <a href="/Calendar" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                        <line x1="16" x2="16" y1="2" y2="6"></line>
-                        <line x1="8" x2="8" y1="2" y2="6"></line>
-                        <line x1="3" x2="21" y1="10" y2="10"></line>
-                    </svg>
+                    <svg ...></svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
                 <a href="/AnnouncementGuest"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 6h13"></path>
-                        <path d="M8 12h13"></path>
-                        <path d="M8 18h13"></path>
-                        <path d="M3 6h.01"></path>
-                        <path d="M3 12h.01"></path>
-                        <path d="M3 18h.01"></path>
-                    </svg>
+                    <svg ...></svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
-                {% if user_role != 'admin' %}
+                {% if user_role == 'student' %}
                     <a href="/Timetable"
                         class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-                            <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-                            <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-                            <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-                        </svg>
+                        <svg ...></svg>
                         <span class="text-xs mt-1">시간표</span>
                     </a>
                 {% endif %}
                 <a href="/MyPage"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    <svg ...></svg>
                     <span class="text-xs mt-1">마이</span>
                 </a>
             </div>
@@ -190,19 +193,52 @@
                 }
             }
 
-            // --- Add Item Form Logic ---
+            // --- 폼 요소 ---
             const addEventForm = document.getElementById('add-event-form');
             const eventColorOptions = document.getElementById('event-color-options');
-
             const eventColorHidden = document.getElementById('event-color');
+            
+            // --- 신규 요소 (관리자 탭) ---
+            const tabPublic = document.getElementById('tab-public');
+            const tabPrivate = document.getElementById('tab-private');
+            const personalDesc = document.getElementById('personal-desc');
+            const eventTypeInput = document.getElementById('event-type');
+            const submitButton = document.getElementById('submit-button');
+
+            if (tabPublic && tabPrivate) { // 관리자일 때만 실행
+                
+                tabPublic.addEventListener('click', () => {
+                    tabPublic.classList.add('active-tab');
+                    tabPrivate.classList.remove('active-tab');
+                    
+                    eventTypeInput.value = 'public';
+                    
+                    if (personalDesc) personalDesc.classList.add('hidden');
+                    
+                    submitButton.classList.add('bg-main-red', 'hover:bg-red-700');
+                    submitButton.classList.remove('bg-sub-blue', 'hover:bg-blue-800');
+                });
+
+                tabPrivate.addEventListener('click', () => {
+                    tabPrivate.classList.add('active-tab');
+                    tabPublic.classList.remove('active-tab');
+
+                    eventTypeInput.value = 'private';
+                    
+                    if (personalDesc) personalDesc.classList.remove('hidden');
+
+                    submitButton.classList.add('bg-sub-blue', 'hover:bg-blue-800');
+                    submitButton.classList.remove('bg-main-red', 'hover:bg-red-700');
+                });
+            }
+
+
             if (eventColorOptions) {
                 eventColorOptions.addEventListener('click', (e) => {
                     if (e.target.classList.contains('event-color-option')) {
-                        // Remove selection from all options
                         eventColorOptions.querySelectorAll('.event-color-option').forEach(opt => {
                             opt.classList.remove('ring-2', 'ring-offset-2', 'ring-sub-blue');
                         });
-                        // Add selection to the clicked option
                         e.target.classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
                         if (eventColorHidden) eventColorHidden.value = e.target.dataset.color || 'bg-red-200';
                     }
@@ -228,23 +264,37 @@
                     params.set('event_date', dateInput.value);
                     params.set('event_time', timeInput.value || ''); // 빈 문자열도 허용
                     params.set('event_color', selectedColorEl.dataset.color || 'bg-red-200');
+                    
+                    params.set('event_type', eventTypeInput.value); 
+                    
+                    let fetchURL = '/AddEvent'; // 기본 제출 URL
+                    
+                    // 만약 관리자면 URL을 바꿔야 한다면 여기서 분기
+                    // if (eventTypeInput.value === 'public') {
+                    //    fetchURL = '/AddPublicEvent';
+                    // } else if (eventTypeInput.value === 'private') {
+                    //    fetchURL = '/AddPrivateEvent';
+                    // }
 
                     try {
-                        const resp = await fetch('/AddEvent', {
+                        const resp = await fetch(fetchURL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
                             body: params.toString()
                         });
                         const data = await resp.json();
+                        
                         if (data && data.ok) {
                             alert('성공적으로 추가되었습니다!');
-                            // 입력 초기화
                             addEventForm.reset();
+                            // (색상 선택 초기화)
                             eventColorOptions.querySelectorAll('.event-color-option').forEach(opt => {
                                 opt.classList.remove('ring-2', 'ring-offset-2', 'ring-sub-blue');
                             });
                             eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
                             if (eventColorHidden) eventColorHidden.value = 'bg-red-200';
+                            // (관리자 탭 초기화)
+                            if(tabPublic) tabPublic.click();
                         } else {
                             alert(data && data.message ? data.message : '추가 실패');
                         }
@@ -256,7 +306,6 @@
             }
 
             // --- Initial Color Selection ---
-            // 페이지 로드 시 첫 번째 색상을 기본으로 선택
             if (eventColorOptions && eventColorOptions.children.length > 0) {
                 eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
             }
