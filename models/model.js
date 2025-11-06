@@ -231,6 +231,17 @@ const getAcademicScheduleByMonth = async (year, month1to12) => {
     }
 }
 
+// 학사일정 생성
+const createAcademicSchedule = async (title, start_date, end_date, campus = null, source_url = null) => {
+    const sql = `
+        INSERT INTO academic_schedule (title, start_date, end_date, campus, source_url)
+        VALUES (?, ?, ?, ?, ?);
+    `;
+    const params = [title, start_date, end_date, campus, source_url];
+    const result = await db.runSql(sql, params);
+    return result.insertId;
+}
+
 // 시간표 조회
 const getTimetablesByPkid = async (user_pkid) => {
     await ensureTimetableTable();
@@ -337,6 +348,7 @@ module.exports = {
     updateAnnouncement,
     deleteAnnouncement,
     createPersonalEvent,
+    createAcademicSchedule,
     getPersonalEventsByMonth,
     getAcademicScheduleByMonth,
     getTodayPersonalEvents,

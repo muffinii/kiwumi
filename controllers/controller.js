@@ -467,40 +467,60 @@ const addEvent = (req, res) => {
     }
 }
 
-// 개인 일정 생성 (POST)
+// 개인/학사 일정 생성 (POST)
 const createPersonalEvent = async (req, res) => {
     try {
         const user = req.session && req.session.user;
         if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
 
-        let { title, event_date, event_time, event_color } = req.body;
+        const event_type = (req.body.event_type || 'private').toLowerCase();
+        let { title, event_date, event_time, event_color, start_date, end_date } = req.body;
 
         // 간단 검증 및 길이 제한
         title = common.reqeustFilter(title, 255, false);
-        event_date = common.reqeustFilter(event_date, 20, false); // YYYY-MM-DD
-        event_color = common.reqeustFilter(event_color, 30, false); // tailwind class like bg-red-200
         
-        // event_time은 선택 사항 (빈 문자열이면 null로 처리)
-        if (event_time && event_time.trim()) {
-            event_time = common.reqeustFilter(event_time, 20, false);
+        if (event_type === 'public') {
+            // 관리자만 학사일정 등록 가능
+            if (!user.isAdmin) {
+                return res.status(403).json({ ok: false, message: '권한이 없습니다.' });
+            }
+            start_date = common.reqeustFilter(start_date, 20, false);
+            end_date = common.reqeustFilter(end_date, 20, false);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(start_date) || !/^\d{4}-\d{2}-\d{2}$/.test(end_date)) {
+                return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
+            }
+            if (new Date(start_date) > new Date(end_date)) {
+                return res.status(400).json({ ok: false, message: '종료일은 시작일보다 빠를 수 없습니다.' });
+            }
+            const id = await model.createAcademicSchedule(title, start_date, end_date, null, null);
+            return res.json({ ok: true, id });
         } else {
-            event_time = null;
-        }
+            // private (개인 일정)
+            event_date = common.reqeustFilter(event_date, 20, false); // YYYY-MM-DD
+            event_color = common.reqeustFilter(event_color, 30, false); // tailwind class like bg-red-200
+            
+            // event_time은 선택 사항 (빈 문자열이면 null로 처리)
+            if (event_time && event_time.trim()) {
+                event_time = common.reqeustFilter(event_time, 20, false);
+            } else {
+                event_time = null;
+            }
 
-        // 날짜/시간 정규식 검증
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
-            return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
-        }
-        if (event_time && !/^\d{2}:\d{2}(:\d{2})?$/.test(event_time)) {
-            return res.status(400).json({ ok: false, message: '잘못된 시간 형식' });
-        }
-        // 색상 클래스 화이트리스트 패턴
-        if (!/^bg-(red|blue|green|yellow)-(100|200|300|400|500|600|700|800|900)$/.test(event_color)) {
-            return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
-        }
+            // 날짜/시간 정규식 검증
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
+                return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
+            }
+            if (event_time && !/^\d{2}:\d{2}(:\d{2})?$/.test(event_time)) {
+                return res.status(400).json({ ok: false, message: '잘못된 시간 형식' });
+            }
+            // 색상 클래스 화이트리스트 패턴
+            if (!/^bg-(red|blue|green|yellow)-(100|200|300|400|500|600|700|800|900)$/.test(event_color)) {
+                return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
+            }
 
-        const id = await model.createPersonalEvent(user.pkid, user.isAdmin ? 'admin' : 'student', title, event_date, event_time, event_color);
-        return res.json({ ok: true, id });
+            const id = await model.createPersonalEvent(user.pkid, user.isAdmin ? 'admin' : 'student', title, event_date, event_time, event_color);
+            return res.json({ ok: true, id });
+        }
     } catch (err) {
         console.error(err);
         return res.status(500).json({ ok: false, message: '서버 오류' });
