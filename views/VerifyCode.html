@@ -29,7 +29,7 @@
     <div class="app-container">
         
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/ForgotPassword.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/ForgotPassword" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center pr-12">인증번호 입력</h1>
@@ -102,7 +102,7 @@
                         
                         // 성공 시, 토큰과 함께 새 비밀번호 설정 페이지로 이동
                         setTimeout(() => {
-                            window.location.href = `/ResetPassword.html?token=${token}`;
+                            window.location.href = `/ResetPassword?token=${token}`;
                         }, 1000);
                     } else {
                         messageEl.textContent = result.message || '인증번호가 올바르지 않습니다.';
