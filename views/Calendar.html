@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,44 +24,56 @@
         /* 기존 디자인 스타일 유지 */
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8fafc; /* bg-slate-50 */
-            color: #1e293b; /* text-slate-800 */
+            background-color: #f8fafc;
+            /* bg-slate-50 */
+            color: #1e293b;
+            /* text-slate-800 */
         }
+
         .app-container {
             /* 화면 꽉차게, 반응형을 위한 기본 설정 */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
+
         .section-card {
             background-color: white;
             padding: 1rem;
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
+
         /* 캘린더 전용 스타일 */
         #calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            grid-auto-rows: minmax(60px, 1fr); /* 유연한 높이 설정 */
-            flex-grow: 1; /* flex-grow를 유지하되, 컨테이너 flex를 제거하여 수평 분할 방지 */
+            grid-auto-rows: minmax(60px, 1fr);
+            /* 유연한 높이 설정 */
+            flex-grow: 1;
+            /* flex-grow를 유지하되, 컨테이너 flex를 제거하여 수평 분할 방지 */
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .calendar-day {
-            border-top: 1px solid #e2e8f0; /* border-slate-200 */
+            border-top: 1px solid #e2e8f0;
+            /* border-slate-200 */
             background-color: white;
             min-height: 50px;
         }
     </style>
 </head>
+
 <body>
 
     <div class="app-container">
-        
+
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
             <h1 class="text-xl font-bold text-slate-800">캘린더</h1>
             <a href="/Notifications" class="relative p-2 rounded-full hover:bg-slate-200 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-slate-600">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
@@ -70,30 +83,45 @@
         <main id="calendar-content" class="flex-grow px-4 py-4 overflow-y-auto pb-20">
             <div id="calendar-section" class="section-card p-4 rounded-lg shadow-md mb-8">
                 <div class="flex flex-col">
-                    
+
                     <div class="flex justify-between items-center mb-3 flex-shrink-0">
                         <span id="month-year" class="font-bold text-base sm:text-lg">2025년 9월</span>
-                         <div class="flex items-center">
-                             <button id="prev-month" class="px-2 py-1 text-sm rounded hover:bg-slate-200 transition-colors">&lt;</button>
-                             <button id="next-month" class="px-2 py-1 text-sm rounded hover:bg-slate-200 transition-colors">&gt;</button>
-                             <a href="/AddEvent" id="add-event-button" class="ml-2 p-2 rounded-full hover:bg-slate-200 transition-colors">
-                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                             </a>
-                         </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-7 text-center text-xs sm:text-sm text-slate-500 flex-shrink-0 border-b border-slate-200">
-                        <div class="text-main-red">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-sub-blue">토</div>
-                    </div>
-                    
-                    <div id="calendar-grid" class="grid grid-cols-7 w-full flex-shrink-0" style="grid-auto-rows: minmax(60px, 1fr);">
+                        <div class="flex items-center">
+                            <button id="prev-month"
+                                class="px-2 py-1 text-sm rounded hover:bg-slate-200 transition-colors">&lt;</button>
+                            <button id="next-month"
+                                class="px-2 py-1 text-sm rounded hover:bg-slate-200 transition-colors">&gt;</button>
+                            <a href="/AddEvent" id="add-event-button"
+                                class="ml-2 p-2 rounded-full hover:bg-slate-200 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </a>
                         </div>
-                    
+                    </div>
+
+                    <div
+                        class="grid grid-cols-7 text-center text-xs sm:text-sm text-slate-500 flex-shrink-0 border-b border-slate-200">
+                        <div class="text-main-red">일</div>
+                        <div>월</div>
+                        <div>화</div>
+                        <div>수</div>
+                        <div>목</div>
+                        <div>금</div>
+                        <div class="text-sub-blue">토</div>
+                    </div>
+
+                    <div id="calendar-grid" class="grid grid-cols-7 w-full flex-shrink-0"
+                        style="grid-auto-rows: minmax(60px, 1fr);">
+                    </div>
+
                     <div id="schedule-details-view" class="overflow-hidden mt-4 pt-4 border-t border-slate-200 hidden">
                         <div class="w-8 h-1 bg-slate-300 rounded-full mx-auto mb-2"></div>
-                         <h3 id="schedule-details-date" class="font-bold text-center pb-2 mb-2 border-b text-sm"></h3>
-                         <div id="schedule-details-list" class="space-y-2">
-                             </div>
+                        <h3 id="schedule-details-date" class="font-bold text-center pb-2 mb-2 border-b text-sm"></h3>
+                        <div id="schedule-details-list" class="space-y-2">
+                        </div>
                     </div>
 
                 </div>
@@ -102,303 +130,345 @@
 
         <nav class="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-                <a href="/Main" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <a href="/Main"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
                     <span class="text-xs mt-1">홈</span>
                 </a>
                 <a href="/Calendar" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                        <line x1="16" x2="16" y1="2" y2="6"></line>
+                        <line x1="8" x2="8" y1="2" y2="6"></line>
+                        <line x1="3" x2="21" y1="10" y2="10"></line>
+                    </svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/AnnouncementGuest" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+                <a href="/AnnouncementGuest"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 6h13"></path>
+                        <path d="M8 12h13"></path>
+                        <path d="M8 18h13"></path>
+                        <path d="M3 6h.01"></path>
+                        <path d="M3 12h.01"></path>
+                        <path d="M3 18h.01"></path>
+                    </svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
                 {% if user_role == 'student' %}
-                    <a href="/Timetable" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
-                        <span class="text-xs mt-1">시간표</span>
-                    </a>
+                <a href="/Timetable"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+                        <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+                        <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+                        <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+                    </svg>
+                    <span class="text-xs mt-1">시간표</span>
+                </a>
                 {% endif %}
-                <a href="/MyPage" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <a href="/MyPage"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
                     <span class="text-xs mt-1">마이</span>
                 </a>
             </div>
         </nav>
     </div>
-    
+
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        
-        // --- Calendar Logic ---
-        const calendarGrid = document.getElementById('calendar-grid');
-        const monthYearEl = document.getElementById('month-year');
-        const prevMonthBtn = document.getElementById('prev-month');
-        const nextMonthBtn = document.getElementById('next-month');
-        
-        let currentDate = new Date(); // 현재 날짜로 시작
-        let selectedDate = null;
+        document.addEventListener('DOMContentLoaded', function () {
 
-        // 학사일정은 서버에서 불러옵니다.
-        const academicScheduleCache = {}; // key: `${year}-${monthNumber}` (monthNumber: 1..12)
+            // --- Calendar Logic ---
+            const calendarGrid = document.getElementById('calendar-grid');
+            const monthYearEl = document.getElementById('month-year');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
 
-        function ymKey(year, monthZeroBased) {
-            const m = monthZeroBased + 1;
-            return `${year}-${m}`;
-        }
-        function normalizeYM(year, monthZeroBased) {
-            const d = new Date(year, monthZeroBased, 1);
-            return { y: d.getFullYear(), m: d.getMonth() }; // m: 0..11
-        }
-        function parseISODate(iso) {
-            const [y, mo, d] = (iso || '').split('-').map(Number);
-            return new Date(y, (mo || 1) - 1, d || 1);
-        }
+            let currentDate = new Date(); // 현재 날짜로 시작
+            let selectedDate = null;
 
-        // 기대하는 응답 형태:
-        // GET /api/academic-schedule?year=2025&month=9
-        // { ok: true, items: [{ id, title, start_date: "YYYY-MM-DD", end_date: "YYYY-MM-DD" }, ...] }
-        async function fetchAcademicSchedule(year, monthZeroBased) {
-            const { y, m } = normalizeYM(year, monthZeroBased);
-            const key = ymKey(y, m);
-            if (academicScheduleCache[key]) return academicScheduleCache[key];
-            try {
-                const resp = await fetch(`/api/academic-schedule?year=${y}&month=${m + 1}`, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                const data = await resp.json();
-                academicScheduleCache[key] = Array.isArray(data?.items) ? data.items : [];
-            } catch (e) {
-                console.error('학사일정 조회 실패', e);
-                academicScheduleCache[key] = [];
+            // 학사일정은 서버에서 불러옵니다.
+            const academicScheduleCache = {}; // key: `${year}-${monthNumber}` (monthNumber: 1..12)
+
+            function ymKey(year, monthZeroBased) {
+                const m = monthZeroBased + 1;
+                return `${year}-${m}`;
             }
-            return academicScheduleCache[key];
-        }
+            function normalizeYM(year, monthZeroBased) {
+                const d = new Date(year, monthZeroBased, 1);
+                return { y: d.getFullYear(), m: d.getMonth() }; // m: 0..11
+            }
+            function parseISODate(iso) {
+                const [y, mo, d] = (iso || '').split('-').map(Number);
+                return new Date(y, (mo || 1) - 1, d || 1);
+            }
 
-        async function ensureAcademicForMonthAndPrev(year, monthZeroBased) {
-            await Promise.all([
-                fetchAcademicSchedule(year, monthZeroBased),
-                fetchAcademicSchedule(year, monthZeroBased - 1)
-            ]);
-        }
+            // GET /api/academic-schedule?year=2025&month=9
+            async function fetchAcademicSchedule(year, monthZeroBased) {
+                const { y, m } = normalizeYM(year, monthZeroBased);
+                const key = ymKey(y, m);
+                if (academicScheduleCache[key]) return academicScheduleCache[key];
+                try {
+                    const resp = await fetch(`/api/academic-schedule?year=${y}&month=${m + 1}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = await resp.json();
+                    academicScheduleCache[key] = Array.isArray(data?.items) ? data.items : [];
+                } catch (e) {
+                    console.error('학사일정 조회 실패', e);
+                    academicScheduleCache[key] = [];
+                }
+                return academicScheduleCache[key];
+            }
 
-        // 개인 일정은 서버에서 불러옵니다.
-        const personalEventsCache = {}; // key: `${month}_${year}` -> [{day, title, color, time}]
+            async function ensureAcademicForMonthAndPrev(year, monthZeroBased) {
+                await Promise.all([
+                    fetchAcademicSchedule(year, monthZeroBased),
+                    fetchAcademicSchedule(year, monthZeroBased - 1)
+                ]);
+            }
 
-        async function fetchPersonalEvents(year, month /* 0..11 */) {
-            const key = `${month}_${year}`;
-            if (personalEventsCache[key]) return personalEventsCache[key];
-            try {
-                const resp = await fetch(`/api/events?year=${year}&month=${month + 1}`, { headers: { 'Accept': 'application/json' } });
-                const data = await resp.json();
-                if (data && data.ok) {
-                    personalEventsCache[key] = data.events || [];
-                } else {
+            // 개인 일정은 서버에서 불러옵니다.
+            const personalEventsCache = {}; // key: `${month}_${year}` -> [{id, day, title, color, time}]
+
+            async function fetchPersonalEvents(year, month /* 0..11 */) {
+                const key = `${month}_${year}`;
+                if (personalEventsCache[key]) return personalEventsCache[key];
+                try {
+                    // (백엔드 참고) 이 API는 /api/events/private 와 /api/events/public (admin) 양쪽의 데이터를 합쳐서 보내줘야 함
+                    const resp = await fetch(`/api/events?year=${year}&month=${month + 1}`, { headers: { 'Accept': 'application/json' } });
+                    const data = await resp.json();
+                    if (data && data.ok) {
+                        personalEventsCache[key] = data.events || []; // events는 [{id, day, title, color, time}, ...]
+                    } else {
+                        personalEventsCache[key] = [];
+                    }
+                } catch (e) {
+                    console.error('개인 일정 조회 실패', e);
                     personalEventsCache[key] = [];
                 }
-            } catch (e) {
-                console.error('개인 일정 조회 실패', e);
-                personalEventsCache[key] = [];
+                return personalEventsCache[key];
             }
-            return personalEventsCache[key];
-        }
 
-        function isDateWithinRange(checkDate, startDate, endDate) {
-            const c = new Date(checkDate); c.setHours(0,0,0,0);
-            const s = new Date(startDate); s.setHours(0,0,0,0);
-            const e = new Date(endDate); e.setHours(0,0,0,0);
-            return c >= s && c <= e;
-        }
+            function isDateWithinRange(checkDate, startDate, endDate) {
+                const c = new Date(checkDate); c.setHours(0, 0, 0, 0);
+                const s = new Date(startDate); s.setHours(0, 0, 0, 0);
+                const e = new Date(endDate); e.setHours(0, 0, 0, 0);
+                return c >= s && c <= e;
+            }
 
-        function getEventsForDaySync(day, month, year) {
-            const events = [];
-            const checkDate = new Date(year, month, day);
+            function getEventsForDaySync(day, month, year) {
+                const events = [];
+                const checkDate = new Date(year, month, day);
 
-            // Check personal events
-            const personalMonthEvents = personalEventsCache[`${month}_${year}`] || [];
-            personalMonthEvents.forEach(event => {
-                if (event.day === day) {
-                    events.push({ type: 'personal', title: event.title, color: event.color, time: event.time });
+                // 1. 개인 일정 (id 포함)
+                const personalMonthEvents = personalEventsCache[`${month}_${year}`] || [];
+                personalMonthEvents.forEach(event => {
+                    if (event.day === day) {
+                        // (중요) event.id를 백엔드에서 꼭 보내줘야 함.
+                        events.push({ type: 'personal', title: event.title, color: event.color, time: event.time, id: event.id });
+                    }
+                });
+
+                // 2. 학사 일정 (id 포함)
+                const currKey = `${year}-${month + 1}`;
+                const { y: prevY, m: prevM } = normalizeYM(year, month - 1);
+                const prevKey = `${prevY}-${prevM + 1}`;
+
+                const academicCurr = academicScheduleCache[currKey] || [];
+                const academicPrev = academicScheduleCache[prevKey] || [];
+
+                [...academicCurr, ...academicPrev].forEach(item => {
+                    const start = parseISODate(item.start_date);
+                    const end = parseISODate(item.end_date || item.start_date);
+                    if (isDateWithinRange(checkDate, start, end)) {
+                        // (중요) item.id를 백엔드에서 꼭 보내줘야 함.
+                        events.push({ type: 'academic', title: item.title, id: item.id });
+                    }
+                });
+
+                return events;
+            }
+
+            function renderScheduleDetails(date) {
+                const detailsView = document.getElementById('schedule-details-view');
+                const detailsDateEl = document.getElementById('schedule-details-date');
+                const detailsListEl = document.getElementById('schedule-details-list');
+
+                if (!detailsView || !detailsDateEl || !detailsListEl) return;
+
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const day = date.getDate();
+                const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+
+                detailsDateEl.textContent = `${month + 1}월 ${day}일 ${dayOfWeek}요일`;
+
+                const events = getEventsForDaySync(day, month, year);
+                detailsListEl.innerHTML = '';
+
+                if (events.length === 0) {
+                    detailsListEl.innerHTML = `<p class="text-center text-slate-500 py-4">선택된 날짜에는 일정이 없습니다.</p>`;
+                } else {
+                    events.forEach(event => {
+                        let bgColor = 'bg-red-100', textColor = 'text-red-800', barColor = 'bg-red-400';
+                        if (event.type === 'academic') {
+                            bgColor = 'bg-green-100'; textColor = 'text-green-800'; barColor = 'bg-green-400';
+                        } else if (event.type === 'personal') {
+                            const m = (event.color || '').match(/^bg-([a-z]+)-(\d{3})$/);
+                            const colorName = m ? m[1] : 'blue';
+                            bgColor = `bg-${colorName}-100`;
+                            textColor = `text-${colorName}-800`;
+                            barColor = `bg-${colorName}-400`;
+                        }
+
+                        const timeDisplay = event.time ? `<span class="text-xs ${textColor} ml-auto">${event.time}</span>` : '';
+
+                        // 상세 페이지로 이동하는 링크 생성
+                        // event.id가 없을 경우(DB에 없는 임시 데이터) 링크를 걸기 X
+                        const eventId = event.id;
+                        const eventType = event.type || 'personal';
+                        let href = '#';
+                        if (eventId) {
+                            href = `/ViewEvent.html?eventId=${eventId}&type=${eventType}`;
+                        }
+
+                        const eventHtml = `
+                        <a href="${href}" class="block">
+                            <div class="flex items-center ${bgColor} p-2 rounded-lg hover:shadow-md transition">
+                                <div class="w-1.5 h-8 ${barColor} mr-3 rounded-full"></div>
+                                <p class="text-sm ${textColor} font-medium flex-grow">${event.title}</p>
+                                ${timeDisplay}
+                            </div>
+                        </a>
+                    `;
+                        detailsListEl.innerHTML += eventHtml;
+                    });
                 }
-            });
+                detailsView.classList.remove('hidden');
+            }
 
-            // Check academic schedule from server
-            const currKey = `${year}-${month + 1}`;
-            const { y: prevY, m: prevM } = normalizeYM(year, month - 1);
-            const prevKey = `${prevY}-${prevM + 1}`;
+            // (renderCalendar 함수는 기존과 동일)
+            async function renderCalendar() {
+                if (!calendarGrid || !monthYearEl) return;
 
-            const academicCurr = academicScheduleCache[currKey] || [];
-            const academicPrev = academicScheduleCache[prevKey] || [];
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
 
-            [...academicCurr, ...academicPrev].forEach(item => {
-                const start = parseISODate(item.start_date);
-                const end = parseISODate(item.end_date || item.start_date);
-                if (isDateWithinRange(checkDate, start, end)) {
-                    events.push({ type: 'academic', title: item.title });
+                // 학사일정 및 개인 일정 로딩
+                await Promise.all([
+                    ensureAcademicForMonthAndPrev(year, month),
+                    fetchPersonalEvents(year, month)
+                ]);
+
+                monthYearEl.textContent = `${year}년 ${month + 1}월`;
+                calendarGrid.innerHTML = '';
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                const isCurrentMonthViewed = selectedDate && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
+
+                if (selectedDate && !isCurrentMonthViewed) {
+                    selectedDate = null;
+                    document.getElementById('schedule-details-view').classList.add('hidden');
                 }
-            });
 
-            return events;
-        }
+                for (let i = 0; i < firstDay; i++) {
+                    calendarGrid.innerHTML += `<div class="calendar-day border-t border-slate-200 bg-slate-50"></div>`;
+                }
 
-    function renderScheduleDetails(date) {
-            const detailsView = document.getElementById('schedule-details-view');
-            const detailsDateEl = document.getElementById('schedule-details-date');
-            const detailsListEl = document.getElementById('schedule-details-list');
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const events = getEventsForDaySync(day, month, year);
+                    const dayDate = new Date(year, month, day);
+                    dayDate.setHours(0, 0, 0, 0);
 
-            if (!detailsView || !detailsDateEl || !detailsListEl) return;
+                    const isSelected = selectedDate && selectedDate.getTime() === dayDate.getTime();
 
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            const day = date.getDate();
-            const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
-            
-            detailsDateEl.textContent = `${month + 1}월 ${day}일 ${dayOfWeek}요일`;
-            
-            const events = getEventsForDaySync(day, month, year);
-            detailsListEl.innerHTML = '';
-            
-            if (events.length === 0) {
-                detailsListEl.innerHTML = `<p class="text-center text-slate-500 py-4">선택된 날짜에는 일정이 없습니다.</p>`;
-            } else {
-                events.forEach(event => {
-                    let bgColor = 'bg-red-100', textColor = 'text-red-800', barColor = 'bg-red-400';
-                    if (event.type === 'academic') {
-                        bgColor = 'bg-green-100'; textColor = 'text-green-800'; barColor = 'bg-green-400';
-                    } else if (event.type === 'personal') {
-                        // event.color 예: 'bg-blue-200'
-                        const m = (event.color || '').match(/^bg-([a-z]+)-(\d{3})$/);
-                        const colorName = m ? m[1] : 'blue';
-                        bgColor = `bg-${colorName}-100`;
-                        textColor = `text-${colorName}-800`;
-                        barColor = `bg-${colorName}-400`;
+                    let dayClasses = 'calendar-day border-t border-slate-200 pt-2 relative flex flex-col items-center cursor-pointer hover:bg-slate-100 transition duration-150 ease-in-out';
+                    if (isSelected) {
+                        dayClasses += ' bg-slate-100 ring-2 ring-sub-blue ring-inset';
+                    } else {
+                        dayClasses += ' bg-white';
                     }
 
-                    // 시간 표시 (있을 경우만)
-                    const timeDisplay = event.time ? `<span class="text-xs ${textColor} ml-auto">${event.time}</span>` : '';
+                    let dayHtml = `<div class="${dayClasses}" data-date="${year}-${month + 1}-${day}">
+                                     <span class="date-number text-xs sm:text-sm w-6 h-6 flex items-center justify-center ${isSelected ? 'bg-sub-blue text-white rounded-full' : ''}">${day}</span>`;
 
-                    const eventHtml = `
-                        <div class="flex items-center ${bgColor} p-2 rounded-lg">
-                            <div class="w-1.5 h-8 ${barColor} mr-3 rounded-full"></div>
-                            <p class="text-sm ${textColor} font-medium flex-grow">${event.title}</p>
-                            ${timeDisplay}
-                        </div>
-                    `;
-                    detailsListEl.innerHTML += eventHtml;
+                    if (events.length > 0) {
+                        dayHtml += '<div class="flex space-x-1 mt-1 pb-1">';
+                        const dotCount = Math.min(events.length, 3);
+                        for (let i = 0; i < dotCount; i++) {
+                            let dotColor = 'bg-slate-400';
+                            if (events[i].type === 'academic') dotColor = 'bg-green-400';
+                            if (events[i].type === 'personal') {
+                                const m = (events[i].color || '').match(/^bg-([a-z]+)-(\d{3})$/);
+                                const colorName = m ? m[1] : 'blue';
+                                dotColor = `bg-${colorName}-400`;
+                            }
+                            dayHtml += `<div class="w-1.5 h-1.5 rounded-full ${dotColor}"></div>`;
+                        }
+                        dayHtml += '</div>';
+                    }
+                    dayHtml += `</div>`;
+
+                    calendarGrid.innerHTML += dayHtml;
+                }
+            }
+
+            // (Event Handlers는 기존과 동일)
+            if (prevMonthBtn && nextMonthBtn) {
+                prevMonthBtn.addEventListener('click', async () => {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    await renderCalendar();
+                });
+
+                nextMonthBtn.addEventListener('click', async () => {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    await renderCalendar();
                 });
             }
 
-            // 레이아웃 변경에 따라, 아래에 보이도록 hidden 클래스만 제거
-            detailsView.classList.remove('hidden');
-        }
+            if (calendarGrid) {
+                calendarGrid.addEventListener('click', (e) => {
+                    const dayCell = e.target.closest('.calendar-day');
+                    if (dayCell && dayCell.dataset.date) {
+                        const clickedDate = new Date(dayCell.dataset.date);
+                        clickedDate.setHours(0, 0, 0, 0); // Normalize time
 
-        async function renderCalendar() {
-            if (!calendarGrid || !monthYearEl) return;
+                        const isSameDate = selectedDate && selectedDate.getTime() === clickedDate.getTime();
+                        const detailsView = document.getElementById('schedule-details-view');
 
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-
-            // 학사일정 및 개인 일정 로딩
-            await Promise.all([
-                ensureAcademicForMonthAndPrev(year, month),
-                fetchPersonalEvents(year, month)
-            ]);
-
-            monthYearEl.textContent = `${year}년 ${month + 1}월`;
-            calendarGrid.innerHTML = '';
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            const isCurrentMonthViewed = selectedDate && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
-
-            if (selectedDate && !isCurrentMonthViewed) {
-                selectedDate = null;
-                document.getElementById('schedule-details-view').classList.add('hidden');
-            }
-
-            for (let i = 0; i < firstDay; i++) {
-                calendarGrid.innerHTML += `<div class="calendar-day border-t border-slate-200 bg-slate-50"></div>`;
-            }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const events = getEventsForDaySync(day, month, year);
-                const dayDate = new Date(year, month, day);
-                dayDate.setHours(0, 0, 0, 0);
-
-                const isSelected = selectedDate && selectedDate.getTime() === dayDate.getTime();
-
-                let dayClasses = 'calendar-day border-t border-slate-200 pt-2 relative flex flex-col items-center cursor-pointer hover:bg-slate-100 transition duration-150 ease-in-out';
-                if (isSelected) {
-                    dayClasses += ' bg-slate-100 ring-2 ring-sub-blue ring-inset';
-                } else {
-                    dayClasses += ' bg-white';
-                }
-                
-                let dayHtml = `<div class="${dayClasses}" data-date="${year}-${month + 1}-${day}">
-                                 <span class="date-number text-xs sm:text-sm w-6 h-6 flex items-center justify-center ${isSelected ? 'bg-sub-blue text-white rounded-full' : ''}">${day}</span>`;
-
-                if (events.length > 0) {
-                    dayHtml += '<div class="flex space-x-1 mt-1 pb-1">';
-                    const dotCount = Math.min(events.length, 3);
-                    for (let i = 0; i < dotCount; i++) {
-                        let dotColor = 'bg-slate-400';
-                        if (events[i].type === 'academic') dotColor = 'bg-green-400';
-                        if (events[i].type === 'personal') {
-                            const m = (events[i].color || '').match(/^bg-([a-z]+)-(\d{3})$/);
-                            const colorName = m ? m[1] : 'blue';
-                            dotColor = `bg-${colorName}-400`;
+                        if (isSameDate) {
+                            selectedDate = null;
+                            detailsView.classList.add('hidden');
+                            renderCalendar(); // Re-render to clear selection
+                        } else {
+                            selectedDate = clickedDate;
+                            renderCalendar(); // Re-render to show selection
+                            renderScheduleDetails(selectedDate); // Show details
                         }
-                        dayHtml += `<div class="w-1.5 h-1.5 rounded-full ${dotColor}"></div>`;
                     }
-                    dayHtml += '</div>';
-                }
-                dayHtml += `</div>`;
-
-                calendarGrid.innerHTML += dayHtml;
+                });
             }
-        }
 
-        // --- Event Handlers ---
-        if (prevMonthBtn && nextMonthBtn) {
-            prevMonthBtn.addEventListener('click', async () => {
-                currentDate.setMonth(currentDate.getMonth() - 1);
-                await renderCalendar();
-            });
-
-            nextMonthBtn.addEventListener('click', async () => {
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                await renderCalendar();
-            });
-        }
-        
-        if (calendarGrid) {
-            calendarGrid.addEventListener('click', (e) => {
-                const dayCell = e.target.closest('.calendar-day');
-                if (dayCell && dayCell.dataset.date) {
-                    const clickedDate = new Date(dayCell.dataset.date);
-                    clickedDate.setHours(0, 0, 0, 0); // Normalize time
-                    
-                    const isSameDate = selectedDate && selectedDate.getTime() === clickedDate.getTime();
-                    const detailsView = document.getElementById('schedule-details-view');
-
-                    if (isSameDate) {
-                        selectedDate = null;
-                        detailsView.classList.add('hidden');
-                        renderCalendar();
-                    } else {
-                        selectedDate = clickedDate;
-                        renderCalendar();
-                        renderScheduleDetails(selectedDate);
-                    }
-                }
-            });
-        }
-
-        // --- Initial Renders ---
-        renderCalendar();
-    });
+            // --- Initial Renders ---
+            renderCalendar();
+        });
     </script>
 </body>
+
 </html>
