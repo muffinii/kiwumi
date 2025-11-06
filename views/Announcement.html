@@ -115,13 +115,10 @@
                     {% if announcements and announcements.length > 0 %}
                     {% for a in announcements %}
                     <li class="announcement-item bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition"
-                        data-category="{{ a.category or '일반' }}"
-                        data-title="{{ a.title }}"
-                        data-content="{{ a.content or '' }}">
+                        data-category="{{ a.category or '일반' }}">
                         <a href="/ViewAnnouncement/{{ a.pkid }}" class="block">
-                            <p class="font-semibold text-sm flex justify-between items-start">
-                                <span class="truncate">
-                                    {% set catClass = 'text-slate-600' %}
+                            <p class="font-semibold text-sm flex justify-between items-start gap-2">
+                                <span class="truncate min-w-0"> {% set catClass = 'text-slate-600' %}
                                     {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category
                                     == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set
                                     catClass = 'text-purple-600' %}{% endif %}
@@ -229,7 +226,7 @@
                     const category = item.getAttribute('data-category') || '일반';
                     const title = (item.getAttribute('data-title') || '').toLowerCase();
                     const content = (item.getAttribute('data-content') || '').toLowerCase();
-                    
+
                     // 제목과 내용을 합쳐서 검색
                     const searchableText = title + ' ' + content;
 
