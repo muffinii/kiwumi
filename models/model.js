@@ -102,6 +102,24 @@ const checkPreRegisteredStudent = async (name, student_num) => {
     }
 }
 
+// 회원가입: 이름과 사번으로 사전 등록된 관리자(직원) 확인
+const checkPreRegisteredAdmin = async (name, employee_num) => {
+    try {
+        await ensureAdminColumns();
+        const sql = `
+            SELECT pkid, name, employee_num, admin_id, email
+            FROM administrator
+            WHERE name = ? AND employee_num = ?;
+        `;
+        const params = [name, employee_num];
+        const result = await db.runSql(sql, params);
+        return result[0];
+    } catch (err) {
+        console.error('관리자 사전 등록 확인 오류:', err);
+        throw err;
+    }
+}
+
 // 회원가입: 이미 가입된 계정인지 확인 (regdate 또는 실제 이메일 존재 여부로 판단)
 const checkStudentAlreadyRegistered = async (student_pkid) => {
     try {
@@ -117,6 +135,25 @@ const checkStudentAlreadyRegistered = async (student_pkid) => {
         return result.length > 0; // 실제 이메일이 있으면 이미 가입된 것으로 판단
     } catch (err) {
         console.error('가입 여부 확인 오류:', err);
+        throw err;
+    }
+}
+
+// 회원가입: 이미 가입된 관리자 계정인지 확인
+const checkAdminAlreadyRegistered = async (admin_pkid) => {
+    try {
+        await ensureAdminColumns();
+        const sql = `
+            SELECT admin_id, email
+            FROM administrator
+            WHERE pkid = ? 
+              AND (admin_id NOT LIKE 'temp_%') 
+              AND (email IS NOT NULL AND email NOT LIKE '%@temp.placeholder');
+        `;
+        const result = await db.runSql(sql, [admin_pkid]);
+        return result.length > 0;
+    } catch (err) {
+        console.error('관리자 가입 여부 확인 오류:', err);
         throw err;
     }
 }
@@ -138,6 +175,22 @@ const checkUsernameExists = async (username) => {
     }
 }
 
+// 회원가입: 관리자 아이디 중복 체크
+const checkAdminUsernameExists = async (admin_id) => {
+    try {
+        await ensureAdminColumns();
+        const sql = `
+            SELECT pkid FROM administrator
+            WHERE admin_id = ? AND admin_id NOT LIKE 'temp_%';
+        `;
+        const result = await db.runSql(sql, [admin_id]);
+        return result.length > 0;
+    } catch (err) {
+        console.error('관리자 아이디 중복 확인 오류:', err);
+        throw err;
+    }
+}
+
 // 회원가입: 이메일 중복 체크
 const checkEmailExists = async (email) => {
     try {
@@ -155,6 +208,22 @@ const checkEmailExists = async (email) => {
     }
 }
 
+// 회원가입: 관리자 이메일 중복 체크
+const checkAdminEmailExists = async (email) => {
+    try {
+        await ensureAdminColumns();
+        const sql = `
+            SELECT pkid FROM administrator
+            WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
+        `;
+        const result = await db.runSql(sql, [email]);
+        return result.length > 0;
+    } catch (err) {
+        console.error('관리자 이메일 중복 확인 오류:', err);
+        throw err;
+    }
+}
+
 // 회원가입: 학생 정보 업데이트 (student_id, student_pw, email, phone_number 등)
 const updateStudentRegistration = async (student_pkid, username, password, email, phone) => {
     try {
@@ -167,6 +236,23 @@ const updateStudentRegistration = async (student_pkid, username, password, email
         await db.runSql(sql, params);
     } catch (err) {
         console.error('학생 정보 업데이트 오류:', err);
+        throw err;
+    }
+}
+
+// 회원가입: 관리자 정보 업데이트 (admin_id, admin_pw, email)
+const updateAdminRegistration = async (admin_pkid, admin_id, admin_pw, email) => {
+    try {
+        await ensureAdminColumns();
+        const sql = `
+            UPDATE administrator
+            SET admin_id = ?, admin_pw = ?, email = ?
+            WHERE pkid = ?;
+        `;
+        const params = [admin_id, admin_pw, email, admin_pkid];
+        await db.runSql(sql, params);
+    } catch (err) {
+        console.error('관리자 정보 업데이트 오류:', err);
         throw err;
     }
 }
@@ -508,10 +594,15 @@ module.exports = {
     loginCheck,
     adminLoginCheck,
     checkPreRegisteredStudent,
+    checkPreRegisteredAdmin,
     checkStudentAlreadyRegistered,
+    checkAdminAlreadyRegistered,
     checkUsernameExists,
+    checkAdminUsernameExists,
     checkEmailExists,
+    checkAdminEmailExists,
     updateStudentRegistration,
+    updateAdminRegistration,
     getAnnouncements,
     getRecentAnnouncements,
     getAnnouncementById,

@@ -775,7 +775,7 @@ const join = (req, res) => {
 
 const registerProc = async (req, res) => {
     try {
-        let { name, student_id, username, password, password_confirm, email, phone } = req.body;
+    let { name, student_id, username, password, password_confirm, email, phone } = req.body;
 
         // 입력값 필터링 및 검증
         name = common.reqeustFilter(name, 100, false);
@@ -800,34 +800,41 @@ const registerProc = async (req, res) => {
             return res.status(400).json({ message: '아이디는 6자 이상이어야 합니다.' });
         }
 
-        // 1. 이름과 학번으로 사전 등록된 학생인지 확인
-        const preRegistered = await model.checkPreRegisteredStudent(name, student_id);
-        if (!preRegistered) {
-            return res.status(400).json({ message: '사전 등록되지 않은 학생입니다. 이름과 학번을 확인해주세요.' });
+        // 학생/직원 중 누가 사전 등록인지 판별
+        const preStudent = await model.checkPreRegisteredStudent(name, student_id);
+        const preAdmin = preStudent ? null : await model.checkPreRegisteredAdmin(name, student_id);
+
+        if (!preStudent && !preAdmin) {
+            return res.status(400).json({ message: '사전 등록되지 않은 사용자입니다. 이름과 학번/사번을 확인해주세요.' });
         }
 
-        // 2. 이미 회원가입이 완료된 계정인지 확인 (student_id가 이미 설정되어 있는지)
-        const alreadyRegistered = await model.checkStudentAlreadyRegistered(preRegistered.pkid);
-        if (alreadyRegistered) {
-            return res.status(400).json({ message: '이미 가입된 계정입니다.' });
+        if (preStudent) {
+            // 학생 가입 플로우
+            const alreadyRegistered = await model.checkStudentAlreadyRegistered(preStudent.pkid);
+            if (alreadyRegistered) return res.status(400).json({ message: '이미 가입된 계정입니다.' });
+
+            const usernameExists = await model.checkUsernameExists(username);
+            if (usernameExists) return res.status(400).json({ message: '이미 사용 중인 아이디입니다.' });
+
+            const emailExists = await model.checkEmailExists(email);
+            if (emailExists) return res.status(400).json({ message: '이미 사용 중인 이메일입니다.' });
+
+            await model.updateStudentRegistration(preStudent.pkid, username, password, email, phone);
+            return res.status(200).json({ message: '학생 회원가입이 완료되었습니다.' });
+        } else {
+            // 관리자(직원) 가입 플로우
+            const alreadyRegistered = await model.checkAdminAlreadyRegistered(preAdmin.pkid);
+            if (alreadyRegistered) return res.status(400).json({ message: '이미 가입된 관리자 계정입니다.' });
+
+            const usernameExists = await model.checkAdminUsernameExists(username);
+            if (usernameExists) return res.status(400).json({ message: '이미 사용 중인 아이디입니다.' });
+
+            const emailExists = await model.checkAdminEmailExists(email);
+            if (emailExists) return res.status(400).json({ message: '이미 사용 중인 이메일입니다.' });
+
+            await model.updateAdminRegistration(preAdmin.pkid, username, password, email);
+            return res.status(200).json({ message: '관리자 회원가입이 완료되었습니다.' });
         }
-
-        // 3. 아이디 중복 체크 (다른 학생이 같은 아이디를 사용하는지)
-        const usernameExists = await model.checkUsernameExists(username);
-        if (usernameExists) {
-            return res.status(400).json({ message: '이미 사용 중인 아이디입니다.' });
-        }
-
-        // 4. 이메일 중복 체크
-        const emailExists = await model.checkEmailExists(email);
-        if (emailExists) {
-            return res.status(400).json({ message: '이미 사용 중인 이메일입니다.' });
-        }
-
-        // 5. 회원가입 처리: student 테이블 업데이트 (student_id, student_pw, email, phone_number 등)
-        await model.updateStudentRegistration(preRegistered.pkid, username, password, email, phone);
-
-        return res.status(200).json({ message: '회원가입이 완료되었습니다.' });
     } catch (err) {
         console.error('회원가입 오류:', err);
         return res.status(500).json({ message: '서버 오류가 발생했습니다.' });
