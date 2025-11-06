@@ -679,6 +679,202 @@ const addClass = (req, res) => {
     }
 }
 
+// 모든 과목 및 분반 조회 API
+const getAllCoursesApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+        const rows = await model.getAllAvailableCourses();
+        
+        // 데이터를 과목별 → 분반별로 그룹화
+        const coursesMap = {};
+        
+        rows.forEach(row => {
+            const courseId = row.course_id;
+            const sectionId = row.section_id;
+            
+            // 과목이 처음 등장하면 초기화
+            if (!coursesMap[courseId]) {
+                coursesMap[courseId] = {
+                    id: courseId,
+                    title: row.title,
+                    credits: row.credits,
+                    department: row.department,
+                    sections: {}
+                };
+            }
+            
+            // 분반이 처음 등장하면 초기화
+            if (!coursesMap[courseId].sections[sectionId]) {
+                coursesMap[courseId].sections[sectionId] = {
+                    id: sectionId,
+                    section_number: row.section_number,
+                    professor: row.professor,
+                    classroom: row.classroom,
+                    schedules: []
+                };
+            }
+            
+            // 해당 분반의 시간 정보 추가
+            coursesMap[courseId].sections[sectionId].schedules.push({
+                day_of_week: row.day_of_week,
+                start_period: row.start_period,
+                end_period: row.end_period
+            });
+        });
+        
+        // Map을 배열로 변환하고 sections도 배열로 변환
+        const courses = Object.values(coursesMap).map(course => {
+            const sections = Object.values(course.sections).map(section => {
+                // 시간 정보를 사람이 읽을 수 있는 형태로 변환
+                const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
+                const periodToTime = (period) => {
+                    const hour = 8 + period; // 1교시=09:00
+                    return `${String(hour).padStart(2, '0')}:00`;
+                };
+                
+                // 요일별로 그룹화해서 시간 문자열 생성
+                const schedulesByDay = {};
+                section.schedules.forEach(sch => {
+                    const day = dayMap[sch.day_of_week] || sch.day_of_week;
+                    if (!schedulesByDay[day]) schedulesByDay[day] = [];
+                    schedulesByDay[day].push({
+                        start: sch.start_period,
+                        end: sch.end_period
+                    });
+                });
+                
+                const timeStrings = [];
+                Object.keys(schedulesByDay).sort().forEach(day => {
+                    schedulesByDay[day].forEach(time => {
+                        const startTime = periodToTime(time.start);
+                        const endTime = periodToTime(time.end + 1); // 종료 교시의 다음 시간
+                        timeStrings.push(`${day} ${startTime}~${endTime}`);
+                    });
+                });
+                
+                return {
+                    id: section.id,
+                    section_number: section.section_number,
+                    professor: section.professor,
+                    time_string: timeStrings.join(', '),
+                    place: section.classroom,
+                    schedules: section.schedules // 원본 스케줄 정보도 포함
+                };
+            });
+            
+            return {
+                id: course.id,
+                title: course.title,
+                credits: course.credits,
+                department: course.department,
+                sections: sections
+            };
+        });
+        
+        return res.json(courses);
+    } catch (err) {
+        console.error('과목 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
+// 시간표에 과목 추가 API (충돌 체크 포함)
+const addCourseToTimetableApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) {
+            return res.status(401).json({ ok: false, message: '학생만 시간표에 추가할 수 있습니다.' });
+        }
+
+        const { section_id, color } = req.body;
+        
+        if (!section_id) {
+            return res.status(400).json({ ok: false, message: '분반 ID가 필요합니다.' });
+        }
+
+        // 1. 분반 정보 조회
+        const sectionDetails = await model.getSectionDetails(section_id);
+        if (!sectionDetails || sectionDetails.length === 0) {
+            return res.status(404).json({ ok: false, message: '해당 분반을 찾을 수 없습니다.' });
+        }
+
+        const courseTitle = sectionDetails[0].title;
+        const credits = sectionDetails[0].credits;
+        const professor = sectionDetails[0].professor;
+        const classroom = sectionDetails[0].classroom;
+
+        // 2. 이미 같은 과목을 추가했는지 확인
+        const alreadyAdded = await model.checkCourseAlreadyAdded(user.pkid, courseTitle);
+        if (alreadyAdded) {
+            return res.status(409).json({ 
+                ok: false, 
+                message: '이미 시간표에 추가된 과목입니다.',
+                conflictType: 'duplicate_course'
+            });
+        }
+
+        // 3. 시간 충돌 체크
+        const conflicts = [];
+        for (const schedule of sectionDetails) {
+            const conflict = await model.checkTimetableConflict(
+                user.pkid,
+                schedule.day_of_week,
+                schedule.start_period,
+                schedule.end_period
+            );
+            if (conflict) {
+                conflicts.push({
+                    day: schedule.day_of_week,
+                    conflictWith: conflict.title,
+                    time: `${schedule.start_period}-${schedule.end_period}교시`
+                });
+            }
+        }
+
+        if (conflicts.length > 0) {
+            const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
+            const conflictMessages = conflicts.map(c => 
+                `${dayMap[c.day]}요일 ${c.time}: ${c.conflictWith}`
+            ).join(', ');
+            
+            return res.status(409).json({ 
+                ok: false, 
+                message: `시간이 겹치는 수업이 있습니다: ${conflictMessages}`,
+                conflictType: 'time_conflict',
+                conflicts: conflicts
+            });
+        }
+
+        // 4. 시간표에 추가 (각 시간대별로)
+        const classColor = color || 'bg-blue-100';
+        for (const schedule of sectionDetails) {
+            await model.addTimetableEntry(
+                user.pkid,
+                schedule.day_of_week,
+                schedule.start_period,
+                schedule.end_period,
+                courseTitle,
+                classroom,
+                classColor,
+                null, // memo
+                professor,
+                credits
+            );
+        }
+
+        return res.json({ 
+            ok: true, 
+            message: '시간표에 성공적으로 추가되었습니다.',
+            course: courseTitle
+        });
+    } catch (err) {
+        console.error('시간표 추가 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류가 발생했습니다.' });
+    }
+}
+
 // ModifyEvent 페이지 렌더
 const modifyEvent = (req, res) => {
     try {
@@ -1337,7 +1533,9 @@ module.exports = {
     loginProc,
     logout,
     upload,
-    uploadAnnouncement
+    uploadAnnouncement,
+    getAllCoursesApi,
+    addCourseToTimetableApi
 }
 
 // 일정 수정 API

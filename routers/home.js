@@ -47,6 +47,8 @@ router.get("/ViewEvent", controller.viewEvent);
 router.get("/ModifyEvent", controller.modifyEvent);
 router.get("/AddClass", controller.addClass);
 router.post("/AddClass", controller.addClassProc);
+router.get("/api/all-courses", controller.getAllCoursesApi);
+router.post("/api/timetable/add", controller.addCourseToTimetableApi);
 router.get("/ViewClass/:id", controller.viewClass);
 router.get("/ViewClass", controller.viewClass);
 router.get("/ModifyClass/:id", controller.modifyClass);

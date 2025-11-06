@@ -105,36 +105,37 @@
             const form = document.getElementById('add-class-form');
             
             let allCoursesData = []; 
+            let userTimetable = []; // 사용자의 기존 시간표 (충돌 체크용)
             
             async function fetchAllCourses() {
                 try {
-                    // 백엔드 /api/all-courses API가 아래 형식의 JSON을 반환해야 함
                     const response = await fetch('/api/all-courses');
                     if (!response.ok) throw new Error('Cannot fetch courses');
                     
                     allCoursesData = await response.json();
-                    // (백엔드 데이터 예시)
-                    // [
-                    //   { id: "C001", title: "운영체제", credits: 3, 
-                    //     sections: [
-                    //       { id: "S01", time_string: "월 14:00~16:00", place: "공학관 101호" },
-                    //       { id: "S02", time_string: "수 09:00~11:00", place: "정보관 303호" }
-                    //     ]
-                    //   },
-                    //   { id: "C002", title: "웹프로그래밍", credits: 3, sections: [...] }
-                    // ]
 
                     courseSelect.innerHTML = '<option value="">과목을 선택하세요...</option>';
                     allCoursesData.forEach(course => {
                         const option = document.createElement('option');
                         option.value = course.id;
-                        option.textContent = course.title;
+                        option.textContent = `${course.title} (${course.credits}학점)`;
                         courseSelect.appendChild(option);
                     });
 
                 } catch (error) {
                     console.error("Error loading courses:", error);
                     courseSelect.innerHTML = '<option value="">과목을 불러올 수 없습니다.</option>';
+                }
+            }
+            
+            // 사용자의 기존 시간표 불러오기 (충돌 체크용)
+            async function fetchUserTimetable() {
+                try {
+                    // 기존 시간표 API가 있다면 활용
+                    // 여기서는 간단히 빈 배열로 시작 (서버에서 충돌 체크하므로)
+                    userTimetable = [];
+                } catch (error) {
+                    console.error("Error loading user timetable:", error);
                 }
             }
             
@@ -147,12 +148,13 @@
 
                 const selectedCourse = allCoursesData.find(c => c.id === selectedCourseId);
                 
-                if (selectedCourse && selectedCourse.sections) {
+                if (selectedCourse && selectedCourse.sections && selectedCourse.sections.length > 0) {
                     sectionSelect.innerHTML = '<option value="">시간/장소를 선택하세요...</option>';
                     selectedCourse.sections.forEach(section => {
                         const option = document.createElement('option');
                         option.value = section.id;
-                        option.textContent = `${section.time_string} (${section.place})`;
+                        option.textContent = `${section.section_number}분반 - ${section.time_string} (${section.place})`;
+                        option.dataset.sectionData = JSON.stringify(section);
                         sectionSelect.appendChild(option);
                     });
                     sectionSelect.disabled = false;
@@ -173,28 +175,43 @@
                     return;
                 }
 
+                // 선택된 분반 정보 가져오기
+                const selectedOption = sectionSelect.options[sectionSelect.selectedIndex];
+                const sectionData = JSON.parse(selectedOption.dataset.sectionData || '{}');
+
                 try {
-                    // 백엔드 /api/timetable/add API가 이 요청을 받아 처리해야 함
                     const response = await fetch('/api/timetable/add', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            course_id: courseId,
                             section_id: sectionId,
                             color: color
                         })
                     });
                     
-                    if (!response.ok) throw new Error('Server error');
+                    const result = await response.json();
                     
-                    alert('시간표에 성공적으로 추가되었습니다!');
-                    window.location.href = '/Timetable';    // 시간표 페이지로 이동
+                    if (!response.ok) {
+                        // 충돌 타입에 따라 다른 메시지 표시
+                        if (result.conflictType === 'duplicate_course') {
+                            alert(result.message || '이미 추가된 과목입니다.');
+                        } else if (result.conflictType === 'time_conflict') {
+                            alert(result.message || '시간이 겹치는 수업이 있습니다.');
+                        } else {
+                            alert(result.message || '시간표 추가에 실패했습니다.');
+                        }
+                        return;
+                    }
+                    
+                    alert(`"${result.course}" 과목이 시간표에 추가되었습니다!`);
+                    window.location.href = '/Timetable';
 
                 } catch (error) {
                     console.error("Error adding class:", error);
-                    alert("시간표 추가에 실패했습니다.");
+                    alert("시간표 추가 중 오류가 발생했습니다.");
                 }
             });
+            
             colorPalette.addEventListener('click', (e) => {
                 const btn = e.target.closest('button[data-color]');
                 if (!btn) return;
@@ -209,7 +226,8 @@
             });
             
             // 초기 실행
-            fetchAllCourses();    // 페이지 로드 시 과목 목록 불러오기
+            fetchAllCourses();
+            fetchUserTimetable();
         });
     </script>
 </body>

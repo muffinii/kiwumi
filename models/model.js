@@ -738,6 +738,90 @@ const deleteTimetableEntry = async (id, user_pkid) => {
     return result.affectedRows;
 }
 
+// ============================================================
+// 과목 및 분반 관리 함수
+// ============================================================
+
+// 활성화된 모든 과목 목록 조회 (분반 및 시간 정보 포함)
+const getAllAvailableCourses = async () => {
+    const sql = `
+        SELECT 
+            c.id AS course_id,
+            c.title,
+            c.credits,
+            c.department,
+            cs.id AS section_id,
+            cs.section_number,
+            cs.professor,
+            cs.classroom,
+            css.day_of_week,
+            css.start_period,
+            css.end_period
+        FROM courses c
+        JOIN course_sections cs ON c.id = cs.course_id
+        JOIN course_schedule css ON cs.id = css.section_id
+        WHERE c.is_active = TRUE AND cs.is_available = TRUE
+        ORDER BY c.id, cs.section_number, css.day_of_week, css.start_period;
+    `;
+    const result = await db.runSql(sql);
+    return result;
+}
+
+// 특정 분반의 상세 정보 조회
+const getSectionDetails = async (section_id) => {
+    const sql = `
+        SELECT 
+            c.id AS course_id,
+            c.title,
+            c.credits,
+            cs.id AS section_id,
+            cs.section_number,
+            cs.professor,
+            cs.classroom,
+            css.id AS schedule_id,
+            css.day_of_week,
+            css.start_period,
+            css.end_period
+        FROM courses c
+        JOIN course_sections cs ON c.id = cs.course_id
+        JOIN course_schedule css ON cs.id = css.section_id
+        WHERE cs.id = ?
+        ORDER BY css.day_of_week, css.start_period;
+    `;
+    const result = await db.runSql(sql, [section_id]);
+    return result;
+}
+
+// 시간표 충돌 체크: 특정 사용자의 기존 시간표와 새로운 수업 시간이 겹치는지 확인
+const checkTimetableConflict = async (user_pkid, day_of_week, start_period, end_period) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT id, title, day, start_period, end_period, location
+        FROM timetable_entries
+        WHERE user_pkid = ? 
+          AND user_type = 'student'
+          AND day = ?
+          AND NOT (end_period < ? OR start_period > ?)
+        LIMIT 1;
+    `;
+    const params = [user_pkid, day_of_week, start_period, end_period];
+    const result = await db.runSql(sql, params);
+    return result[0]; // 충돌하는 수업이 있으면 반환, 없으면 undefined
+}
+
+// 사용자가 이미 특정 과목을 시간표에 추가했는지 확인
+const checkCourseAlreadyAdded = async (user_pkid, course_title) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT id, title
+        FROM timetable_entries
+        WHERE user_pkid = ? AND user_type = 'student' AND title = ?
+        LIMIT 1;
+    `;
+    const result = await db.runSql(sql, [user_pkid, course_title]);
+    return result[0]; // 이미 추가되어 있으면 반환, 없으면 undefined
+}
+
 module.exports.ensureTimetableTable = ensureTimetableTable;
 module.exports.addTimetableEntry = addTimetableEntry;
 module.exports.getTimetableByUser = getTimetableByUser;
@@ -745,3 +829,9 @@ module.exports.getTimetableById = getTimetableById;
 module.exports.getTimetablesByTitle = getTimetablesByTitle;
 module.exports.updateTimetableEntry = updateTimetableEntry;
 module.exports.deleteTimetableEntry = deleteTimetableEntry;
+
+// 과목 관리 함수 export
+module.exports.getAllAvailableCourses = getAllAvailableCourses;
+module.exports.getSectionDetails = getSectionDetails;
+module.exports.checkTimetableConflict = checkTimetableConflict;
+module.exports.checkCourseAlreadyAdded = checkCourseAlreadyAdded;
