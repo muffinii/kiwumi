@@ -773,6 +773,31 @@ const join = (req, res) => {
     }
 }
 
+// 비밀번호 찾기/인증/재설정 페이지 렌더
+const forgotPassword = (req, res) => {
+    try {
+        res.render('ForgotPassword');
+    } catch {
+        res.status(500).send('500 Error');
+    }
+}
+
+const verifyCode = (req, res) => {
+    try {
+        res.render('VerifyCode');
+    } catch {
+        res.status(500).send('500 Error');
+    }
+}
+
+const resetPassword = (req, res) => {
+    try {
+        res.render('ResetPassword');
+    } catch {
+        res.status(500).send('500 Error');
+    }
+}
+
 const registerProc = async (req, res) => {
     try {
     let { name, student_id, username, password, password_confirm, email, phone } = req.body;
@@ -1305,6 +1330,9 @@ module.exports = {
     notifications,
     login,
     join,
+    forgotPassword,
+    verifyCode,
+    resetPassword,
     registerProc,
     loginProc,
     logout,

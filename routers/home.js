@@ -6,6 +6,9 @@ const controller = require("../controllers/controller");
 router.get("/Login", controller.login);
 router.post("/Login", controller.loginProc);
 router.get("/Join", controller.join);
+router.get("/ForgotPassword", controller.forgotPassword);
+router.get("/VerifyCode", controller.verifyCode);
+router.get("/ResetPassword", controller.resetPassword);
 router.post("/api/auth/register", controller.registerProc);
 router.get("/Logout", controller.logout);
 
