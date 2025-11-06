@@ -32,7 +32,7 @@
     <div class="app-container">
         
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Calendar.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Calendar" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center">일정 상세</h1>
@@ -80,11 +80,28 @@
         
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-                <a href="/Main.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
-                <a href="/Calendar.html" class="flex flex-col items-center justify-center text-main-red font-bold p-1">...</a>
-                <a href="/Announcement.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
-                <a href="/Timetable.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
-                <a href="/MyPage.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
+                <a href="/Main" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span class="text-xs mt-1">홈</span>
+                </a>
+                <a href="/Calendar" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+                    <span class="text-xs mt-1">캘린더</span>
+                </a>
+                <a href="/AnnouncementGuest" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+                    <span class="text-xs mt-1">공지사항</span>
+                </a>
+                {% if user_role == 'student' %}
+                <a href="/Timetable" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+                    <span class="text-xs mt-1">시간표</span>
+                </a>
+                {% endif %}
+                <a href="/MyPage" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span class="text-xs mt-1">마이</span>
+                </a>
             </div>
         </nav>
     </div>
@@ -124,6 +141,7 @@
             if (data.event_time) {
                 timeEl.textContent = data.event_time;
             }
+            // 개인 일정 카드 배경색은 유지, 배지는 아래에서 설정
             if (data.place) {
                 placeEl.textContent = data.place;
                 placeGroup.classList.remove('hidden');
@@ -143,7 +161,24 @@
                 {% endif %}
             } else {
                 categoryEl.textContent = '개인 일정';
-                categoryEl.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800';
+                // 사용자가 선택한 색상으로 배지 배경/텍스트 색상 적용
+                const badgeColorMap = {
+                    'bg-red-200': { bg: '#fecaca', text: '#991b1b' },
+                    'bg-blue-200': { bg: '#bfdbfe', text: '#1e40af' },
+                    'bg-green-200': { bg: '#bbf7d0', text: '#065f46' },
+                    'bg-yellow-200': { bg: '#fef08a', text: '#854d0e' }
+                };
+                if (data.color && badgeColorMap[data.color]) {
+                    const { bg, text } = badgeColorMap[data.color];
+                    categoryEl.className = 'text-xs font-semibold px-2 py-0.5 rounded-full';
+                    categoryEl.style.backgroundColor = bg;
+                    categoryEl.style.color = text;
+                } else {
+                    // 기본 색상 (파랑 톤)
+                    categoryEl.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800';
+                    categoryEl.style.backgroundColor = '';
+                    categoryEl.style.color = '';
+                }
             }
 
             const menuToggle = document.getElementById('menu-toggle');
@@ -153,7 +188,7 @@
 
             if (menuToggle && dropdownMenu && modifyLink && deleteBtn) {
                 
-                modifyLink.href = `/ModifyEvent.html?eventId=${eventId}`;
+                modifyLink.href = `/ModifyEvent?eventId=${eventId}&type=${eventType}`;
 
                 menuToggle.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -166,10 +201,10 @@
                     
                     if (confirm("이 일정을 삭제합니다. 정말 삭제하시겠습니까?")) {
                         try {
-                            const deleteResponse = await fetch(`/api/events/${eventId}`, { method: 'DELETE' });
+                            const deleteResponse = await fetch(`/api/events/${eventId}?type=${eventType}`, { method: 'DELETE' });
                             if (!deleteResponse.ok) throw new Error('삭제 실패');
                             alert('일정이 삭제되었습니다.');
-                            window.location.href = '/Calendar.html';
+                            window.location.href = '/Calendar';
                         } catch (err) {
                             alert('삭제 중 오류가 발생했습니다.');
                         }

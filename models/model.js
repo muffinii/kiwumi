@@ -279,7 +279,7 @@ const deleteAnnouncement = async (pkid) => {
     const getPersonalEventsByMonth = async (user_pkid, user_type, year, month1to12) => {
         await ensurePersonalEventsTable();
         const sql = `
-            SELECT DAY(event_date) as day, title, color, TIME_FORMAT(event_time, '%H:%i') as time
+            SELECT id, DAY(event_date) as day, title, color, TIME_FORMAT(event_time, '%H:%i') as time
             FROM personal_events
             WHERE user_pkid = ? AND user_type = ? AND YEAR(event_date) = ? AND MONTH(event_date) = ?
             ORDER BY event_date, event_time;
@@ -288,6 +288,43 @@ const deleteAnnouncement = async (pkid) => {
         const rows = await db.runSql(sql, params);
         return rows;
     }
+
+// 개인 일정 상세 조회
+const getPersonalEventById = async (event_id, user_pkid, user_type) => {
+    await ensurePersonalEventsTable();
+    const sql = `
+        SELECT id, title, DATE_FORMAT(event_date, '%Y-%m-%d') as event_date, 
+               TIME_FORMAT(event_time, '%H:%i') as event_time, color
+        FROM personal_events
+        WHERE id = ? AND user_pkid = ? AND user_type = ?;
+    `;
+    const params = [event_id, user_pkid, user_type];
+    const result = await db.runSql(sql, params);
+    return result[0];
+}
+
+// 개인 일정 삭제
+const deletePersonalEvent = async (event_id, user_pkid, user_type) => {
+    await ensurePersonalEventsTable();
+    const sql = `
+        DELETE FROM personal_events
+        WHERE id = ? AND user_pkid = ? AND user_type = ?;
+    `;
+    const params = [event_id, user_pkid, user_type];
+    await db.runSql(sql, params);
+}
+
+// 개인 일정 수정
+const updatePersonalEvent = async (event_id, user_pkid, user_type, title, event_date, event_time, color) => {
+    await ensurePersonalEventsTable();
+    const sql = `
+        UPDATE personal_events
+        SET title = ?, event_date = ?, event_time = ?, color = ?
+        WHERE id = ? AND user_pkid = ? AND user_type = ?;
+    `;
+    const params = [title, event_date, event_time, color, event_id, user_pkid, user_type];
+    await db.runSql(sql, params);
+}
 
 // 학사일정 월별 조회
 const getAcademicScheduleByMonth = async (year, month1to12) => {
@@ -326,6 +363,42 @@ const createAcademicSchedule = async (title, start_date, end_date, campus = null
     const params = [title, start_date, end_date, campus, source_url];
     const result = await db.runSql(sql, params);
     return result.insertId;
+}
+
+// 학사일정 상세 조회
+const getAcademicScheduleById = async (event_id) => {
+    const sql = `
+        SELECT id, title,
+               DATE_FORMAT(start_date, '%Y-%m-%d') as start_date,
+               DATE_FORMAT(end_date, '%Y-%m-%d') as end_date,
+               campus, source_url
+        FROM academic_schedule
+        WHERE id = ?;
+    `;
+    const params = [event_id];
+    const result = await db.runSql(sql, params);
+    return result[0];
+}
+
+// 학사일정 삭제
+const deleteAcademicSchedule = async (event_id) => {
+    const sql = `
+        DELETE FROM academic_schedule
+        WHERE id = ?;
+    `;
+    const params = [event_id];
+    await db.runSql(sql, params);
+}
+
+// 학사일정 수정
+const updateAcademicSchedule = async (event_id, title, start_date, end_date) => {
+    const sql = `
+        UPDATE academic_schedule
+        SET title = ?, start_date = ?, end_date = ?
+        WHERE id = ?;
+    `;
+    const params = [title, start_date, end_date, event_id];
+    await db.runSql(sql, params);
 }
 
 // 시간표 조회
@@ -439,9 +512,15 @@ module.exports = {
     updateAnnouncement,
     deleteAnnouncement,
     createPersonalEvent,
-    createAcademicSchedule,
     getPersonalEventsByMonth,
+    getPersonalEventById,
+    deletePersonalEvent,
+    updatePersonalEvent,
+    createAcademicSchedule,
     getAcademicScheduleByMonth,
+    getAcademicScheduleById,
+    deleteAcademicSchedule,
+    updateAcademicSchedule,
     getTodayPersonalEvents,
     getTodayTimetable,
     updateStudentPhoto,

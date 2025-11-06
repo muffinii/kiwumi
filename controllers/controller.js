@@ -467,6 +467,16 @@ const addEvent = (req, res) => {
     }
 }
 
+const viewEvent = (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
+        res.render('ViewEvent', { user_role });
+    } catch {
+        res.status(500).send("500 Error");
+    }
+}
+
 // 개인/학사 일정 생성 (POST)
 const createPersonalEvent = async (req, res) => {
     try {
@@ -565,11 +575,106 @@ const getAcademicScheduleApi = async (req, res) => {
     }
 }
 
+// 일정 상세 조회 API (개인/학사 통합)
+const getEventByIdApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+    const eventId = parseInt(req.params.id, 10);
+    const typeRaw = (req.query.type || 'personal').toLowerCase();
+    const eventType = (typeRaw === 'public') ? 'academic' : (typeRaw === 'private' ? 'personal' : typeRaw);
+
+        if (!eventId) {
+            return res.status(400).json({ ok: false, message: '잘못된 일정 ID' });
+        }
+
+        if (eventType === 'academic') {
+            // 학사일정 조회
+            const event = await model.getAcademicScheduleById(eventId);
+            if (!event) {
+                return res.status(404).json({ ok: false, message: '일정을 찾을 수 없습니다.' });
+            }
+            return res.json({
+                ok: true,
+                id: event.id,
+                title: event.title,
+                start_date: event.start_date,
+                end_date: event.end_date,
+                type: 'academic',
+                campus: event.campus,
+                source_url: event.source_url
+            });
+        } else {
+            // 개인일정 조회
+            const userType = user.isAdmin ? 'admin' : 'student';
+            const event = await model.getPersonalEventById(eventId, user.pkid, userType);
+            if (!event) {
+                return res.status(404).json({ ok: false, message: '일정을 찾을 수 없습니다.' });
+            }
+            return res.json({
+                ok: true,
+                id: event.id,
+                title: event.title,
+                event_date: event.event_date,
+                event_time: event.event_time,
+                color: event.color,
+                type: 'personal'
+            });
+        }
+    } catch (err) {
+        console.error('일정 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
+// 일정 삭제 API
+const deleteEventApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+    const eventId = parseInt(req.params.id, 10);
+    const typeRaw = (req.query.type || 'personal').toLowerCase();
+    const eventType = (typeRaw === 'public') ? 'academic' : (typeRaw === 'private' ? 'personal' : typeRaw);
+
+        if (!eventId) {
+            return res.status(400).json({ ok: false, message: '잘못된 일정 ID' });
+        }
+
+        if (eventType === 'academic') {
+            // 관리자만 학사일정 삭제 가능
+            if (!user.isAdmin) {
+                return res.status(403).json({ ok: false, message: '권한이 없습니다.' });
+            }
+            await model.deleteAcademicSchedule(eventId);
+        } else {
+            // 개인일정 삭제 (본인만 가능)
+            const userType = user.isAdmin ? 'admin' : 'student';
+            await model.deletePersonalEvent(eventId, user.pkid, userType);
+        }
+
+        return res.json({ ok: true, message: '삭제되었습니다.' });
+    } catch (err) {
+        console.error('일정 삭제 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
 const addClass = (req, res) => {
     try {
         res.render('AddClass');
     } catch {
         res.status(500).send("500 Error");
+    }
+}
+
+// ModifyEvent 페이지 렌더
+const modifyEvent = (req, res) => {
+    try {
+        res.render('ModifyEvent');
+    } catch {
+        res.status(500).send('500 Error');
     }
 }
 
@@ -1165,8 +1270,13 @@ module.exports = {
     myPage,
     uploadPhotoProc,
     addEvent,
+    viewEvent,
+    modifyEvent,
     createPersonalEvent,
     getPersonalEventsApi,
+    getEventByIdApi,
+    updateEventApi,
+    deleteEventApi,
     getAcademicScheduleApi,
     addClass,
     addClassProc,
@@ -1183,4 +1293,64 @@ module.exports = {
     logout,
     upload,
     uploadAnnouncement
+}
+
+// 일정 수정 API
+async function updateEventApi(req, res) {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+    const eventId = parseInt(req.params.id, 10);
+    const typeRaw = (req.query.type || req.body.event_type || 'personal').toLowerCase();
+    const eventType = (typeRaw === 'public') ? 'academic' : (typeRaw === 'private' ? 'personal' : typeRaw);
+        if (!eventId) return res.status(400).json({ ok: false, message: '잘못된 일정 ID' });
+
+        const title = common.reqeustFilter(req.body.title, 255, false);
+        if (!title) return res.status(400).json({ ok: false, message: '제목이 필요합니다.' });
+
+        if (eventType === 'academic') {
+            // 관리자만 수정 가능
+            if (!user.isAdmin) return res.status(403).json({ ok: false, message: '권한이 없습니다.' });
+            let start_date = common.reqeustFilter(req.body.start_date, 20, false);
+            let end_date = common.reqeustFilter(req.body.end_date, 20, false);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(start_date) || !/^\d{4}-\d{2}-\d{2}$/.test(end_date)) {
+                return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
+            }
+            if (new Date(start_date) > new Date(end_date)) {
+                return res.status(400).json({ ok: false, message: '종료일은 시작일보다 빠를 수 없습니다.' });
+            }
+            await model.updateAcademicSchedule(eventId, title, start_date, end_date);
+            return res.json({ ok: true });
+        } else {
+            // 개인 일정: 본인 것만 수정
+            const userType = user.isAdmin ? 'admin' : 'student';
+            // 존재 확인
+            const existing = await model.getPersonalEventById(eventId, user.pkid, userType);
+            if (!existing) return res.status(404).json({ ok: false, message: '일정을 찾을 수 없습니다.' });
+
+            let event_date = common.reqeustFilter(req.body.event_date, 20, false);
+            let event_time = req.body.event_time;
+            let event_color = common.reqeustFilter(req.body.event_color, 30, false);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
+                return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
+            }
+            if (event_time && event_time.trim()) {
+                event_time = common.reqeustFilter(event_time, 20, false);
+                if (!/^\d{2}:\d{2}(:\d{2})?$/.test(event_time)) {
+                    return res.status(400).json({ ok: false, message: '잘못된 시간 형식' });
+                }
+            } else {
+                event_time = null;
+            }
+            if (!/^bg-(red|blue|green|yellow)-(100|200|300|400|500|600|700|800|900)$/.test(event_color)) {
+                return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
+            }
+            await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color);
+            return res.json({ ok: true });
+        }
+    } catch (err) {
+        console.error('일정 수정 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
 }

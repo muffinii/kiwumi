@@ -30,7 +30,7 @@
     <div class="app-container">
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a id="cancel-link" href="/Calendar.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a id="cancel-link" href="/Calendar" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center pr-12">일정 수정</h1>
@@ -114,7 +114,8 @@
         
         // --- 1. 폼 요소 및 URL 정보 가져오기 ---
         const params = new URLSearchParams(window.location.search);
-        const eventId = params.get('eventId');
+    const eventId = params.get('eventId');
+    const urlType = (params.get('type') || 'personal');
         
         const form = document.getElementById('modify-event-form');
         const eventColorOptions = document.getElementById('event-color-options');
@@ -129,11 +130,11 @@
         const personalFields = document.getElementById('personal-fields');
         
         // 닫기 버튼 링크 설정
-        document.getElementById('cancel-link').href = `/ViewEvent.html?eventId=${eventId}`;
+    document.getElementById('cancel-link').href = `/ViewEvent?eventId=${eventId}&type=${encodeURIComponent(urlType)}`;
 
         if (!eventId) {
             alert('수정할 일정 ID가 없습니다.');
-            window.location.href = '/Calendar.html';
+            window.location.href = '/Calendar';
             return;
         }
 
@@ -167,7 +168,7 @@
 
         // --- 3. (핵심) 기존 데이터 불러와서 폼 채우기 (GET) ---
         try {
-            const response = await fetch(`/api/events/${eventId}`); // (타입 상관없이 ID로 조회)
+            const response = await fetch(`/api/events/${eventId}?type=${encodeURIComponent(urlType)}`); // 타입과 함께 조회
             if (!response.ok) throw new Error('데이터 로딩 실패');
             
             const data = await response.json();
@@ -253,7 +254,7 @@
                 }
 
                 try {
-                    const resp = await fetch(`/api/events/${eventId}`, {
+                    const resp = await fetch(`/api/events/${eventId}?type=${encodeURIComponent(urlType)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
                         body: params.toString()
@@ -262,7 +263,7 @@
                     
                     if (data && data.ok) {
                         alert('성공적으로 수정되었습니다!');
-                        window.location.href = `/ViewEvent.html?eventId=${eventId}`; // 수정 후 상세 페이지로 복귀
+                        window.location.href = `/ViewEvent?eventId=${eventId}&type=${encodeURIComponent(urlType)}`; // 수정 후 상세 페이지로 복귀
                     } else {
                         alert(data && data.message ? data.message : '수정 실패');
                     }

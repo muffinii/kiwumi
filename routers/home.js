@@ -40,6 +40,8 @@ router.get("/MyPage", controller.myPage);
 router.post("/UploadPhoto", controller.upload.single('student_photo'), controller.uploadPhotoProc);
 router.get("/AddEvent", controller.addEvent);
 router.post("/AddEvent", controller.createPersonalEvent);
+router.get("/ViewEvent", controller.viewEvent);
+router.get("/ModifyEvent", controller.modifyEvent);
 router.get("/AddClass", controller.addClass);
 router.post("/AddClass", controller.addClassProc);
 router.get("/ViewClass/:id", controller.viewClass);
@@ -49,6 +51,9 @@ router.get("/ModifyClass", controller.modifyClass);
 router.get("/Notifications", controller.notifications);
 // 개인 일정 API
 router.get("/api/events", controller.getPersonalEventsApi);
+router.get("/api/events/:id", controller.getEventByIdApi);
+router.put("/api/events/:id", controller.updateEventApi);
+router.delete("/api/events/:id", controller.deleteEventApi);
 // 학사일정 API
 router.get("/api/academic-schedule", controller.getAcademicScheduleApi);
 // 시간표 API
