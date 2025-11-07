@@ -3,6 +3,7 @@ const common = require('../common/common');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const bwipjs = require('bwip-js');
 
 // Multer 설정: 파일 저장 위치 및 파일명 설정
 const storage = multer.diskStorage({
@@ -1491,6 +1492,30 @@ const deleteClassApi = async (req, res) => {
     }
 }
 
+// 바코드 생성 컨트롤러
+const generateBarcode = (req, res) => {
+    const text = req.params.text;
+    if (!text) {
+        return res.status(400).send('Barcode text is required');
+    }
+    bwipjs.toBuffer({
+        bcid: 'code128',       // 바코드 타입
+        text: text,            // 바코드에 인코딩할 텍스트
+        scale: 3,              // 스케일
+        height: 10,            // 높이
+        includetext: true,     // 텍스트 포함 여부
+        textxalign: 'center',  // 텍스트 정렬
+    }, (err, png) => {
+        if (err) {
+            console.error("Barcode generation error:", err);
+            return res.status(500).send('Error generating barcode');
+        } else {
+            res.writeHead(200, { 'Content-Type': 'image/png' });
+            res.end(png);
+        }
+    });
+};
+
 module.exports = {
     main,
     calendar,
@@ -1535,7 +1560,8 @@ module.exports = {
     upload,
     uploadAnnouncement,
     getAllCoursesApi,
-    addCourseToTimetableApi
+    addCourseToTimetableApi,
+    generateBarcode
 }
 
 // 일정 수정 API

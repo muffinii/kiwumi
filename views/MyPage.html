@@ -112,7 +112,7 @@
                 <p class="text-sm text-slate-500">학번</p>
                 <p class="font-mono text-lg font-semibold">{{ user.student_num }}</p>
                 {% endif %}
-                <img src="https://placehold.co/180x50/333/FFF?text=BARCODE" alt="Barcode" class="mt-4" width="180px">
+                <img src="/barcode/{% if user_role == 'admin' %}{{ user.employee_num }}{% else %}{{ user.student_num }}{% endif %}" alt="Barcode" class="mt-4" width="180px">
 
                 {% if user_role == 'student' %}
                 <div class="border-t mt-4 pt-4 w-full text-center">

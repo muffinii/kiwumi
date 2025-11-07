@@ -66,6 +66,9 @@ router.get("/api/classes/:id", controller.getClassApi);
 router.put("/api/classes/:id", controller.updateClassApi);
 router.delete("/api/classes/:id", controller.deleteClassApi);
 
+// 바코드 생성 라우트
+router.get('/barcode/:text', controller.generateBarcode);
+
 module.exports = {
     router
 }
