@@ -302,10 +302,67 @@ const addAnnouncement = (req, res) => {
     }
 }
 
-const calculator = (req, res) => {
+// 학점 계산기 페이지
+const calculator = async (req, res) => {
     try {
-        res.render('Calculator');
-    } catch {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) return res.redirect('/Login');
+
+        // 사용자 전체 성적 조회
+        const grades = await model.getGradesByUser(user.pkid);
+
+        // 점수 맵핑
+        const gradeToPoint = (grade) => {
+            const map = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0.0 };
+            return map[grade] ?? null; // P 등은 null
+        };
+
+        // 전체 GPA/학점 계산
+        let totalEarnedCredits = 0; // F 제외, P 포함
+        let gpaCredits = 0;         // GPA 계산 대상 (A+~F)
+        let totalPoints = 0;
+        
+        let majorGpaCredits = 0;    // 전공 GPA 계산 대상
+        let majorTotalPoints = 0;
+
+        grades.forEach(g => {
+            const point = gradeToPoint(g.grade);
+            const credit = g.credits || 0;
+
+            if (point !== null) {
+                gpaCredits += credit;
+                totalPoints += point * credit;
+                
+                // 전공 과목만 따로 계산
+                if (g.is_major) {
+                    majorGpaCredits += credit;
+                    majorTotalPoints += point * credit;
+                }
+            }
+
+            if (g.grade !== 'F') {
+                totalEarnedCredits += credit;
+            }
+        });
+
+        const overallGPA = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : '0.00';
+        const majorGPA = majorGpaCredits > 0 ? (majorTotalPoints / majorGpaCredits).toFixed(2) : '0.00';
+
+        // 학기별 그룹화
+        const semestersMap = {};
+        grades.forEach(g => {
+            const key = `${g.year}-${g.semester}`;
+            if (!semestersMap[key]) {
+                semestersMap[key] = { year: g.year, semester: g.semester, courses: [] };
+            }
+            semestersMap[key].courses.push(g);
+        });
+    // 최근 학기(연도/학기 내림차순) 먼저 보이도록 정렬
+    const semesters = Object.values(semestersMap).sort((a,b)=> a.year===b.year ? b.semester - a.semester : b.year - a.year);
+
+        res.render('Calculator', { overallGPA, majorGPA, totalCredits: totalEarnedCredits, semesters });
+    } catch (err) {
+        console.error(err);
         res.status(500).send("500 Error");
     }
 }
@@ -1492,6 +1549,88 @@ const deleteClassApi = async (req, res) => {
     }
 }
 
+// ===== Helper: 현재 연도/학기 계산 =====
+function getCurrentYearSemester() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // 1..12
+    const semester = (month >= 3 && month <= 8) ? 1 : 2; // 3~8월: 1학기, 그 외: 2학기
+    return { year, semester };
+}
+
+// 시간표 과목 리스트 (학점 포함) 반환
+const getMyTimetableCoursesApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) return res.status(401).json({ ok: false, message: '학생만 이용 가능합니다.' });
+        const rows = await model.getUserTimetableCourses(user.pkid);
+        return res.json(rows);
+    } catch (err) {
+        console.error('과목 목록 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
+// 성적 입력/수정 API
+const addGradeApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) return res.status(401).json({ ok: false, message: '학생만 이용 가능합니다.' });
+
+        let { course_title, credits, grade, is_major } = req.body;
+        if (!course_title || !grade) {
+            return res.status(400).json({ ok: false, message: '과목명과 성적이 필요합니다.' });
+        }
+        credits = parseInt(credits, 10) || 0;
+        is_major = is_major ? 1 : 0;
+
+        // 현재 학기 기준으로 저장
+        const { year, semester } = getCurrentYearSemester();
+        await model.addOrUpdateGrade(user.pkid, year, semester, course_title, credits, grade, is_major);
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('성적 저장 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
+// 성적 요약 API (GPA/총 학점)
+const getGradesSummaryApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) return res.status(401).json({ ok: false, message: '학생만 이용 가능합니다.' });
+        const grades = await model.getGradesByUser(user.pkid);
+
+        const gradeToPoint = (grade) => {
+            const map = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0.0 };
+            return map[grade] ?? null;
+        };
+        let totalEarnedCredits = 0, gpaCredits = 0, totalPoints = 0;
+        let majorGpaCredits = 0, majorTotalPoints = 0;
+        
+        grades.forEach(g => {
+            const pt = gradeToPoint(g.grade);
+            const cr = g.credits || 0;
+            if (pt !== null) { 
+                gpaCredits += cr; 
+                totalPoints += pt * cr;
+                
+                if (g.is_major) {
+                    majorGpaCredits += cr;
+                    majorTotalPoints += pt * cr;
+                }
+            }
+            if (g.grade !== 'F') { totalEarnedCredits += cr; }
+        });
+        const overallGPA = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : '0.00';
+        const majorGPA = majorGpaCredits > 0 ? (majorTotalPoints / majorGpaCredits).toFixed(2) : '0.00';
+        return res.json({ ok: true, overallGPA, majorGPA, totalCredits: totalEarnedCredits });
+    } catch (err) {
+        console.error('요약 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
 // 바코드 생성 컨트롤러
 const generateBarcode = (req, res) => {
     const text = req.params.text;
@@ -1561,6 +1700,10 @@ module.exports = {
     uploadAnnouncement,
     getAllCoursesApi,
     addCourseToTimetableApi,
+    // grades/timetable related APIs
+    getMyTimetableCoursesApi,
+    addGradeApi,
+    getGradesSummaryApi,
     generateBarcode
 }
 

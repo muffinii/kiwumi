@@ -672,6 +672,34 @@ const ensureTimetableTable = async () => {
     }
 }
 
+// ===== Grades helpers (upsert only; DDL managed externally) =====
+const addOrUpdateGrade = async (student_pkid, year, semester, course_name, credits, grade, is_major = 0) => {
+    const sql = `
+        INSERT INTO grades (student_pkid, year, semester, course_name, credits, grade, is_major)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE credits = VALUES(credits), grade = VALUES(grade), is_major = VALUES(is_major);
+    `;
+    const params = [student_pkid, year, semester, course_name, credits || 0, grade, is_major ? 1 : 0];
+    const result = await db.runSql(sql, params);
+    return result.insertId || true;
+};
+
+// ===== Timetable-derived courses (distinct) =====
+const getUserTimetableCourses = async (user_pkid) => {
+    await ensureTimetableTable();
+    const sql = `
+        SELECT title AS course_name, 
+               COALESCE(MAX(credits), 0) AS credits
+        FROM timetable_entries
+        WHERE user_pkid = ? AND user_type = 'student'
+        GROUP BY title
+        ORDER BY title ASC;
+    `;
+    const rows = await db.runSql(sql, [user_pkid]);
+    // map to expected shape
+    return rows.map(r => ({ id: r.course_name, title: r.course_name, credits: r.credits }));
+};
+
 const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color, memo = null, professor = null, credits = null) => {
     await ensureTimetableTable();
     const sql = `
@@ -829,6 +857,8 @@ module.exports.getTimetableById = getTimetableById;
 module.exports.getTimetablesByTitle = getTimetablesByTitle;
 module.exports.updateTimetableEntry = updateTimetableEntry;
 module.exports.deleteTimetableEntry = deleteTimetableEntry;
+module.exports.addOrUpdateGrade = addOrUpdateGrade;
+module.exports.getUserTimetableCourses = getUserTimetableCourses;
 
 // 과목 관리 함수 export
 module.exports.getAllAvailableCourses = getAllAvailableCourses;

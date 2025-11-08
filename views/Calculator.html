@@ -120,28 +120,36 @@
                         </select>
 
                         <input type="number" id="course-credits" placeholder="학점"
-                            class="p-3 border rounded text-sm bg-white form-input" readonly>
+                            class="col-span-2 p-3 border rounded text-sm bg-white form-input" readonly>
 
-                        <select id="course-grade" class="p-3 border rounded bg-white text-sm">
-                            <option value="4.5">A+</option>
-                            <option value="4.0">A</option>
-                            <option value="3.5">B+</option>
-                            <option value="3.0">B</option>
-                            <option value="2.5">C+</option>
-                            <option value="2.0">C</option>
-                            <option value="1.5">D+</option>
-                            <option value="1.0">D</option>
-                            <option value="0">F</option>
+                        <label class="col-span-2 flex items-center justify-center p-3 border rounded bg-white cursor-pointer hover:bg-slate-50">
+                            <input type="checkbox" id="course-is-major" class="w-4 h-4 text-sub-blue border-slate-300 rounded focus:ring-sub-blue">
+                            <span class="ml-2 text-sm text-slate-700">전공 과목</span>
+                        </label>
+
+                        <select id="course-grade" class="p-3 border rounded bg-white text-sm col-span-3">
+                            <option value="A+">A+</option>
+                            <option value="A0">A</option>
+                            <option value="B+">B+</option>
+                            <option value="B0">B</option>
+                            <option value="C+">C+</option>
+                            <option value="C0">C</option>
+                            <option value="D+">D+</option>
+                            <option value="D0">D</option>
+                            <option value="F">F</option>
                         </select>
 
                         <button id="add-course-btn"
-                            class="col-span-2 bg-main-red text-white rounded font-bold text-sm hover:bg-red-700">추가</button>
+                            class="bg-main-red text-white rounded font-bold text-sm hover:bg-red-700">추가</button>
                     </div>
 
                     <div class="bg-sub-blue text-white p-4 rounded-lg shadow-lg mb-4 flex-shrink-0">
                         <p class="text-sm font-medium">총 평균 학점 (4.5 만점)</p>
-                        <p class="text-4xl font-extrabold mt-1"><span id="total-gpa">0.00</span></p>
-                        <p class="text-xs mt-2">총 이수 학점: <span id="total-credits">0</span>학점</p>
+                        <p class="text-4xl font-extrabold mt-1"><span id="total-gpa">{{ overallGPA or '0.00' }}</span></p>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-xs">총 이수 학점: <span id="total-credits">{{ totalCredits or 0 }}</span>학점</p>
+                            <p class="text-xs">전공 평점: <span id="major-gpa">{{ majorGPA or '0.00' }}</span></p>
+                        </div>
                     </div>
 
                     <div id="grade-list-section" class="mt-4 pt-3 border-t border-slate-200">
@@ -149,8 +157,15 @@
                         <div class="space-y-4">
                             {% if semesters and semesters.length > 0 %}
                             {% for s in semesters %}
-                            <div class="bg-white rounded-lg shadow p-4 border border-slate-100">
-                                <h5 class="font-bold text-md mb-2">{{ s.year }}년 {{ s.semester }}학기</h5>
+                            <div class="bg-white rounded-lg shadow border border-slate-100 overflow-hidden">
+                                <button type="button" class="w-full flex items-center justify-between p-4 sem-toggle hover:bg-slate-50"
+                                    data-sem-key="{{ s.year }}-{{ s.semester }}">
+                                    <span class="font-bold text-md">{{ s.year }}년 {{ s.semester }}학기</span>
+                                    <svg class="w-5 h-5 text-slate-600 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="sem-content px-4 pb-4">
                                 <table class="w-full text-sm text-left table-fixed">
                                     <thead class="text-xs text-slate-500 uppercase bg-slate-50">
                                         <tr>
@@ -175,6 +190,7 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
                             {% endfor %}
                             {% else %}
@@ -191,7 +207,7 @@
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
 
-                <a href="/Main.html"
+                <a href="/Main"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -201,7 +217,7 @@
                     <span class="text-xs mt-1">홈</span>
                 </a>
 
-                <a href="/Calendar.html"
+                <a href="/Calendar"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -213,7 +229,7 @@
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
 
-                <a href="/AnnouncementGuest.html"
+                <a href="/Announcement"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -227,7 +243,7 @@
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
 
-                <a href="/Timetable.html" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                <a href="/Timetable" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect width="7" height="9" x="3" y="3" rx="1"></rect>
@@ -238,7 +254,7 @@
                     <span class="text-xs mt-1">시간표</span>
                 </a>
 
-                <a href="/MyPage.html"
+                <a href="/MyPage"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -254,34 +270,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const addCourseBtn = document.getElementById('add-course-btn');
-            const courseListEl = document.getElementById('course-list');
             const courseSelect = document.getElementById('course-select');
             const courseCreditsInput = document.getElementById('course-credits');
             const courseGradeSelect = document.getElementById('course-grade');
+            const courseIsMajorCheckbox = document.getElementById('course-is-major');
             const totalGpaEl = document.getElementById('total-gpa');
             const totalCreditsEl = document.getElementById('total-credits');
 
             let myCoursesData = []; // { id, title, credits }
-            let calculatedCourses = []; // { name, credits, gradeValue, gradeText }
 
             async function fetchMyCourses() {
                 try {
-                    // (백엔드) /api/my-timetable-courses API가 아래 형식의 JSON을 반환해야 함
                     const response = await fetch('/api/my-timetable-courses');
                     if (!response.ok) throw new Error('Cannot fetch my courses');
 
                     myCoursesData = await response.json();
-                    // (백엔드 데이터 예시)
-                    // [
-                    //   { "id": "C001", "title": "운영체제", "credits": 3 },
-                    //   { "id": "C002", "title": "웹프로그래밍", "credits": 3 },
-                    //   { "id": "G001", "title": "교양영어", "credits": 2 }
-                    // ]
 
                     courseSelect.innerHTML = '<option value="">과목을 선택하세요 (시간표 기준)</option>';
                     myCoursesData.forEach(course => {
                         const option = document.createElement('option');
-                        option.value = course.id; 
+                        option.value = course.title; 
                         option.textContent = course.title;
                         option.dataset.credits = course.credits;
                         courseSelect.appendChild(option);
@@ -304,100 +312,54 @@
                 courseCreditsInput.value = selectedCredits;
             });
 
-            addCourseBtn.addEventListener('click', () => {
+            addCourseBtn.addEventListener('click', async () => {
                 const selectedOption = courseSelect.options[courseSelect.selectedIndex];
-
                 if (!selectedOption || courseSelect.value === "") {
                     alert('과목을 선택해주세요.');
                     return;
                 }
-
                 const courseName = selectedOption.textContent;
-                const courseCredits = courseCreditsInput.value;
-                const courseGradeValue = courseGradeSelect.value;
-                const courseGradeText = courseGradeSelect.options[courseGradeSelect.selectedIndex].text;
+                const courseCredits = courseCreditsInput.value || 0;
+                const gradeValue = courseGradeSelect.value;
+                const isMajor = courseIsMajorCheckbox.checked ? 1 : 0;
 
-                if (calculatedCourses.find(c => c.name === courseName)) {
-                    alert('이미 추가된 과목입니다.');
-                    return;
+                try {
+                    const resp = await fetch('/api/grades', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            course_title: courseName, 
+                            credits: Number(courseCredits), 
+                            grade: gradeValue,
+                            is_major: isMajor
+                        })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || !data.ok) {
+                        throw new Error(data.message || '저장 실패');
+                    }
+                    // 저장 후 새로고침하여 서버 데이터로 갱신
+                    location.reload();
+                } catch (e) {
+                    alert(e.message || '성적을 저장하는 중 오류가 발생했습니다.');
                 }
-
-                calculatedCourses.push({
-                    name: courseName,
-                    credits: courseCredits,
-                    gradeValue: courseGradeValue,
-                    gradeText: courseGradeText
-                });
-
-                courseSelect.value = '';
-                courseCreditsInput.value = '';
-                courseGradeSelect.value = '4.5';
-
-                renderCourseList();
-                calculateAndRenderGPA();
             });
-
-            function renderCourseList() {
-                if (!courseListEl) return;
-                courseListEl.innerHTML = '';
-
-                if (calculatedCourses.length === 0) {
-                    courseListEl.innerHTML = `<p class="text-center text-slate-500 py-4 text-sm">추가된 과목이 없습니다.</p>`;
-                    return;
-                }
-
-                calculatedCourses.forEach((course, index) => {
-                    const li = document.createElement('div');
-                    li.className = 'bg-white p-3 rounded-md shadow-sm flex justify-between items-center hover:shadow-md transition';
-                    li.innerHTML = `
-                    <div>
-                        <p class="font-bold text-sm">${course.name}</p>
-                        <p class="text-xs text-slate-500">${course.credits}학점 / ${course.gradeText}</p>
-                    </div>
-                    <button data-index="${index}" class="remove-btn text-red-500 hover:text-red-700 p-1">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                `;
-                    courseListEl.appendChild(li);
-                });
-            }
-            
-            function calculateAndRenderGPA() {
-                let totalCredits = 0;
-                let totalGradePoints = 0;
-
-                calculatedCourses.forEach(course => {
-                    const credits = parseFloat(course.credits);
-                    const gradePoint = parseFloat(course.gradeValue);
-                    if (!isNaN(credits) && !isNaN(gradePoint)) {
-                        totalCredits += credits;
-                        totalGradePoints += credits * gradePoint;
-                    }
-                });
-
-                const gpa = totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : '0.00';
-
-                if (totalGpaEl && totalCreditsEl) {
-                    totalGpaEl.textContent = gpa;
-                    totalCreditsEl.textContent = totalCredits;
-                }
-            }
-
-            if (courseListEl) {
-                courseListEl.addEventListener('click', (e) => {
-                    const removeBtn = e.target.closest('.remove-btn');
-                    if (removeBtn) {
-                        const indexToRemove = removeBtn.dataset.index;
-                        calculatedCourses.splice(indexToRemove, 1);
-                        renderCourseList();
-                        calculateAndRenderGPA();
-                    }
-                });
-            }
-
-            renderCourseList();
-            calculateAndRenderGPA();
             fetchMyCourses();
+
+            // --- 학기별 접기/펼치기 토글 ---
+            const toggles = document.querySelectorAll('.sem-toggle');
+            toggles.forEach(btn => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('svg');
+                // 기본적으로 접혀있음
+                content.classList.add('hidden');
+                icon.classList.add('rotate-180');
+                
+                btn.addEventListener('click', () => {
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
         });
     </script>
 </body>

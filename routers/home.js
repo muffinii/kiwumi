@@ -69,6 +69,11 @@ router.delete("/api/classes/:id", controller.deleteClassApi);
 // 바코드 생성 라우트
 router.get('/barcode/:text', controller.generateBarcode);
 
+// 학점/시간표 관련 API
+router.get('/api/my-timetable-courses', controller.getMyTimetableCoursesApi);
+router.post('/api/grades', controller.addGradeApi);
+router.get('/api/grades/summary', controller.getGradesSummaryApi);
+
 module.exports = {
     router
 }
