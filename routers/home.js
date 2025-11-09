@@ -10,6 +10,9 @@ router.get("/ForgotPassword", controller.forgotPassword);
 router.get("/VerifyCode", controller.verifyCode);
 router.get("/ResetPassword", controller.resetPassword);
 router.post("/api/auth/register", controller.registerProc);
+router.post("/api/auth/send-code", controller.sendVerificationCodeApi);
+router.post("/api/auth/verify-code", controller.verifyCodeApi);
+router.post("/api/auth/reset-password", controller.resetPasswordApi);
 router.get("/Logout", controller.logout);
 
 // 인증 미들웨어: 세션에 user가 없으면 로그인 페이지로 이동

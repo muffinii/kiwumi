@@ -38,9 +38,18 @@
         <main class="flex-grow px-4 py-4 overflow-y-auto">
             
             <div class="section-card">
-                <p class="text-sm text-slate-600 mb-6 text-center">
+                <p class="text-sm text-slate-600 mb-2 text-center">
                     <span id="user-email" class="font-bold">...</span>(으)로 전송된<br> 6자리 인증번호를 입력하세요.
                 </p>
+                
+                <!-- 타이머 표시 -->
+                <div class="flex justify-center items-center mb-6">
+                    <div class="bg-red-50 px-4 py-2 rounded-lg border border-red-200">
+                        <p class="text-sm text-red-600 font-medium">
+                            남은 시간: <span id="timer" class="font-bold text-lg">10:00</span>
+                        </p>
+                    </div>
+                </div>
 
                 <form id="verify-code-form" class="space-y-4">
                     <div>
@@ -50,7 +59,7 @@
                     </div>
                     
                     <div class="pt-4">
-                        <button type="submit" class="w-full bg-sub-blue text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-lg">
+                        <button type="submit" id="submit-btn" class="w-full bg-sub-blue text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-lg">
                             인증 확인
                         </button>
                     </div>
@@ -68,6 +77,9 @@
             const form = document.getElementById('verify-code-form');
             const messageEl = document.getElementById('form-message');
             const emailDisplay = document.getElementById('user-email');
+            const timerDisplay = document.getElementById('timer');
+            const submitBtn = document.getElementById('submit-btn');
+            const codeInput = document.getElementById('code');
             
             // 1. URL에서 이메일 주소 가져오기
             const params = new URLSearchParams(window.location.search);
@@ -79,9 +91,54 @@
                 emailDisplay.textContent = "이메일 정보";
             }
 
+            // 2. 10분 카운트다운 타이머 (600초)
+            let timeLeft = 600; // 10분 = 600초
+            let timerInterval;
+
+            function updateTimer() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                // 시간이 30초 미만이면 빨간색으로 강조
+                if (timeLeft < 30) {
+                    timerDisplay.parentElement.parentElement.className = 'bg-red-100 px-4 py-2 rounded-lg border border-red-300 animate-pulse';
+                    timerDisplay.parentElement.className = 'text-sm text-red-700 font-medium';
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = '만료됨';
+                    messageEl.textContent = '인증 시간이 만료되었습니다. 다시 시도해주세요.';
+                    messageEl.className = 'text-center text-sm h-6 mt-2 text-red-600 font-bold';
+                    
+                    // 폼 비활성화
+                    submitBtn.disabled = true;
+                    submitBtn.className = 'w-full bg-gray-400 text-white p-3 rounded-lg font-bold text-lg cursor-not-allowed';
+                    codeInput.disabled = true;
+                    codeInput.className = 'form-input bg-gray-100 text-lg tracking-[0.3em] text-center cursor-not-allowed';
+                    
+                    return;
+                }
+
+                timeLeft--;
+            }
+
+            // 타이머 시작
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const code = document.getElementById('code').value;
+                
+                // 시간 만료 체크
+                if (timeLeft <= 0) {
+                    messageEl.textContent = '인증 시간이 만료되었습니다.';
+                    messageEl.className = 'text-center text-sm h-6 mt-2 text-red-500';
+                    return;
+                }
+
+                const code = codeInput.value;
 
                 try {
                     // 백엔드 /api/auth/verify-code API가 이메일과 코드가 일치하는지 확인
@@ -94,6 +151,9 @@
                     const result = await response.json();
 
                     if (response.ok) {
+                        // 타이머 중지
+                        clearInterval(timerInterval);
+                        
                         messageEl.textContent = '인증에 성공했습니다.';
                         messageEl.className = 'text-center text-sm h-6 mt-2 text-green-600';
                         
@@ -113,6 +173,11 @@
                     messageEl.textContent = '요청 중 오류가 발생했습니다.';
                     messageEl.className = 'text-center text-sm h-6 mt-2 text-red-500';
                 }
+            });
+
+            // 페이지를 떠날 때 타이머 정리
+            window.addEventListener('beforeunload', function() {
+                clearInterval(timerInterval);
             });
         });
     </script>

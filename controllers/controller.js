@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bwipjs = require('bwip-js');
+const mailer = require('../common/mailer');
 
 // Multer 설정: 파일 저장 위치 및 파일명 설정
 const storage = multer.diskStorage({
@@ -1703,6 +1704,102 @@ const deleteGradeApi = async (req, res) => {
     }
 };
 
+// ============================================================
+// 이메일 인증 및 비밀번호 재설정 API
+// ============================================================
+
+// 인증번호 발송 API
+const sendVerificationCodeApi = async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ ok: false, message: '이메일을 입력해주세요.' });
+        }
+
+        // 이메일로 사용자 찾기
+        const user = await model.findUserByEmail(email);
+        if (!user) {
+            return res.status(404).json({ ok: false, message: '가입되지 않은 이메일입니다.' });
+        }
+
+        // 6자리 랜덤 인증번호 생성
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // DB에 인증번호 저장 (10분 유효)
+        await model.saveVerificationCode(email, code, 10);
+
+        // 이메일 발송
+        const result = await mailer.sendVerificationCode(email, code);
+
+        if (result.success) {
+            return res.json({ ok: true, message: '인증번호가 발송되었습니다.' });
+        } else {
+            return res.status(500).json({ ok: false, message: '이메일 발송에 실패했습니다.' });
+        }
+    } catch (err) {
+        console.error('인증번호 발송 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
+// 인증번호 확인 API
+const verifyCodeApi = async (req, res) => {
+    try {
+        const { email, code } = req.body;
+
+        if (!email || !code) {
+            return res.status(400).json({ ok: false, message: '이메일과 인증번호를 입력해주세요.' });
+        }
+
+        // 인증번호 확인
+        const isValid = await model.verifyCode(email, code);
+
+        if (isValid) {
+            // 인증 성공 시 비밀번호 재설정용 1회용 토큰 생성
+            const token = await model.createPasswordResetToken(email);
+            return res.json({ ok: true, token: token, message: '인증에 성공했습니다.' });
+        } else {
+            return res.status(400).json({ ok: false, message: '인증번호가 올바르지 않거나 만료되었습니다.' });
+        }
+    } catch (err) {
+        console.error('인증번호 확인 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
+// 비밀번호 재설정 API
+const resetPasswordApi = async (req, res) => {
+    try {
+        const { token, password } = req.body;
+
+        if (!token || !password) {
+            return res.status(400).json({ ok: false, message: '토큰과 비밀번호를 입력해주세요.' });
+        }
+
+        // 토큰 확인
+        const tokenInfo = await model.verifyPasswordResetToken(token);
+
+        if (!tokenInfo.valid) {
+            return res.status(400).json({ ok: false, message: '토큰이 올바르지 않거나 만료되었습니다.' });
+        }
+
+        // 비밀번호 변경
+        const success = await model.updatePassword(tokenInfo.email, password);
+
+        if (success) {
+            // 토큰 사용 처리
+            await model.markTokenAsUsed(tokenInfo.tokenId);
+            return res.json({ ok: true, message: '비밀번호가 성공적으로 변경되었습니다.' });
+        } else {
+            return res.status(500).json({ ok: false, message: '비밀번호 변경에 실패했습니다.' });
+        }
+    } catch (err) {
+        console.error('비밀번호 재설정 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
 // 바코드 생성 컨트롤러
 const generateBarcode = (req, res) => {
     const text = req.params.text;
@@ -1778,6 +1875,10 @@ module.exports = {
     updateGradeApi,
     deleteGradeApi,
     getGradesSummaryApi,
+    // email verification APIs
+    sendVerificationCodeApi,
+    verifyCodeApi,
+    resetPasswordApi,
     generateBarcode
 }
 

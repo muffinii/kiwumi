@@ -912,3 +912,146 @@ module.exports.getAllAvailableCourses = getAllAvailableCourses;
 module.exports.getSectionDetails = getSectionDetails;
 module.exports.checkTimetableConflict = checkTimetableConflict;
 module.exports.checkCourseAlreadyAdded = checkCourseAlreadyAdded;
+
+// ============================================================
+// 이메일 인증 및 비밀번호 재설정 관련 함수
+// ============================================================
+
+// 이메일로 사용자 찾기 (학생 또는 관리자)
+const findUserByEmail = async (email) => {
+    try {
+        // 학생 테이블에서 검색
+        let sql = 'SELECT pkid, name, email, "student" as user_type FROM student WHERE email = ?;';
+        let result = await db.runSql(sql, [email]);
+        if (result.length > 0) return result[0];
+
+        // 관리자 테이블에서 검색
+        await ensureAdminColumns();
+        sql = 'SELECT pkid, name, email, "admin" as user_type FROM administrator WHERE email = ?;';
+        result = await db.runSql(sql, [email]);
+        if (result.length > 0) return result[0];
+
+        return null;
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 인증 코드 저장
+const saveVerificationCode = async (email, code, expiresInMinutes = 10) => {
+    try {
+        const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
+        const sql = `
+            INSERT INTO verification_codes (email, code, expires_at)
+            VALUES (?, ?, ?);
+        `;
+        const result = await db.runSql(sql, [email, code, expiresAt]);
+        return result.insertId;
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 인증 코드 확인
+const verifyCode = async (email, code) => {
+    try {
+        const sql = `
+            SELECT id, email
+            FROM verification_codes
+            WHERE email = ? AND code = ? 
+              AND expires_at > NOW() 
+              AND is_used = 0
+            ORDER BY created_at DESC
+            LIMIT 1;
+        `;
+        const result = await db.runSql(sql, [email, code]);
+        
+        if (result.length > 0) {
+            // 사용 처리
+            const updateSql = 'UPDATE verification_codes SET is_used = 1 WHERE id = ?;';
+            await db.runSql(updateSql, [result[0].id]);
+            return true;
+        }
+        return false;
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 비밀번호 재설정 토큰 생성
+const createPasswordResetToken = async (email) => {
+    try {
+        const crypto = require('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30분 유효
+
+        const sql = `
+            INSERT INTO password_reset_tokens (email, token, expires_at)
+            VALUES (?, ?, ?);
+        `;
+        await db.runSql(sql, [email, token, expiresAt]);
+        return token;
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 비밀번호 재설정 토큰 확인
+const verifyPasswordResetToken = async (token) => {
+    try {
+        const sql = `
+            SELECT id, email
+            FROM password_reset_tokens
+            WHERE token = ? 
+              AND expires_at > NOW() 
+              AND is_used = 0
+            LIMIT 1;
+        `;
+        const result = await db.runSql(sql, [token]);
+        
+        if (result.length > 0) {
+            return { valid: true, email: result[0].email, tokenId: result[0].id };
+        }
+        return { valid: false };
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 비밀번호 변경
+const updatePassword = async (email, newPassword) => {
+    try {
+        // 학생인지 관리자인지 확인
+        const user = await findUserByEmail(email);
+        if (!user) return false;
+
+        if (user.user_type === 'student') {
+            const sql = 'UPDATE student SET student_pw = ? WHERE email = ?;';
+            await db.runSql(sql, [newPassword, email]);
+        } else {
+            const sql = 'UPDATE administrator SET admin_pw = ? WHERE email = ?;';
+            await db.runSql(sql, [newPassword, email]);
+        }
+        return true;
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 토큰 사용 처리
+const markTokenAsUsed = async (tokenId) => {
+    try {
+        const sql = 'UPDATE password_reset_tokens SET is_used = 1 WHERE id = ?;';
+        await db.runSql(sql, [tokenId]);
+    } catch (err) {
+        throw err;
+    }
+};
+
+module.exports.findUserByEmail = findUserByEmail;
+module.exports.saveVerificationCode = saveVerificationCode;
+module.exports.verifyCode = verifyCode;
+module.exports.createPasswordResetToken = createPasswordResetToken;
+module.exports.verifyPasswordResetToken = verifyPasswordResetToken;
+module.exports.updatePassword = updatePassword;
+module.exports.markTokenAsUsed = markTokenAsUsed;
