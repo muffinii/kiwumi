@@ -81,7 +81,7 @@
     <div class="app-container">
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Timetable.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Timetable" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m15 18-6-6 6-6" />
@@ -135,7 +135,7 @@
                     <div>
                         <label for="class-memo" class="form-label">메모 (선택)</label>
                         <textarea id="class-memo" name="memo" placeholder="수업 관련 메모나 특이사항" rows="3"
-                            class="form-select"></textarea>
+                            class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-main-red focus:border-transparent resize-none"></textarea>
                     </div>
                 </div>
 
@@ -299,7 +299,7 @@
                     }
 
                     alert(`"${result.course}" 과목이 시간표에 추가되었습니다!`);
-                    window.location.href = '/Timetable.html';
+                    window.location.href = '/Timetable';
 
                 } catch (error) {
                     console.error("Error adding class:", error);

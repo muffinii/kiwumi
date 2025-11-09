@@ -134,7 +134,7 @@
                                     }}</span></div>
                             {% for c in r.cells %}
                             {% if c %}
-                            <a href="/ViewClass/{{ c.id }}"
+                            <a href="/ViewClass?classId={{ c.id }}"
                                 class="timetable-slot border rounded {{ c.color }} p-1 cursor-pointer hover:opacity-80 transition-opacity">
                                 <span class="font-bold text-xs break-words">{{ c.title }}</span>
                                 {% if c.location %}<span class="text-[10px] text-slate-600">{{ c.location }}</span>{%

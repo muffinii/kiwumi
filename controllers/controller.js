@@ -884,6 +884,22 @@ const getAllCoursesApi = async (req, res) => {
     }
 }
 
+// 특정 과목의 분반 목록 조회 API
+const getCourseSectionsApi = async (req, res) => {
+    try {
+        const course_id = req.params.courseId;
+        if (!course_id) {
+            return res.status(400).json({ ok: false, message: '과목 ID가 필요합니다.' });
+        }
+        
+        const sections = await model.getSectionsByCourseId(course_id);
+        return res.json(sections);
+    } catch (err) {
+        console.error('분반 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
 // 시간표에 과목 추가 API (충돌 체크 포함)
 const addCourseToTimetableApi = async (req, res) => {
     try {
@@ -892,7 +908,7 @@ const addCourseToTimetableApi = async (req, res) => {
             return res.status(401).json({ ok: false, message: '학생만 시간표에 추가할 수 있습니다.' });
         }
 
-        const { section_id, color } = req.body;
+        const { section_id, color, memo } = req.body;
         
         if (!section_id) {
             return res.status(400).json({ ok: false, message: '분반 ID가 필요합니다.' });
@@ -962,7 +978,7 @@ const addCourseToTimetableApi = async (req, res) => {
                 courseTitle,
                 classroom,
                 classColor,
-                null, // memo
+                memo || null,
                 professor,
                 credits
             );
@@ -1353,7 +1369,7 @@ const viewClass = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return res.redirect('/Login');
         
-        const id = req.params.id || req.query.id;
+        const id = req.params.id || req.query.id || req.query.classId;
         if (!id) return res.status(400).send('수업 ID가 필요합니다.');
         
         // 먼저 해당 ID의 수업 정보를 가져와서 과목명을 확인
@@ -1406,10 +1422,16 @@ const modifyClass = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return res.redirect('/Login');
         
-        const id = req.params.id || req.query.id;
+        const id = req.params.id || req.query.id || req.query.classId;
+        console.log('modifyClass - req.params:', req.params);
+        console.log('modifyClass - req.query:', req.query);
+        console.log('modifyClass - id:', id);
+        
         if (!id) return res.status(400).send('수업 ID가 필요합니다.');
         
         const classInfo = await model.getTimetableById(id, user.pkid);
+        console.log('modifyClass - classInfo:', classInfo);
+        
         if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
         
         // 요일 변환
@@ -1492,6 +1514,33 @@ const getClassApi = async (req, res) => {
     }
 }
 
+// 시간표 상세 정보 조회 API (ModifyClass용)
+const getClassDetailsApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+        
+        const id = req.params.id;
+        if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
+        
+        // 해당 수업 정보 가져오기
+        const classInfo = await model.getTimetableById(id, user.pkid);
+        if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
+        
+        return res.json({
+            ok: true,
+            title: classInfo.title,
+            color: classInfo.color || 'bg-blue-100',
+            memo: classInfo.memo || '',
+            professor: classInfo.professor || '',
+            credits: classInfo.credits || ''
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+}
+
 // 시간표 수정 API (JSON)
 const updateClassApi = async (req, res) => {
     try {
@@ -1537,6 +1586,7 @@ const updateClassApi = async (req, res) => {
         }
         
         // 새로운 슬롯들 추가
+        let firstNewId = null;
         for (const slot of slots) {
             const day = dayMap[slot.day];
             const start_period = timeToPeriod(slot.startTime);
@@ -1548,7 +1598,7 @@ const updateClassApi = async (req, res) => {
             
             const location = common.reqeustFilter(slot.place || '', 100, false, '');
             
-            await model.addTimetableEntry(
+            const newId = await model.addTimetableEntry(
                 user.pkid,
                 day,
                 start_period,
@@ -1560,9 +1610,11 @@ const updateClassApi = async (req, res) => {
                 professor,
                 credits
             );
+            
+            if (!firstNewId) firstNewId = newId;
         }
         
-        return res.json({ ok: true, message: '수업이 수정되었습니다.' });
+        return res.json({ ok: true, message: '수업이 수정되었습니다.', newClassId: firstNewId });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ ok: false, message: '서버 오류' });
@@ -2065,6 +2117,7 @@ module.exports = {
     viewClass,
     modifyClass,
     getClassApi,
+    getClassDetailsApi,
     updateClassApi,
     deleteClassApi,
     notifications,
@@ -2079,6 +2132,7 @@ module.exports = {
     upload,
     uploadAnnouncement,
     getAllCoursesApi,
+    getCourseSectionsApi,
     addCourseToTimetableApi,
     // grades/timetable related APIs
     getMyTimetableCoursesApi,

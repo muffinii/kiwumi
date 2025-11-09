@@ -89,6 +89,7 @@
 
             <h1 id="class-title-header" class="text-xl font-bold text-slate-800 flex-grow text-center">{{ classInfo.title }}</h1>
 
+            {% if classInfo.timeSlots and classInfo.timeSlots.length > 0 %}
             <div class="dropdown">
                 <button class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -99,10 +100,11 @@
                     </svg>
                 </button>
                 <div class="dropdown-content">
-                    <a href="/ModifyClass/{{ classInfo.id }}">수정</a>
-                    <a href="#" onclick="deleteClass(event, '{{ classInfo.id }}')">삭제</a>
+                    <a href="/ModifyClass?classId={{ classInfo.timeSlots[0].id }}">수정</a>
+                    <a href="#" onclick="deleteClass(event, '{{ classInfo.timeSlots[0].id }}')">삭제</a>
                 </div>
             </div>
+            {% endif %}
         </header>
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">

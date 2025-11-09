@@ -119,23 +119,23 @@
         
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-                <a href="/Main.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/Main" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     <span class="text-xs mt-1">홈</span>
                 </a>
-                <a href="/Calendar.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/Calendar" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/AnnouncementGuest.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/AnnouncementGuest" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
-                <a href="/Timetable.html" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                <a href="/Timetable" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
                     <span class="text-xs mt-1">시간표</span>
                 </a>
-                <a href="/MyPage.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                <a href="/MyPage" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span class="text-xs mt-1">마이페이지</span>
                 </a>
@@ -226,32 +226,41 @@
             const classId = params.get('classId'); 
 
             // 뒤로가기 버튼 링크 설정
-            backToView.href = `/ViewClass.html?classId=${classId}`;
+            backToView.href = `/ViewClass?classId=${classId}`;
 
             if (!classId) {
                 alert('수정할 수업 ID가 없습니다.');
-                window.location.href = '/Timetable.html';
+                window.location.href = '/Timetable';
                 return;
             }
 
             try {
-                // 1. 기존 시간표 항목의 상세 정보 로드 (GET)
-                const response = await fetch(`/api/classes/${classId}/details`);
+                // 1. 기존 시간표 항목의 전체 정보 로드 (모든 시간 슬롯 포함)
+                const response = await fetch(`/api/classes/${classId}`);
                 if (!response.ok) throw new Error('데이터 로딩 실패');
                 const data = await response.json();
                 
-                // 2. 기본 정보 채우기 (Read-Only)
+                // 2. 기본 정보 채우기
                 document.getElementById('title').value = data.title || '정보 없음';
-                // data.course_id는 분반 목록 로드에 필요하므로 캐시
-                courseIdCache = data.course_id; 
-                
-                // 3. 메모 및 표시 설정 채우기
                 document.getElementById('memo').value = data.memo || '';
                 colorHidden.value = data.color || 'bg-blue-100';
                 updateColorSelection();
 
-                // 4. 시간표 분반 목록 로드 (핵심!)
-                await fetchAndPopulateSections(data.course_id, data.section_id);
+                // 3. 시간표 슬롯을 분반 선택으로 표시
+                sectionSelect.innerHTML = '';
+                if (data.slots && data.slots.length > 0) {
+                    data.slots.forEach((slot, index) => {
+                        const option = document.createElement('option');
+                        option.value = slot.id;
+                        option.textContent = `${slot.day} ${slot.startTime}-${slot.endTime} (${slot.place || '장소없음'})`;
+                        if (index === 0) option.selected = true;
+                        sectionSelect.appendChild(option);
+                    });
+                    sectionSelect.disabled = false;
+                } else {
+                    sectionSelect.innerHTML = '<option value="">시간 정보 없음</option>';
+                    sectionSelect.disabled = true;
+                }
 
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -263,30 +272,26 @@
             e.preventDefault();
             const classId = new URLSearchParams(window.location.search).get('classId');
 
-            const sectionId = document.getElementById('section-select').value;
             const color = colorHidden.value;
             const memo = document.getElementById('memo').value;
 
-            if (!sectionId) {
-                alert('시간/분반을 선택해야 합니다.');
-                return;
-            }
-            if (document.getElementById('section-select').disabled) {
-                 alert('현재 분반을 변경할 수 없습니다. (로드 실패)');
-                 return;
-            }
-
-            // Read-only 필드 값을 서버에 다시 전송하여 DB 일관성을 유지
-            const data = {
-                title: document.getElementById('title').value, 
-                section_id: sectionId, 
-                class_color: color, 
-                memo: memo
-                // 서버에서 title, credits, professor를 다시 쿼리할 수 있도록 course_id도 보내는 것이 안전할 수 있습니다.
-            };
-
             try {
-                // 2. 수정 요청 (PUT)
+                // 기존 데이터를 다시 가져와서 slots 정보 유지
+                const getResponse = await fetch(`/api/classes/${classId}`);
+                if (!getResponse.ok) throw new Error('데이터 로딩 실패');
+                const currentData = await getResponse.json();
+
+                // 색상과 메모만 업데이트, 나머지는 기존 데이터 유지
+                const data = {
+                    title: currentData.title,
+                    class_color: color,
+                    memo: memo,
+                    professor: currentData.professor,
+                    credits: currentData.credits,
+                    slots: currentData.slots
+                };
+
+                // 수정 요청 (PUT)
                 const response = await fetch(`/api/classes/${classId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -300,7 +305,12 @@
                 }
 
                 alert('수업 정보가 성공적으로 수정되었습니다.');
-                window.location.href = `/ViewClass.html?classId=${classId}`; 
+                // 새로 생성된 첫 번째 슬롯의 ID로 ViewClass 페이지로 이동
+                if (result.newClassId) {
+                    window.location.href = `/ViewClass?classId=${result.newClassId}`;
+                } else {
+                    window.location.href = '/Timetable';
+                } 
 
             } catch (error) {
                 console.error('Error updating data:', error);

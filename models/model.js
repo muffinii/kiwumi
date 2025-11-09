@@ -893,6 +893,40 @@ const getSectionDetails = async (section_id) => {
     return result;
 }
 
+// 특정 과목의 모든 분반 조회
+const getSectionsByCourseId = async (course_id) => {
+    const sql = `
+        SELECT 
+            cs.id,
+            cs.section_number,
+            cs.professor,
+            cs.classroom AS place,
+            GROUP_CONCAT(
+                CONCAT(
+                    CASE css.day_of_week
+                        WHEN 1 THEN '월'
+                        WHEN 2 THEN '화'
+                        WHEN 3 THEN '수'
+                        WHEN 4 THEN '목'
+                        WHEN 5 THEN '금'
+                    END,
+                    ' ',
+                    LPAD(9 + (css.start_period - 1), 2, '0'), ':00-',
+                    LPAD(9 + css.end_period, 2, '0'), ':00'
+                )
+                ORDER BY css.day_of_week, css.start_period
+                SEPARATOR ', '
+            ) AS time_string
+        FROM course_sections cs
+        LEFT JOIN course_schedule css ON cs.id = css.section_id
+        WHERE cs.course_id = ? AND cs.is_available = TRUE
+        GROUP BY cs.id, cs.section_number, cs.professor, cs.classroom
+        ORDER BY cs.section_number;
+    `;
+    const result = await db.runSql(sql, [course_id]);
+    return result;
+}
+
 // 시간표 충돌 체크: 특정 사용자의 기존 시간표와 새로운 수업 시간이 겹치는지 확인
 const checkTimetableConflict = async (user_pkid, day_of_week, start_period, end_period) => {
     await ensureTimetableTable();
@@ -939,6 +973,7 @@ module.exports.getUserTimetableCourses = getUserTimetableCourses;
 // 과목 관리 함수 export
 module.exports.getAllAvailableCourses = getAllAvailableCourses;
 module.exports.getSectionDetails = getSectionDetails;
+module.exports.getSectionsByCourseId = getSectionsByCourseId;
 module.exports.checkTimetableConflict = checkTimetableConflict;
 module.exports.checkCourseAlreadyAdded = checkCourseAlreadyAdded;
 

@@ -51,6 +51,7 @@ router.get("/ModifyEvent", controller.modifyEvent);
 router.get("/AddClass", controller.addClass);
 router.post("/AddClass", controller.addClassProc);
 router.get("/api/all-courses", controller.getAllCoursesApi);
+router.get("/api/course/:courseId/sections", controller.getCourseSectionsApi);
 router.post("/api/timetable/add", controller.addCourseToTimetableApi);
 router.get("/ViewClass/:id", controller.viewClass);
 router.get("/ViewClass", controller.viewClass);
@@ -66,6 +67,7 @@ router.delete("/api/events/:id", controller.deleteEventApi);
 router.get("/api/academic-schedule", controller.getAcademicScheduleApi);
 // 시간표 API
 router.get("/api/classes/:id", controller.getClassApi);
+router.get("/api/classes/:id/details", controller.getClassDetailsApi);
 router.put("/api/classes/:id", controller.updateClassApi);
 router.delete("/api/classes/:id", controller.deleteClassApi);
 
