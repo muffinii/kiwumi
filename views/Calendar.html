@@ -486,8 +486,9 @@
             }
         }
 
-        // 페이지 로드 시 알림 개수 확인
+        // 페이지 로드 시 알림 개수 확인 및 주기적 확인
         checkUnreadNotifications();
+        setInterval(checkUnreadNotifications, 15000); // 15초마다
     </script>
 </body>
 

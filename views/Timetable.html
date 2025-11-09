@@ -319,7 +319,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', checkUnreadNotifications);
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUnreadNotifications();
+            setInterval(checkUnreadNotifications, 15000); // 15초마다
+        });
     </script>
 </body>
 
