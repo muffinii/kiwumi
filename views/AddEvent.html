@@ -41,20 +41,70 @@
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
 
-        /* ▼▼▼ [1. 신규 CSS] 관리자 탭 스타일 ▼▼▼ */
+        /* 관리자 탭 스타일 */
         .event-tab {
             padding: 0.75rem 1rem;
             font-weight: 600;
-            color: #64748b; /* text-slate-500 */
+            color: #64748b;
+            /* text-slate-500 */
             border-bottom: 3px solid transparent;
-            transform: translateY(1px); /* 하단 경계선과 정렬 */
+            transform: translateY(1px);
+            /* 하단 경계선과 정렬 */
             cursor: pointer;
         }
+
         .event-tab.active-tab {
-            color: #003875; /* sub-blue */
+            color: #003875;
+            /* sub-blue */
             border-bottom-color: #003875;
         }
-        /* ▲▲▲ CSS 추가 완료 ▲▲▲ */
+
+        .alarm-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e0e7ff;
+            /* indigo-100 */
+            color: #3730a3;
+            /* indigo-800 */
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            /* rounded-full */
+        }
+
+        .alarm-tag button {
+            margin-left: 0.5rem;
+            color: #4338ca;
+            /* indigo-700 */
+            padding: 0.25rem;
+            border-radius: 9999px;
+        }
+
+        .alarm-tag button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .alarm-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .alarm-option:hover {
+            background-color: #f1f5f9;
+            /* slate-100 */
+        }
+
+        .alarm-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: transparent;
+        }
     </style>
 </head>
 
@@ -65,15 +115,16 @@
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
             <div class="flex items-center space-x-2">
                 <button type="button" id="back-button" aria-label="뒤로가기"
-                        class="p-2 rounded-full hover:bg-slate-200 transition-colors"
-                        onclick="history.back()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    class="p-2 rounded-full hover:bg-slate-200 transition-colors" onclick="history.back()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
                 <h1 class="text-xl font-bold text-slate-800">일정 추가</h1>
             </div>
-            <a href="/Notifications" class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
+            <a href="/Notifications.html"
+                class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="text-slate-600">
@@ -86,40 +137,41 @@
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
             <div id="add-event-section" class="section-card p-4 rounded-lg shadow-md mb-8 h-full min-h-[600px]">
-                
+
                 {% if user_role == 'admin' %}
-                    <div class="border-b border-slate-200 mb-4">
-                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
-                            <button id="tab-public" type="button" class="event-tab active-tab">
-                                학사 일정
-                            </button>
-                            <button id="tab-private" type="button" class="event-tab">
-                                개인 일정
-                            </button>
-                        </nav>
-                    </div>
-                    <p id="personal-desc" class="text-slate-600 mb-4 text-sm sm:text-base hidden">
-                        개인적인 스케줄을 달력에 등록하고 관리하세요.
-                    </p>
-                
+                <div class="border-b border-slate-200 mb-4">
+                    <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                        <button id="tab-public" type="button" class="event-tab active-tab">
+                            학사 일정
+                        </button>
+                        <button id="tab-private" type="button" class="event-tab">
+                            개인 일정
+                        </button>
+                    </nav>
+                </div>
+                <p id="personal-desc" class="text-slate-600 mb-4 text-sm sm:text-base hidden">
+                    개인적인 스케줄을 달력에 등록하고 관리하세요.
+                </p>
                 {% else %}
-                    <h3 class="text-lg font-bold mb-3">새로운 개인 일정</h3>
-                    <p class="text-slate-600 mb-4 text-sm sm:text-base">개인적인 스케줄을 달력에 등록하고 관리하세요.</p>
-                
+                <h3 class="text-lg font-bold mb-3">새로운 개인 일정</h3>
+                <p class="text-slate-600 mb-4 text-sm sm:text-base">개인적인 스케줄을 달력에 등록하고 관리하세요.</p>
                 {% endif %}
-                <div class="bg-slate-100 p-3 rounded-lg flex flex-col h-[80%]">
-                    <form id="add-event-form" method="post" action="/AddEvent" class="flex flex-col h-full p-2 space-y-4">
-                        
-                        <input type="hidden" id="event-type" name="event_type" 
-                               value="{% if user_role == 'admin' %}public{% else %}private{% endif %}">
+
+                <div class="bg-slate-100 p-3 rounded-lg flex flex-col h-full">
+                    <form id="add-event-form" method="post" action="/AddEvent"
+                        class="flex flex-col h-full p-2 space-y-4">
+
+                        <input type="hidden" id="event-type" name="event_type"
+                            value="{% if user_role == 'admin' %}public{% else %}private{% endif %}">
+
                         <div>
                             <label for="event-title" class="block text-sm font-medium text-slate-700">일정명</label>
                             <input type="text" id="event-title" name="title" placeholder="예: 팀 프로젝트 회의"
                                 class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
                         </div>
 
-                        <!-- 학사 일정 전용 필드: 시작일/종료일 -->
-                        <div id="public-fields" class="grid grid-cols-2 gap-4 {% if user_role == 'admin' %}{% else %}hidden{% endif %}">
+                        <div id="public-fields"
+                            class="grid grid-cols-2 gap-4 {% if user_role == 'admin' %}{% else %}hidden{% endif %}">
                             <div>
                                 <label for="start-date" class="block text-sm font-medium text-slate-700">시작일</label>
                                 <input type="date" id="start-date" name="start_date"
@@ -132,7 +184,6 @@
                             </div>
                         </div>
 
-                        <!-- 개인 일정 전용 필드: 날짜/시간/색상 -->
                         <div id="personal-fields" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -141,23 +192,37 @@
                                         class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
                                 </div>
                                 <div>
-                                    <label for="event-time" class="block text-sm font-medium text-slate-700">시간 (선택)</label>
+                                    <label for="event-time" class="block text-sm font-medium text-slate-700">시간
+                                        (선택)</label>
                                     <input type="time" id="event-time" name="event_time"
                                         class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700">배경색</label>
-                                <div id="event-color-options" class="mt-2 flex space-x-3">
-                                    <div data-color="bg-red-200"
-                                        class="event-color-option w-8 h-8 rounded-full bg-red-200 cursor-pointer ring-2 ring-offset-2 ring-sub-blue"
-                                        title="빨강"></div>
-                                    <div data-color="bg-blue-200"
-                                        class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"
-                                        title="파랑"></div>
-                                    <div data-color="bg-yellow-200"
-                                        class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
-                                        title="노랑"></div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">배경색</label>
+                                    <div id="event-color-options" class="mt-2 flex space-x-3">
+
+                                        <div data-color="bg-red-200"
+                                            class="event-color-option w-8 h-8 rounded-full bg-red-200 cursor-pointer ring-2 ring-offset-2 ring-sub-blue"
+                                            title="빨강"></div>
+
+                                        <div data-color="bg-blue-200"
+                                            class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"
+                                            title="파랑"></div>
+
+                                        {% if user_role == 'admin' %}
+                                        <div data-color="bg-green-200"
+                                            class="event-color-option w-8 h-8 rounded-full bg-green-200 cursor-pointer"
+                                            title="초록"></div>
+                                        {% endif %}
+                                        <div data-color="bg-yellow-200"
+                                            class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
+                                            title="노랑"></div>
+
+                                    </div>
+                                    <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
                                 </div>
                                 <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
                             </div>
@@ -165,6 +230,37 @@
                                 <label for="event-memo" class="block text-sm font-medium text-slate-700">메모 (선택)</label>
                                 <textarea id="event-memo" name="memo" rows="3" placeholder="메모를 입력하세요"
                                     class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm"></textarea>
+                            </div>
+                        </div>
+
+                        <div id="alarm-section" class="border-t border-slate-200 pt-4 space-y-3">
+                            <label class="text-sm font-medium text-slate-700">알림 설정</label>
+
+                            <div id="alarm-list-container" class="flex flex-wrap gap-2">
+                                <p class="text-xs text-slate-400">설정된 알림이 없습니다.</p>
+                            </div>
+
+                            <div class="relative">
+                                <button type="button" id="add-alarm-toggle"
+                                    class="w-full text-sm font-medium text-sub-blue p-2 rounded-lg hover:bg-slate-200 transition border-2 border-dashed border-slate-300">
+                                    + 알림 추가
+                                </button>
+
+                                <div id="add-alarm-options"
+                                    class="hidden absolute left-0 right-0 bottom-full mb-1 p-2 bg-white shadow-lg rounded-lg border z-10 space-y-1">
+                                    <button type="button" data-alarm="10m" data-text="10분 전" class="alarm-option">10분
+                                        전</button>
+                                    <button type="button" data-alarm="30m" data-text="30분 전" class="alarm-option">30분
+                                        전</button>
+                                    <button type="button" data-alarm="1h" data-text="1시간 전" class="alarm-option">1시간
+                                        전</button>
+                                    <button type="button" data-alarm="12h" data-text="12시간 전" class="alarm-option">12시간
+                                        전</button>
+                                    <button type="button" data-alarm="1d" data-text="1일 전" class="alarm-option">1일
+                                        전</button>
+                                    <button type="button" data-alarm="1w" data-text="1주일 전" class="alarm-option">1주일
+                                        전</button>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-auto pt-4">
@@ -178,34 +274,7 @@
         </main>
 
         <nav class="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
-            <div class="flex justify-around h-16 items-start">
-                    <a href="/Main"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg ...></svg>
-                    <span class="text-xs mt-1">홈</span>
-                </a>
-                <a href="/Calendar" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
-                    <svg ...></svg>
-                    <span class="text-xs mt-1">캘린더</span>
-                </a>
-                <a href="/AnnouncementGuest"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg ...></svg>
-                    <span class="text-xs mt-1">공지사항</span>
-                </a>
-                {% if user_role == 'student' %}
-                    <a href="/Timetable"
-                        class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                        <svg ...></svg>
-                        <span class="text-xs mt-1">시간표</span>
-                    </a>
-                {% endif %}
-                <a href="/MyPage"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg ...></svg>
-                    <span class="text-xs mt-1">마이</span>
-                </a>
-            </div>
+            ...
         </nav>
     </div>
 
@@ -222,12 +291,10 @@
                 }
             }
 
-            // --- 폼 요소 ---
             const addEventForm = document.getElementById('add-event-form');
             const eventColorOptions = document.getElementById('event-color-options');
             const eventColorHidden = document.getElementById('event-color');
-            
-            // --- 신규 요소 (관리자 탭) ---
+
             const tabPublic = document.getElementById('tab-public');
             const tabPrivate = document.getElementById('tab-private');
             const personalDesc = document.getElementById('personal-desc');
@@ -236,42 +303,112 @@
             const publicFields = document.getElementById('public-fields');
             const personalFields = document.getElementById('personal-fields');
 
-            if (tabPublic && tabPrivate) { // 관리자일 때만 실행
-                
+            const alarmSection = document.getElementById('alarm-section');
+            const alarmListContainer = document.getElementById('alarm-list-container');
+            const addAlarmToggle = document.getElementById('add-alarm-toggle');
+            const addAlarmOptions = document.getElementById('add-alarm-options');
+            let currentAlarms = [];
+            
+            if (tabPublic && tabPrivate) {
+
                 tabPublic.addEventListener('click', () => {
                     tabPublic.classList.add('active-tab');
                     tabPrivate.classList.remove('active-tab');
-                    
                     eventTypeInput.value = 'public';
-                    
                     if (personalDesc) personalDesc.classList.add('hidden');
-                    
                     submitButton.classList.add('bg-main-red', 'hover:bg-red-700');
                     submitButton.classList.remove('bg-sub-blue', 'hover:bg-blue-800');
-
-                    // 필드 표시 전환
                     if (publicFields) publicFields.classList.remove('hidden');
                     if (personalFields) personalFields.classList.add('hidden');
+                    if (alarmSection) alarmSection.classList.remove('hidden');  // 학사일정도 알림 가능
                 });
 
                 tabPrivate.addEventListener('click', () => {
                     tabPrivate.classList.add('active-tab');
                     tabPublic.classList.remove('active-tab');
-
                     eventTypeInput.value = 'private';
-                    
                     if (personalDesc) personalDesc.classList.remove('hidden');
-
                     submitButton.classList.add('bg-sub-blue', 'hover:bg-blue-800');
                     submitButton.classList.remove('bg-main-red', 'hover:bg-red-700');
-
-                    // 필드 표시 전환
                     if (publicFields) publicFields.classList.add('hidden');
                     if (personalFields) personalFields.classList.remove('hidden');
+                    if (alarmSection) alarmSection.classList.remove('hidden');  // 개인일정도 알림 가능
                 });
             }
 
-            // 초기 필드 표시 상태
+            // 알림 렌더링 함수
+            function renderAlarms() {
+                alarmListContainer.innerHTML = '';
+
+                if (currentAlarms.length === 0) {
+                    alarmListContainer.innerHTML = '<p class="text-xs text-slate-400">설정된 알림이 없습니다.</p>';
+                } else {
+                    currentAlarms.forEach(alarmOffset => {
+                        const option = addAlarmOptions.querySelector(`[data-alarm="${alarmOffset}"]`);
+                        const text = option ? option.dataset.text : alarmOffset;    // 10분 전
+
+                        const tag = document.createElement('span');
+                        tag.className = 'alarm-tag';
+                        tag.innerHTML = `
+                            ${text}
+                            <button type="button" class="remove-alarm-btn" data-alarm="${alarmOffset}" aria-label="알림 삭제">
+                                &times;
+                            </button>
+                        `;
+                        alarmListContainer.appendChild(tag);
+                    });
+                }
+
+                // 알림 추가 옵션에서 이미 선택된 항목은 비활성화
+                document.querySelectorAll('.alarm-option').forEach(option => {
+                    const offset = option.dataset.alarm;
+                    if (currentAlarms.includes(offset)) {
+                        option.classList.add('disabled');
+                        option.disabled = true;
+                    } else {
+                        option.classList.remove('disabled');
+                        option.disabled = false;
+                    }
+                });
+            }
+
+            // 알림 추가/삭제 이벤트 리스너
+            addAlarmToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                addAlarmOptions.classList.toggle('hidden');
+            });
+
+            // 알림 옵션(10분 전 등) 클릭 시 (배열에만 추가)
+            addAlarmOptions.addEventListener('click', (e) => {
+                const button = e.target.closest('.alarm-option');
+                if (!button || button.disabled) return;
+
+                const alarmOffset = button.dataset.alarm;
+                addAlarmOptions.classList.add('hidden');
+
+                if (!currentAlarms.includes(alarmOffset)) {
+                    currentAlarms.push(alarmOffset);
+                    renderAlarms(); 
+                }
+            });
+
+            // 알림 태그의 'x' 버튼 클릭 시 (배열에서 제거)
+            alarmListContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.remove-alarm-btn');
+                if (!button) return;
+
+                const alarmOffset = button.dataset.alarm;
+                currentAlarms = currentAlarms.filter(a => a !== alarmOffset);
+                renderAlarms();
+            });
+
+            // 화면 아무 곳이나 클릭하면 알림 옵션 닫기
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#add-alarm-toggle') && !e.target.closest('#add-alarm-options')) {
+                    addAlarmOptions.classList.add('hidden');
+                }
+            });
+
             if (eventTypeInput && eventTypeInput.value === 'public') {
                 if (publicFields) publicFields.classList.remove('hidden');
                 if (personalFields) personalFields.classList.add('hidden');
@@ -279,7 +416,6 @@
                 if (publicFields) publicFields.classList.add('hidden');
                 if (personalFields) personalFields.classList.remove('hidden');
             }
-
 
             if (eventColorOptions) {
                 eventColorOptions.addEventListener('click', (e) => {
@@ -293,6 +429,7 @@
                 });
             }
 
+            // 알림 목록 전송 추가
             if (addEventForm) {
                 addEventForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -308,13 +445,14 @@
                     params.set('title', titleInput.value);
                     params.set('event_type', eventTypeInput.value);
 
+                    // 알림 목록을 JSON 문자열로 변환하여 추가
+                    params.set('alarms', JSON.stringify(currentAlarms));
+
                     if (eventTypeInput.value === 'public') {
-                        // 학사일정: 제목, 시작/종료일 필수
                         if (!titleInput.value || !startInput.value || !endInput.value) {
                             alert('제목과 시작일/종료일은 필수입니다!');
                             return;
                         }
-                        // 날짜 유효성
                         if (new Date(startInput.value) > new Date(endInput.value)) {
                             alert('종료일은 시작일보다 빠를 수 없습니다.');
                             return;
@@ -322,7 +460,6 @@
                         params.set('start_date', startInput.value);
                         params.set('end_date', endInput.value);
                     } else {
-                        // 개인일정: 제목, 날짜, 색상 필수
                         if (!titleInput.value || !dateInput.value || !selectedColorEl) {
                             alert('제목, 날짜, 색상은 필수입니다!');
                             return;
@@ -332,15 +469,8 @@
                         if (memoInput && memoInput.value) params.set('memo', memoInput.value);
                         params.set('event_color', selectedColorEl.dataset.color || 'bg-red-200');
                     }
-                    
-                    let fetchURL = '/AddEvent'; // 기본 제출 URL
-                    
-                    // 만약 관리자면 URL을 바꿔야 한다면 여기서 분기
-                    // if (eventTypeInput.value === 'public') {
-                    //    fetchURL = '/AddPublicEvent';
-                    // } else if (eventTypeInput.value === 'private') {
-                    //    fetchURL = '/AddPrivateEvent';
-                    // }
+
+                    let fetchURL = '/AddEvent';
 
                     try {
                         const resp = await fetch(fetchURL, {
@@ -349,10 +479,10 @@
                             body: params.toString()
                         });
                         const data = await resp.json();
-                        
+
                         if (data && data.ok) {
-                            // 성공 시 캘린더로 이동
-                            window.location.href = '/Calendar';
+                            alert('성공적으로 추가되었습니다!');
+                            window.location.href = '/Calendar.html';
                             return;
                         } else {
                             alert(data && data.message ? data.message : '추가 실패');
@@ -364,7 +494,6 @@
                 });
             }
 
-            // --- Initial Color Selection ---
             if (eventColorOptions && eventColorOptions.children.length > 0) {
                 eventColorOptions.children[0].classList.add('ring-2', 'ring-offset-2', 'ring-sub-blue');
             }
