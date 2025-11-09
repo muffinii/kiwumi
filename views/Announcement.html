@@ -121,14 +121,15 @@
                         data-content="{{ a.content | lower }}">
                         <a href="/ViewAnnouncement/{{ a.pkid }}" class="block">
                             <p class="font-semibold text-sm flex justify-between items-start gap-2">
-                                <span class="truncate min-w-0"> {% set catClass = 'text-slate-600' %}
+                                <span class="truncate min-w-0 flex-1">
+                                    {% set catClass = 'text-slate-600' %}
                                     {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category
                                     == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set
                                     catClass = 'text-purple-600' %}{% endif %}
                                     <span class="font-bold {{ catClass }}">[{{ a.category or '일반' }}]</span>
                                     {{ a.title }}
                                 </span>
-                                <span class="text-xs text-slate-500 flex-shrink-0 ml-4">{{ a.created_at }}</span>
+                                <span class="text-xs text-slate-500 flex-shrink-0 whitespace-nowrap ml-2">{{ a.created_at }}</span>
                             </p>
                         </a>
                     </li>
@@ -246,7 +247,7 @@
                 });
 
                 // 검색 결과가 없을 때 '공지 없음' 메시지 처리
-                const noResultMsg = document.querySelector('#announcement-list .text-slate-500');
+                const noResultMsg = document.querySelector('#announcement-list > li:not(.announcement-item)');
                 if (noResultMsg && itemsFound === 0) {
                     noResultMsg.style.display = '';
                     noResultMsg.textContent = '일치하는 공지사항이 없습니다.';
