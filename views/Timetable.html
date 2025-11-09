@@ -93,7 +93,7 @@
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
             <h1 class="text-xl font-bold text-slate-800">시간표</h1>
-            <a href="/Notifications"
+            <a href="/Notifications" id="notificationBell"
                 class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -101,7 +101,7 @@
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
-                <span class="absolute top-2 right-2 block w-2 h-2 bg-main-red rounded-full"></span>
+                <span id="notificationBadge" class="absolute top-2 right-2 block w-2 h-2 bg-main-red rounded-full hidden"></span>
             </a>
         </header>
 
@@ -302,6 +302,25 @@
         </nav>
     </div>
 
+    <script>
+        // 읽지 않은 알림 개수 확인
+        async function checkUnreadNotifications() {
+            try {
+                const response = await fetch('/api/notifications/unread-count');
+                const data = await response.json();
+                
+                if (data.ok && data.count > 0) {
+                    document.getElementById('notificationBadge').classList.remove('hidden');
+                } else {
+                    document.getElementById('notificationBadge').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('알림 개수 조회 오류:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', checkUnreadNotifications);
+    </script>
 </body>
 
 </html>
