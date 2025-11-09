@@ -1164,6 +1164,16 @@ const markAllNotificationsAsRead = async (user_pkid, user_type) => {
     await db.runSql(sql, [user_pkid, user_type]);
 };
 
+// 특정 일정과 관련된 알림 삭제
+const deleteNotificationsByEvent = async (event_id, user_pkid, user_type) => {
+    const sql = `
+        DELETE FROM notifications
+        WHERE user_pkid = ? AND user_type = ? AND type = 'event' AND link_url LIKE ?;
+    `;
+    const linkPattern = `%eventId=${event_id}%`;
+    await db.runSql(sql, [user_pkid, user_type, linkPattern]);
+};
+
 module.exports.findUserByEmail = findUserByEmail;
 module.exports.saveVerificationCode = saveVerificationCode;
 module.exports.verifyCode = verifyCode;
@@ -1177,3 +1187,4 @@ module.exports.getNotifications = getNotifications;
 module.exports.getUnreadNotificationCount = getUnreadNotificationCount;
 module.exports.markNotificationAsRead = markNotificationAsRead;
 module.exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
+module.exports.deleteNotificationsByEvent = deleteNotificationsByEvent;

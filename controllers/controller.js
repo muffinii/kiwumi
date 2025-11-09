@@ -6,6 +6,9 @@ const fs = require('fs');
 const bwipjs = require('bwip-js');
 const mailer = require('../common/mailer');
 
+// 일정 알림 타이머 저장소 (eventId를 키로 사용)
+const eventNotificationTimers = new Map();
+
 // Multer 설정: 파일 저장 위치 및 파일명 설정
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -755,7 +758,14 @@ const deleteEventApi = async (req, res) => {
         } else {
             // 개인일정 삭제 (본인만 가능)
             const userType = user.isAdmin ? 'admin' : 'student';
+            
+            // 스케줄링된 알림 타이머 취소
+            cancelEventNotifications(eventId);
+            
             await model.deletePersonalEvent(eventId, user.pkid, userType);
+            
+            // 해당 일정과 관련된 알림도 삭제
+            await model.deleteNotificationsByEvent(eventId, user.pkid, userType);
         }
 
         return res.json({ ok: true, message: '삭제되었습니다.' });
@@ -1839,6 +1849,9 @@ const resetPasswordApi = async (req, res) => {
 
 // 일정 알림 스케줄링 함수
 const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_title, event_date, event_time, alarms) => {
+    // 기존 타이머가 있으면 먼저 취소
+    cancelEventNotifications(event_id);
+    
     // 일정 시간 계산
     let eventDateTime;
     if (event_time) {
@@ -1866,6 +1879,8 @@ const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_
         '1w': '1주일'
     };
     
+    const timers = [];
+    
     for (const alarmOffset of alarms) {
         const offsetMs = alarmOffsetMap[alarmOffset];
         if (!offsetMs) continue;
@@ -1877,7 +1892,7 @@ const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_
         if (notificationTime > now) {
             const delay = notificationTime.getTime() - now.getTime();
             
-            setTimeout(async () => {
+            const timerId = setTimeout(async () => {
                 try {
                     await model.createNotification(
                         user_pkid,
@@ -1891,7 +1906,23 @@ const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_
                     console.error('일정 알림 전송 오류:', err);
                 }
             }, delay);
+            
+            timers.push(timerId);
         }
+    }
+    
+    // 타이머 ID들을 저장
+    if (timers.length > 0) {
+        eventNotificationTimers.set(event_id, timers);
+    }
+};
+
+// 일정 알림 취소 함수
+const cancelEventNotifications = (event_id) => {
+    const timers = eventNotificationTimers.get(event_id);
+    if (timers) {
+        timers.forEach(timerId => clearTimeout(timerId));
+        eventNotificationTimers.delete(event_id);
     }
 };
 
