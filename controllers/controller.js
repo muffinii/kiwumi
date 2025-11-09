@@ -543,7 +543,7 @@ const createPersonalEvent = async (req, res) => {
         if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
 
         const event_type = (req.body.event_type || 'private').toLowerCase();
-    let { title, event_date, event_time, event_color, start_date, end_date, memo } = req.body;
+    let { title, event_date, event_time, event_color, start_date, end_date, memo, alarms } = req.body;
 
         // 간단 검증 및 길이 제한
         title = common.reqeustFilter(title, 255, false);
@@ -565,6 +565,16 @@ const createPersonalEvent = async (req, res) => {
             return res.json({ ok: true, id });
         } else {
             // private (개인 일정)
+            // 알림 데이터 파싱
+            let alarmsArray = [];
+            if (alarms) {
+                try {
+                    alarmsArray = JSON.parse(alarms);
+                } catch (e) {
+                    alarmsArray = [];
+                }
+            }
+            
             event_date = common.reqeustFilter(event_date, 20, false); // YYYY-MM-DD
             event_color = common.reqeustFilter(event_color, 30, false); // tailwind class like bg-red-200
             memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
@@ -595,7 +605,8 @@ const createPersonalEvent = async (req, res) => {
                 event_date,
                 event_time,
                 event_color,
-                memo
+                memo,
+                alarmsArray
             );
             return res.json({ ok: true, id });
         }
@@ -671,7 +682,8 @@ const getEventByIdApi = async (req, res) => {
                 end_date: event.end_date,
                 type: 'academic',
                 campus: event.campus,
-                source_url: event.source_url
+                source_url: event.source_url,
+                alarms: [] // 학사일정은 알림 사용 안 함
             });
         } else {
             // 개인일정 조회
@@ -686,9 +698,11 @@ const getEventByIdApi = async (req, res) => {
                 title: event.title,
                 event_date: event.event_date,
                 event_time: event.event_time,
-                color: event.color,
+                event_color: event.color,
+                color: event.color, // ViewEvent.html 호환성
                 memo: event.memo,
-                type: 'personal'
+                type: 'personal',
+                alarms: event.alarms || []
             });
         }
     } catch (err) {
@@ -1916,6 +1930,16 @@ async function updateEventApi(req, res) {
             const existing = await model.getPersonalEventById(eventId, user.pkid, userType);
             if (!existing) return res.status(404).json({ ok: false, message: '일정을 찾을 수 없습니다.' });
 
+            // 알림 데이터 파싱
+            let alarmsArray = [];
+            if (req.body.alarms) {
+                try {
+                    alarmsArray = JSON.parse(req.body.alarms);
+                } catch (e) {
+                    alarmsArray = [];
+                }
+            }
+
             let event_date = common.reqeustFilter(req.body.event_date, 20, false);
             let event_time = req.body.event_time;
             let memo = req.body.memo ? common.reqeustFilter(req.body.memo, 1000, false, '') : null;
@@ -1934,7 +1958,7 @@ async function updateEventApi(req, res) {
             if (!/^bg-(red|blue|green|yellow)-(100|200|300|400|500|600|700|800|900)$/.test(event_color)) {
                 return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
             }
-            await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color, memo);
+            await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color, memo, alarmsArray);
             return res.json({ ok: true });
         }
     } catch (err) {

@@ -47,7 +47,7 @@
     <div class="app-container">
         
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Calendar.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Calendar" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center">일정 상세</h1>
@@ -137,12 +137,7 @@
             if (!response.ok) throw new Error('일정을 불러오지 못했습니다.');
             
             const data = await response.json();
-            // (백엔드 응답 예시)
-            // { 
-            //   id: 123, type: 'personal', title: '팀 프로젝트', ...
-            //   alarms: ["10m", "1h"] // (신규) 현재 설정된 알림 목록
-            // }
-
+            
             // --- 2. 데이터 화면에 표시 (기존 코드) ---
             titleEl.textContent = data.title;
             dateEl.textContent = data.event_date || data.start_date || ''; 
@@ -165,20 +160,21 @@
                 // 학사일정은 알림/수정/삭제 불가 (관리자 제외)
                 if (alarmDisplaySection) alarmDisplaySection.style.display = 'none'; 
                 
-                {% if user_role == 'admin' %}
+                {% if user_role != 'admin' %}
                     if (menuContainer) menuContainer.style.display = 'none';
-                { % endif % }
+                {% endif %}
             } else {
                 categoryEl.textContent = '개인 일정';
-                // (배지 색상 설정 - 기존과 동일)
+                // 배지 배경색을 일정 색상과 동일하게 설정
+                const eventColor = data.event_color || data.color || 'bg-red-200';
                 const badgeColorMap = {
                     'bg-red-200': { bg: '#fecaca', text: '#991b1b' },
                     'bg-blue-200': { bg: '#bfdbfe', text: '#1e40af' },
                     'bg-green-200': { bg: '#bbf7d0', text: '#065f46' },
                     'bg-yellow-200': { bg: '#fef08a', text: '#854d0e' }
                 };
-                if (data.color && badgeColorMap[data.color]) {
-                    const { bg, text } = badgeColorMap[data.color];
+                if (badgeColorMap[eventColor]) {
+                    const { bg, text } = badgeColorMap[eventColor];
                     categoryEl.className = 'text-xs font-semibold px-2 py-0.5 rounded-full';
                     categoryEl.style.backgroundColor = bg;
                     categoryEl.style.color = text;
@@ -187,7 +183,7 @@
                 }
                 
                 // [신규] 알림 목록 표시
-                if (data.alarms && data.alarms.length > 0) {
+                if (data.alarms && Array.isArray(data.alarms) && data.alarms.length > 0) {
                     alarmDisplaySection.classList.remove('hidden');
                     alarmDisplayList.innerHTML = ''; // 목록 비우기
                     const textMap = { '10m': '10분 전', '30m': '30분 전', '1h': '1시간 전', '12h': '12시간 전', '1d': '1일 전', '1w': '1주일 전' };
@@ -212,7 +208,7 @@
 
             if (menuToggle && dropdownMenu && modifyLink && deleteBtn) {
                 
-                modifyLink.href = `/ModifyEvent.html?eventId=${eventId}&type=${eventType}`;
+                modifyLink.href = `/ModifyEvent?eventId=${eventId}&type=${eventType}`;
                 menuToggle.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
                 
                 deleteBtn.addEventListener('click', async (e) => {
@@ -223,7 +219,7 @@
                             const deleteResponse = await fetch(`/api/events/${eventId}?type=${eventType}`, { method: 'DELETE' });
                             if (!deleteResponse.ok) throw new Error('삭제 실패');
                             alert('일정이 삭제되었습니다.');
-                            window.location.href = '/Calendar.html';
+                            window.location.href = '/Calendar';
                         } catch (err) {
                             alert('삭제 중 오류가 발생했습니다.');
                         }

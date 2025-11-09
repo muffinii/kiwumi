@@ -356,15 +356,23 @@ const deleteAnnouncement = async (pkid) => {
         } catch (err) {
             // 이미 존재하면 무시
         }
+        
+        // alarms 컬럼 추가 (JSON 형식으로 저장)
+        try {
+            await db.runSql('ALTER TABLE personal_events ADD COLUMN alarms JSON NULL AFTER memo;');
+        } catch (err) {
+            // 이미 존재하면 무시
+        }
     }
 
-    const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color, memo = null) => {
+    const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color, memo = null, alarms = null) => {
         await ensurePersonalEventsTable();
+        const alarmsJson = alarms ? JSON.stringify(alarms) : null;
         const sql = `
-            INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color, memo)
-            VALUES (?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color, memo, alarms)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         `;
-        const params = [user_pkid, user_type, title, event_date, event_time, color, memo];
+        const params = [user_pkid, user_type, title, event_date, event_time, color, memo, alarmsJson];
         const result = await db.runSql(sql, params);
         return result.insertId;
     }
@@ -387,13 +395,26 @@ const getPersonalEventById = async (event_id, user_pkid, user_type) => {
     await ensurePersonalEventsTable();
     const sql = `
      SELECT id, title, DATE_FORMAT(event_date, '%Y-%m-%d') as event_date, 
-         TIME_FORMAT(event_time, '%H:%i') as event_time, color, memo
+         TIME_FORMAT(event_time, '%H:%i') as event_time, color, memo, alarms
         FROM personal_events
         WHERE id = ? AND user_pkid = ? AND user_type = ?;
     `;
     const params = [event_id, user_pkid, user_type];
     const result = await db.runSql(sql, params);
-    return result[0];
+    const event = result[0];
+    if (event && event.alarms) {
+        try {
+            // MySQL JSON 타입은 이미 객체/배열로 파싱되어 올 수 있음
+            if (typeof event.alarms === 'string') {
+                event.alarms = JSON.parse(event.alarms);
+            }
+        } catch (e) {
+            event.alarms = [];
+        }
+    } else {
+        event.alarms = [];
+    }
+    return event;
 }
 
 // 개인 일정 삭제
@@ -408,14 +429,15 @@ const deletePersonalEvent = async (event_id, user_pkid, user_type) => {
 }
 
 // 개인 일정 수정
-const updatePersonalEvent = async (event_id, user_pkid, user_type, title, event_date, event_time, color, memo = null) => {
+const updatePersonalEvent = async (event_id, user_pkid, user_type, title, event_date, event_time, color, memo = null, alarms = null) => {
     await ensurePersonalEventsTable();
+    const alarmsJson = alarms ? JSON.stringify(alarms) : null;
     const sql = `
         UPDATE personal_events
-        SET title = ?, event_date = ?, event_time = ?, color = ?, memo = ?
+        SET title = ?, event_date = ?, event_time = ?, color = ?, memo = ?, alarms = ?
         WHERE id = ? AND user_pkid = ? AND user_type = ?;
     `;
-    const params = [title, event_date, event_time, color, memo, event_id, user_pkid, user_type];
+    const params = [title, event_date, event_time, color, memo, alarmsJson, event_id, user_pkid, user_type];
     await db.runSql(sql, params);
 }
 

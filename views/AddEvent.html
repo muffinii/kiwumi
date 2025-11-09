@@ -123,7 +123,7 @@
                 </button>
                 <h1 class="text-xl font-bold text-slate-800">일정 추가</h1>
             </div>
-            <a href="/Notifications.html"
+            <a href="/Notifications"
                 class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -210,11 +210,6 @@
                                         class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"
                                         title="파랑"></div>
 
-                                    {% if user_role == 'admin' %}
-                                    <div data-color="bg-green-200"
-                                        class="event-color-option w-8 h-8 rounded-full bg-green-200 cursor-pointer"
-                                        title="초록"></div>
-                                    {% endif %}
                                     <div data-color="bg-yellow-200"
                                         class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
                                         title="노랑"></div>
@@ -305,6 +300,11 @@
             const addAlarmOptions = document.getElementById('add-alarm-options');
             let currentAlarms = [];
 
+            // 초기 상태 설정: 관리자의 경우 학사일정(public)이 기본이므로 알림 섹션 숨김
+            if (eventTypeInput && eventTypeInput.value === 'public') {
+                if (alarmSection) alarmSection.classList.add('hidden');
+            }
+
             if (tabPublic && tabPrivate) {
 
                 tabPublic.addEventListener('click', () => {
@@ -316,7 +316,7 @@
                     submitButton.classList.remove('bg-sub-blue', 'hover:bg-blue-800');
                     if (publicFields) publicFields.classList.remove('hidden');
                     if (personalFields) personalFields.classList.add('hidden');
-                    if (alarmSection) alarmSection.classList.remove('hidden');  // 학사일정도 알림 가능
+                    if (alarmSection) alarmSection.classList.add('hidden');  // 학사일정은 알림 불가
                 });
 
                 tabPrivate.addEventListener('click', () => {
@@ -328,7 +328,7 @@
                     submitButton.classList.remove('bg-main-red', 'hover:bg-red-700');
                     if (publicFields) publicFields.classList.add('hidden');
                     if (personalFields) personalFields.classList.remove('hidden');
-                    if (alarmSection) alarmSection.classList.remove('hidden');  // 개인일정도 알림 가능
+                    if (alarmSection) alarmSection.classList.remove('hidden');  // 개인일정은 알림 가능
                 });
             }
 
@@ -478,7 +478,7 @@
 
                         if (data && data.ok) {
                             alert('성공적으로 추가되었습니다!');
-                            window.location.href = '/Calendar.html';
+                            window.location.href = '/Calendar';
                             return;
                         } else {
                             alert(data && data.message ? data.message : '추가 실패');
