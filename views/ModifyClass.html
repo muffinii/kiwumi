@@ -1,116 +1,91 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>키우미 | 시간표 수정</title>
+    <title>키우미 | 수업 수정</title>
     <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap"
-            rel="stylesheet">
-        <script>
-            // Tailwind configuration and custom colors maintained
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            'main-red': '#ed2024',
-                            'sub-blue': '#003875',
-                        }
-                    }
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 'main-red': '#ed2024', 'sub-blue': '#003875' }
                 }
             }
-        </script>
-        <style>
-            /* 기존 디자인 스타일 유지 */
-            body {
-                font-family: 'Noto Sans KR', sans-serif;
-                background-color: #f8fafc;
-                /* bg-slate-50 */
-                color: #1e293b;
-                /* text-slate-800 */
-            }
-
-            .app-container {
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-            }
-
-            .section-card {
-                background-color: white;
-                padding: 1rem;
-                border-radius: 0.5rem;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            }
-        </style>
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .app-container { 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .section-card { 
+            background-color: white; padding: 1.5rem; border-radius: 0.5rem; 
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); 
+        }
+        
+        .form-label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #475569; }
+        
+        /* ▼▼▼ [핵심 수정] 드롭다운 스타일링 및 네이티브 UI 제거 ▼▼▼ */
+        .form-select {
+            width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+            background-color: #f8fafc; 
+            transition: border-color 0.15s ease-in-out;
+            
+            /* 네이티브 드롭다운 화살표 제거 */
+            -webkit-appearance: none; 
+            -moz-appearance: none; 
+            appearance: none;
+            
+            /* 커스텀 화살표 아이콘 */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center; /* 오른쪽 패딩 확보 */
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em; /* 아이콘 크기 조정 */
+        }
+        .form-select:focus { outline: none; border-color: #003875; box-shadow: 0 0 0 1px #003875; }
+        .form-select:disabled { background-color: #e2e8f0; color: #94a3b8; }
+        
+        .form-input {
+            width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+            background-color: #f8fafc;
+            transition: border-color 0.15s ease-in-out;
+        }
+        .form-input:disabled { background-color: #e2e8f0; color: #94a3b8; }
+        /* ▲▲▲ 수정 완료 ▲▲▲ */
+        
+    </style>
 </head>
-
 <body>
 
     <div class="app-container">
-
+        
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Timetable" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m15 18-6-6 6-6" />
-                </svg>
+            <a id="back-to-view" href="#" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center pr-12">수업 수정</h1>
         </header>
 
         <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
-
+            
             <form id="modify-form" class="section-card p-6">
-
+                
                 <h2 class="text-xl font-bold mb-5">수업 정보</h2>
 
                 <div class="space-y-4 mb-6">
-                    <input type="text" id="title" name="title" placeholder="과목 이름 (예: 운영체제)" required
-                        class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
-                    
-                    <div class="flex space-x-3">
-                        <input type="number" id="credits" name="credits" placeholder="학점 (예: 3)" min="1" max="5" class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
-                        <input type="text" id="professor" name="professor" placeholder="담당 교수" class="w-1/2 p-3 border rounded-lg bg-white focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition">
-                    </div>
+                    <label for="title" class="form-label">과목명</label>
+                    <input type="text" id="title" name="title" placeholder="과목 이름" required disabled
+                        class="form-input">
                 </div>
-
-                <h3 class="text-lg font-bold mb-3 border-t pt-4">수업 시간 설정</h3>
-
-                <div id="time-slot-container" class="space-y-3">
-                    <div class="flex flex-wrap items-center gap-2 border p-3 rounded-lg bg-white">
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                            <select name="day" class="p-2 border rounded text-sm bg-slate-50">
-                                <option value="월">월</option>
-                                <option value="화">화</option>
-                                <option value="수">수</option>
-                                <option value="목">목</option>
-                                <option value="금">금</option>
-                            </select>
-                            <input type="time" name="start_time" value="09:00"
-                                class="p-2 border rounded text-sm bg-slate-50">
-                            <span>~</span>
-                            <input type="time" name="end_time" value="10:00"
-                                class="p-2 border rounded text-sm bg-slate-50">
-                        </div>
-                        <input type="text" name="place" placeholder="장소 (예: 공학관 101호)"
-                            class="flex-grow min-w-[200px] p-2 border rounded text-sm bg-slate-50">
-                        <button type="button" class="text-red-500 hover:text-red-700 p-1 remove-slot-btn">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
+                <div class="mb-6">
+                    <label for="section-select" class="form-label">시간 / 장소 (분반)</label>
+                    <select id="section-select" name="section_id" class="form-select" disabled></select>
                 </div>
-
-                <button type="button" id="add-slot-btn"
-                    class="w-full mt-4 p-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:bg-slate-50 transition">
-                    + 시간 추가
-                </button>
-
+                
                 <h3 class="text-lg font-bold mb-3 border-t pt-4 mt-6">표시 설정</h3>
 
                 <div class="space-y-4 mb-6">
@@ -118,150 +93,66 @@
                         <label class="text-slate-700 block mb-2">과목 색상</label>
                         <input type="hidden" name="class_color" id="class_color" value="bg-blue-100">
                         <div id="colorPalette" class="flex gap-2">
-                            <button type="button" data-color="bg-blue-100"
-                                class="w-8 h-8 rounded border-2 border-sub-blue bg-blue-100"></button>
-                            <button type="button" data-color="bg-red-100"
-                                class="w-8 h-8 rounded border bg-red-100"></button>
-                            <button type="button" data-color="bg-green-100"
-                                class="w-8 h-8 rounded border bg-green-100"></button>
-                            <button type="button" data-color="bg-yellow-100"
-                                class="w-8 h-8 rounded border bg-yellow-100"></button>
-                            <button type="button" data-color="bg-purple-100"
-                                class="w-8 h-8 rounded border bg-purple-100"></button>
-                            <button type="button" data-color="bg-pink-100"
-                                class="w-8 h-8 rounded border bg-pink-100"></button>
+                            <button type="button" data-color="bg-blue-100" class="w-8 h-8 rounded border-2 border-sub-blue bg-blue-100"></button>
+                            <button type="button" data-color="bg-red-100" class="w-8 h-8 rounded border bg-red-100"></button>
+                            <button type="button" data-color="bg-green-100" class="w-8 h-8 rounded border bg-green-100"></button>
+                            <button type="button" data-color="bg-yellow-100" class="w-8 h-8 rounded border bg-yellow-100"></button>
+                            <button type="button" data-color="bg-purple-100" class="w-8 h-8 rounded border bg-purple-100"></button>
+                            <button type="button" data-color="bg-pink-100" class="w-8 h-8 rounded border bg-pink-100"></button>
                         </div>
                     </div>
-                    <textarea id="memo" name="memo" placeholder="선택 사항: 수업 관련 메모나 특이사항" rows="3"
-                        class="w-full p-3 border rounded-lg bg-slate-50 focus:border-sub-blue focus:ring-1 focus:ring-sub-blue transition"></textarea>
+                    
+                    <div>
+                        <label for="memo" class="form-label">메모 (선택)</label>
+                        <textarea id="memo" name="memo" placeholder="수업 관련 메모나 특이사항" rows="3"
+                            class="form-input"></textarea>
+                    </div>
                 </div>
 
                 <button type="submit"
                     class="w-full bg-main-red text-white p-3 rounded-lg font-bold text-lg hover:bg-red-700 transition shadow-lg">
-                    시간표 수정하기
+                    수정 완료
                 </button>
             </form>
 
         </main>
-
+        
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-                <a href="/Main"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
+                <a href="/Main.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     <span class="text-xs mt-1">홈</span>
                 </a>
-                <a href="/Calendar"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                        <line x1="16" x2="16" y1="2" y2="6"></line>
-                        <line x1="8" x2="8" y1="2" y2="6"></line>
-                        <line x1="3" x2="21" y1="10" y2="10"></line>
-                    </svg>
+                <a href="/Calendar.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
                     <span class="text-xs mt-1">캘린더</span>
                 </a>
-                <a href="/AnnouncementGuest"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 6h13"></path>
-                        <path d="M8 12h13"></path>
-                        <path d="M8 18h13"></path>
-                        <path d="M3 6h.01"></path>
-                        <path d="M3 12h.01"></path>
-                        <path d="M3 18h.01"></path>
-                    </svg>
+                <a href="/AnnouncementGuest.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
-                <a href="/Timetable" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-                        <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-                        <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-                        <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-                    </svg>
+                <a href="/Timetable.html" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
                     <span class="text-xs mt-1">시간표</span>
                 </a>
-                <a href="/MyPage"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                <a href="/MyPage.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span class="text-xs mt-1">마이페이지</span>
                 </a>
             </div>
         </nav>
-    </div>
+        </div>
 
     <script>
-        // 시간 추가/삭제 및 색상 선택 로직 AddClass.html랑 동일하게 일단..
-        const container = document.getElementById('time-slot-container');
-        const addBtn = document.getElementById('add-slot-btn');
         const colorPalette = document.getElementById('colorPalette');
         const colorHidden = document.getElementById('class_color');
         const form = document.getElementById('modify-form');
+        const backToView = document.getElementById('back-to-view');
+        const sectionSelect = document.getElementById('section-select');
 
-        const slotTemplate = `
-        <div class="flex flex-wrap items-center gap-2 border p-3 rounded-lg bg-white">
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <select name="day" class="p-2 border rounded text-sm bg-slate-50">
-                    <option value="월">월</option><option value="화">화</option><option value="수">수</option><option value="목">목</option><option value="금">금</option>
-                </select>
-                <input type="time" name="start_time" value="09:00" class="p-2 border rounded text-sm bg-slate-50">
-                <span>~</span>
-                <input type="time" name="end_time" value="10:00" class="p-2 border rounded text-sm bg-slate-50">
-            </div>
-            <input type="text" name="place" placeholder="장소 (예: 공학관 101호)" class="flex-grow min-w-[200px] p-2 border rounded text-sm bg-slate-50">
-            <button type="button" class="text-red-500 hover:text-red-700 p-1 remove-slot-btn">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-    `;
+        let courseIdCache = null; 
 
-        // 새 슬롯 추가 함수
-        function addNewSlot(slotData = {}) {
-            const newSlot = document.createElement('div');
-            newSlot.innerHTML = slotTemplate;
-            const slotEl = newSlot.firstElementChild;
-
-            // 백엔드 데이터로 값 채우기
-            if (slotData.day) slotEl.querySelector('select[name="day"]').value = slotData.day;
-            if (slotData.startTime) slotEl.querySelector('input[name="start_time"]').value = slotData.startTime;
-            if (slotData.endTime) slotEl.querySelector('input[name="end_time"]').value = slotData.endTime;
-            if (slotData.place) slotEl.querySelector('input[name="place"]').value = slotData.place;
-
-            container.appendChild(slotEl);
-        }
-
-        addBtn.addEventListener('click', () => addNewSlot());
-
-        container.addEventListener('click', (e) => {
-            if (e.target.closest('.remove-slot-btn')) {
-                if (container.children.length > 1) {
-                    e.target.closest('.flex').remove();
-                } else {
-                    alert('최소한 하나의 수업 시간은 입력해야 합니다.');
-                }
-            }
-        });
-
-        colorPalette.addEventListener('click', (e) => {
-            const btn = e.target.closest('button[data-color]');
-            if (!btn) return;
-            const color = btn.getAttribute('data-color');
-            colorHidden.value = color;
-            updateColorSelection();
-        });
-
+        // --- 색상 선택 로직 ---
         function updateColorSelection() {
             const selectedColor = colorHidden.value;
             Array.from(colorPalette.querySelectorAll('button[data-color]')).forEach(b => {
@@ -273,40 +164,94 @@
                 }
             });
         }
+        
+        colorPalette.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-color]');
+            if (!btn) return;
+            const color = btn.getAttribute('data-color');
+            colorHidden.value = color;
+            updateColorSelection();
+        });
 
-        document.addEventListener('DOMContentLoaded', async function () {
-            const params = new URLSearchParams(window.location.search);
-            const classId = params.get('id') || window.location.pathname.split('/').pop();
 
-            if (!classId || classId === 'ModifyClass') {
-                alert('수정할 수업 ID가 없습니다.');
-                window.location.href = '/Timetable';
+        // --- 분반 목록 가져오기 및 현재 상태 표시 ---
+        async function fetchAndPopulateSections(currentCourseId, currentSectionId) {
+            sectionSelect.innerHTML = '<option value="">분반 정보를 불러오는 중...</option>';
+            sectionSelect.disabled = true;
+
+            if (!currentCourseId) {
+                sectionSelect.innerHTML = '<option value="">과목 ID가 없습니다.</option>';
                 return;
             }
 
             try {
-                // 백엔드 API에서 기존 수업 정보 GET 하기
-                const response = await fetch(`/api/classes/${classId}`);
+                // (백엔드) /api/course/{courseId}/sections API를 호출하여 해당 과목의 모든 분반을 가져옵니다.
+                const response = await fetch(`/api/course/${currentCourseId}/sections`);
+                if (!response.ok) throw new Error('분반 로드 실패');
+                
+                const sections = await response.json(); 
+
+                sectionSelect.innerHTML = '<option value="">다른 분반을 선택하세요...</option>';
+                let foundCurrent = false;
+
+                sections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = `${section.section_number}분반 - ${section.time_string} (${section.place})`;
+                    
+                    if (section.id === currentSectionId) {
+                        option.selected = true; 
+                        foundCurrent = true;
+                    }
+                    sectionSelect.appendChild(option);
+                });
+                
+                if (!foundCurrent) {
+                    alert("경고: 기존 분반 정보를 찾을 수 없습니다. 수정이 제한됩니다.");
+                    sectionSelect.disabled = true;
+                } else {
+                    sectionSelect.disabled = false;
+                }
+
+            } catch (error) {
+                console.error("Error loading sections:", error);
+                sectionSelect.innerHTML = '<option value="">분반 로드 중 오류 발생</option>';
+            }
+        }
+
+
+        // --- 페이지 로드 (GET) 및 폼 제출 (PUT) 로직 ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            const params = new URLSearchParams(window.location.search);
+            const classId = params.get('classId'); 
+
+            // 뒤로가기 버튼 링크 설정
+            backToView.href = `/ViewClass.html?classId=${classId}`;
+
+            if (!classId) {
+                alert('수정할 수업 ID가 없습니다.');
+                window.location.href = '/Timetable.html';
+                return;
+            }
+
+            try {
+                // 1. 기존 시간표 항목의 상세 정보 로드 (GET)
+                const response = await fetch(`/api/classes/${classId}/details`);
                 if (!response.ok) throw new Error('데이터 로딩 실패');
-
                 const data = await response.json();
-                if (!data.ok) throw new Error(data.message || '데이터 로딩 실패');
-
-                // 폼에 데이터 채우기
-                document.getElementById('title').value = data.title || '';
+                
+                // 2. 기본 정보 채우기 (Read-Only)
+                document.getElementById('title').value = data.title || '정보 없음';
+                // data.course_id는 분반 목록 로드에 필요하므로 캐시
+                courseIdCache = data.course_id; 
+                
+                // 3. 메모 및 표시 설정 채우기
                 document.getElementById('memo').value = data.memo || '';
-                document.getElementById('professor').value = data.professor || '';
-                document.getElementById('credits').value = data.credits || '';
                 colorHidden.value = data.color || 'bg-blue-100';
                 updateColorSelection();
 
-                // 기존 시간표 슬롯 채우기
-                container.innerHTML = '';   // 기존 템플릿 비우기
-                if (data.slots && data.slots.length > 0) {
-                    data.slots.forEach(slot => addNewSlot(slot));
-                } else {
-                    addNewSlot();   // 빈 슬롯 1개 추가
-                }
+                // 4. 시간표 분반 목록 로드 (핵심!)
+                await fetchAndPopulateSections(data.course_id, data.section_id);
 
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -316,33 +261,32 @@
 
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const classId = window.location.pathname.split('/').pop();
+            const classId = new URLSearchParams(window.location.search).get('classId');
 
-            const title = document.getElementById('title').value;
-            const memo = document.getElementById('memo').value;
-            const professor = document.getElementById('professor').value;
-            const credits = document.getElementById('credits').value;
+            const sectionId = document.getElementById('section-select').value;
             const color = colorHidden.value;
+            const memo = document.getElementById('memo').value;
 
-            const slots = [];
-            container.querySelectorAll('.flex.flex-wrap.items-center').forEach(slotDiv => {
-                const day = slotDiv.querySelector('select[name="day"]').value;
-                const startTime = slotDiv.querySelector('input[name="start_time"]').value;
-                const endTime = slotDiv.querySelector('input[name="end_time"]').value;
-                const place = slotDiv.querySelector('input[name="place"]').value;
-                slots.push({ day, startTime, endTime, place });
-            });
+            if (!sectionId) {
+                alert('시간/분반을 선택해야 합니다.');
+                return;
+            }
+            if (document.getElementById('section-select').disabled) {
+                 alert('현재 분반을 변경할 수 없습니다. (로드 실패)');
+                 return;
+            }
 
+            // Read-only 필드 값을 서버에 다시 전송하여 DB 일관성을 유지
             const data = {
-                title,
-                class_color: color,
-                memo,
-                professor,
-                credits,
-                slots
+                title: document.getElementById('title').value, 
+                section_id: sectionId, 
+                class_color: color, 
+                memo: memo
+                // 서버에서 title, credits, professor를 다시 쿼리할 수 있도록 course_id도 보내는 것이 안전할 수 있습니다.
             };
 
             try {
+                // 2. 수정 요청 (PUT)
                 const response = await fetch(`/api/classes/${classId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -355,9 +299,8 @@
                     throw new Error(result.message || '수정 실패');
                 }
 
-                // 성공 시 시간표 페이지로 이동
                 alert('수업 정보가 성공적으로 수정되었습니다.');
-                window.location.href = '/Timetable';
+                window.location.href = `/ViewClass.html?classId=${classId}`; 
 
             } catch (error) {
                 console.error('Error updating data:', error);
