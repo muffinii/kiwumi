@@ -1174,6 +1174,15 @@ const deleteNotificationsByEvent = async (event_id, user_pkid, user_type) => {
     await db.runSql(sql, [user_pkid, user_type, linkPattern]);
 };
 
+// 사용자의 모든 알림 삭제
+const deleteAllNotifications = async (user_pkid, user_type) => {
+    const sql = `
+        DELETE FROM notifications
+        WHERE user_pkid = ? AND user_type = ?;
+    `;
+    await db.runSql(sql, [user_pkid, user_type]);
+};
+
 module.exports.findUserByEmail = findUserByEmail;
 module.exports.saveVerificationCode = saveVerificationCode;
 module.exports.verifyCode = verifyCode;
@@ -1188,3 +1197,4 @@ module.exports.getUnreadNotificationCount = getUnreadNotificationCount;
 module.exports.markNotificationAsRead = markNotificationAsRead;
 module.exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 module.exports.deleteNotificationsByEvent = deleteNotificationsByEvent;
+module.exports.deleteAllNotifications = deleteAllNotifications;

@@ -1995,6 +1995,22 @@ const markAllNotificationsReadApi = async (req, res) => {
     }
 };
 
+// 모든 알림 삭제 API
+const deleteAllNotificationsApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+        const userType = user.isAdmin ? 'admin' : 'student';
+        await model.deleteAllNotifications(user.pkid, userType);
+        
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('모든 알림 삭제 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
 // 바코드 생성 컨트롤러
 const generateBarcode = (req, res) => {
     const text = req.params.text;
@@ -2079,7 +2095,8 @@ module.exports = {
     getNotificationsApi,
     getUnreadCountApi,
     markNotificationReadApi,
-    markAllNotificationsReadApi
+    markAllNotificationsReadApi,
+    deleteAllNotificationsApi
 }
 
 // 일정 수정 API

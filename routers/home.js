@@ -84,6 +84,7 @@ router.get('/api/notifications', controller.getNotificationsApi);
 router.get('/api/notifications/unread-count', controller.getUnreadCountApi);
 router.put('/api/notifications/:id/read', controller.markNotificationReadApi);
 router.put('/api/notifications/read-all', controller.markAllNotificationsReadApi);
+router.delete('/api/notifications/delete-all', controller.deleteAllNotificationsApi);
 
 module.exports = {
     router
