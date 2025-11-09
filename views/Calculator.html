@@ -25,13 +25,10 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f8fafc;
-            /* bg-slate-50 */
             color: #1e293b;
-            /* text-slate-800 */
         }
 
         .app-container {
-            /* 화면 꽉차게, 반응형을 위한 기본 설정 */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -51,7 +48,6 @@
             border: 1px solid #e2e8f0;
             border-radius: 0.375rem;
             background-color: #f8fafc;
-            /* bg-slate-50 */
             transition: border-color 0.15s ease-in-out;
             -webkit-appearance: none;
             appearance: none;
@@ -80,6 +76,7 @@
             color: #64748b;
         }
 
+        /* 모달(팝업) 스타일 */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -101,7 +98,6 @@
         .modal-content {
             background-color: white;
             padding: 1.5rem;
-            /* p-6 */
             border-radius: 0.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             width: 90%;
@@ -121,14 +117,14 @@
     <div class="app-container">
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Timetable" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Timetable.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m15 18-6-6 6-6" />
                 </svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center">학점 계산기</h1>
-            <a href="/Notifications"
+            <a href="/Notifications.html"
                 class="relative p-2 rounded-full hover:bg-slate-200 transition-colors inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -147,35 +143,41 @@
                     <h4 class="text-lg font-bold mb-4">성적 입력 (4.5 만점)</h4>
 
                     <div class="grid grid-cols-4 gap-2 mb-4 flex-shrink-0">
-
                         <select id="course-select"
                             class="col-span-4 p-3 border rounded text-sm bg-slate-50 form-select">
                             <option value="">과목을 선택하세요 (시간표 기준)</option>
                         </select>
-
                         <input type="number" id="course-credits" placeholder="학점"
-                            class="p-3 border rounded text-sm bg-white form-input" readonly>
-
-                        <select id="course-grade" class="p-3 border rounded bg-white text-sm">
-                            <option value="4.5">A+</option>
-                            <option value="4.0">A</option>
-                            <option value="3.5">B+</option>
-                            <option value="3.0">B</option>
-                            <option value="2.5">C+</option>
-                            <option value="2.0">C</option>
-                            <option value="1.5">D+</option>
-                            <option value="1.0">D</option>
-                            <option value="0">F</option>
+                            class="col-span-2 p-3 border rounded text-sm bg-white form-input" readonly>
+                        <label
+                            class="col-span-2 flex items-center justify-center p-3 border rounded bg-white cursor-pointer hover:bg-slate-50">
+                            <input type="checkbox" id="course-is-major"
+                                class="w-4 h-4 text-sub-blue border-slate-300 rounded focus:ring-sub-blue">
+                            <span class="ml-2 text-sm text-slate-700">전공 과목</span>
+                        </label>
+                        <select id="course-grade" class="p-3 border rounded bg-white text-sm col-span-3">
+                            <option value="A+">A+</option>
+                            <option value="A0">A</option>
+                            <option value="B+">B+</option>
+                            <option value="B0">B</option>
+                            <option value="C+">C+</option>
+                            <option value="C0">C</option>
+                            <option value="D+">D+</option>
+                            <option value="D0">D</option>
+                            <option value="F">F</option>
                         </select>
-
                         <button id="add-course-btn"
-                            class="col-span-2 bg-main-red text-white rounded font-bold text-sm hover:bg-red-700">추가</button>
+                            class="bg-main-red text-white rounded font-bold text-sm hover:bg-red-700">추가</button>
                     </div>
 
                     <div class="bg-sub-blue text-white p-4 rounded-lg shadow-lg mb-4 flex-shrink-0">
                         <p class="text-sm font-medium">총 평균 학점 (4.5 만점)</p>
-                        <p class="text-4xl font-extrabold mt-1"><span id="total-gpa">0.00</span></p>
-                        <p class="text-xs mt-2">총 이수 학점: <span id="total-credits">0</span>학점</p>
+                        <p class="text-4xl font-extrabold mt-1"><span id="total-gpa">{{ overallGPA or '0.00' }}</span>
+                        </p>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-xs">총 이수 학점: <span id="total-credits">{{ totalCredits or 0 }}</span>학점</p>
+                            <p class="text-xs">전공 평점: <span id="major-gpa">{{ majorGPA or '0.00' }}</span></p>
+                        </div>
                     </div>
 
                     <div id="grade-list-section" class="mt-4 pt-3 border-t border-slate-200">
@@ -183,35 +185,45 @@
                         <div class="space-y-4">
                             {% if semesters and semesters.length > 0 %}
                             {% for s in semesters %}
-                            <div class="bg-white rounded-lg shadow p-4 border border-slate-100">
-                                <h5 class="font-bold text-md mb-2">{{ s.year }}년 {{ s.semester }}학기</h5>
-                                <table class="w-full text-sm text-left table-fixed">
-                                    <thead class="text-xs text-slate-500 uppercase bg-slate-50">
-                                        <tr>
-                                            <th class="px-4 py-2" style="width: 60%;">과목명</th>
-                                            <th class="px-2 py-2 text-center" style="width: 20%;">학점</th>
-                                            <th class="px-2 py-2 text-center" style="width: 20%;">성적</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for c in s.courses %}
-                                        <tr class="border-b cursor-pointer" data-grade-id="{{ c.pkid }}"
-                                            data-course-name="{{ c.course_name }}" data-credits="{{ c.credits }}"
-                                            data-grade="{{ c.grade }}">
-
-                                            <td class="px-4 py-2 font-medium overflow-hidden">
-                                                <div class="truncate">
-                                                    {% if c.is_major %}<span
-                                                        class="text-sub-blue font-bold">[전공]</span>{% endif %}
-                                                    {{ c.course_name }}
-                                                </div>
-                                            </td>
-                                            <td class="px-2 py-2 text-center">{{ c.credits }}</td>
-                                            <td class="px-2 py-2 text-center font-semibold">{{ c.grade }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                            <div class="bg-white rounded-lg shadow border border-slate-100 overflow-hidden">
+                                <button type="button"
+                                    class="w-full flex items-center justify-between p-4 sem-toggle hover:bg-slate-50"
+                                    data-sem-key="{{ s.year }}-{{ s.semester }}">
+                                    <span class="font-bold text-md">{{ s.year }}년 {{ s.semester }}학기</span>
+                                    <svg class="w-5 h-5 text-slate-600 transition-transform duration-200"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="sem-content px-4 pb-4">
+                                    <table class="w-full text-sm text-left table-fixed">
+                                        <thead class="text-xs text-slate-500 uppercase bg-slate-50">
+                                            <tr>
+                                                <th class="px-4 py-2" style="width: 60%;">과목명</th>
+                                                <th class="px-2 py-2 text-center" style="width: 20%;">학점</th>
+                                                <th class="px-2 py-2 text-center" style="width: 20%;">성적</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="grade-table-body-{{ s.year }}-{{ s.semester }}">
+                                            {% for c in s.courses %}
+                                            <tr class="border-b cursor-pointer hover:bg-slate-50"
+                                                data-grade-id="{{ c.pkid }}" data-course-name="{{ c.course_name }}"
+                                                data-credits="{{ c.credits }}" data-grade="{{ c.grade }}">
+                                                <td class="px-4 py-2 font-medium overflow-hidden">
+                                                    <div class="truncate">
+                                                        {% if c.is_major %}<span
+                                                            class="text-sub-blue font-bold">[전공]</span>{% endif %}
+                                                        {{ c.course_name }}
+                                                    </div>
+                                                </td>
+                                                <td class="px-2 py-2 text-center">{{ c.credits }}</td>
+                                                <td class="px-2 py-2 text-center font-semibold">{{ c.grade }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                             {% endfor %}
                             {% else %}
@@ -227,370 +239,47 @@
 
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-
-                <a href="/Main.html"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
-                    <span class="text-xs mt-1">홈</span>
-                </a>
-
-                <a href="/Calendar.html"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                        <line x1="16" x2="16" y1="2" y2="6"></line>
-                        <line x1="8" x2="8" y1="2" y2="6"></line>
-                        <line x1="3" x2="21" y1="10" y2="10"></line>
-                    </svg>
-                    <span class="text-xs mt-1">캘린더</span>
-                </a>
-
-                <a href="/AnnouncementGuest.html"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 6h13"></path>
-                        <path d="M8 12h13"></path>
-                        <path d="M8 18h13"></path>
-                        <path d="M3 6h.01"></path>
-                        <path d="M3 12h.01"></path>
-                        <path d="M3 18h.01"></path>
-                    </svg>
-                    <span class="text-xs mt-1">공지사항</span>
-                </a>
-
-                <a href="/Timetable.html" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="7" height="9" x="3" y="3" rx="1"></rect>
-                        <rect width="7" height="5" x="14" y="3" rx="1"></rect>
-                        <rect width="7" height="9" x="14" y="12" rx="1"></rect>
-                        <rect width="7" height="5" x="3" y="16" rx="1"></rect>
-                    </svg>
-                    <span class="text-xs mt-1">시간표</span>
-                </a>
-
-                <a href="/MyPage.html"
-                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span class="text-xs mt-1">마이</span>
-                </a>
+                <a href="/Main"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
+                <a href="/Calendar"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
+                <a href="/Announcement"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
+                <a href="/Timetable"
+                    class="flex flex-col items-center justify-center text-main-red font-bold p-1">...</a>
+                <a href="/MyPage"
+                    class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">...</a>
             </div>
         </nav>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const addCourseBtn = document.getElementById('add-course-btn');
-            const courseListEl = document.getElementById('course-list');
-            const courseSelect = document.getElementById('course-select');
-            const courseCreditsInput = document.getElementById('course-credits');
-            const courseGradeSelect = document.getElementById('course-grade');
-            const totalGpaEl = document.getElementById('total-gpa');
-            const totalCreditsEl = document.getElementById('total-credits');
-
-            let myCoursesData = []; // { id, title, credits }
-            let calculatedCourses = []; // { name, credits, gradeValue, gradeText }
-
-            async function fetchMyCourses() {
-                try {
-                    // (백엔드) /api/my-timetable-courses API가 아래 형식의 JSON을 반환해야 함
-                    const response = await fetch('/api/my-timetable-courses');
-                    if (!response.ok) throw new Error('Cannot fetch my courses');
-
-                    myCoursesData = await response.json();
-                    // (백엔드 데이터 예시)
-                    // [
-                    //   { "id": "C001", "title": "운영체제", "credits": 3 },
-                    //   { "id": "C002", "title": "웹프로그래밍", "credits": 3 },
-                    //   { "id": "G001", "title": "교양영어", "credits": 2 }
-                    // ]
-
-                    courseSelect.innerHTML = '<option value="">과목을 선택하세요 (시간표 기준)</option>';
-                    myCoursesData.forEach(course => {
-                        const option = document.createElement('option');
-                        option.value = course.id;
-                        option.textContent = course.title;
-                        option.dataset.credits = course.credits;
-                        courseSelect.appendChild(option);
-                    });
-
-                } catch (error) {
-                    console.error("Error loading my courses:", error);
-                    courseSelect.innerHTML = '<option value="">시간표 과목을 불러올 수 없습니다.</option>';
-                }
-            }
-
-            // 과목 선택 시 학점 자동 입력
-            courseSelect.addEventListener('change', function () {
-                if (this.value === "") {
-                    courseCreditsInput.value = "";
-                    return;
-                }
-                // data-credits에 저장된 학점 값을 가져와 input에 자동 입력
-                const selectedCredits = this.options[this.selectedIndex].dataset.credits;
-                courseCreditsInput.value = selectedCredits;
-            });
-
-            addCourseBtn.addEventListener('click', () => {
-                const selectedOption = courseSelect.options[courseSelect.selectedIndex];
-
-                if (!selectedOption || courseSelect.value === "") {
-                    alert('과목을 선택해주세요.');
-                    return;
-                }
-
-                const courseName = selectedOption.textContent;
-                const courseCredits = courseCreditsInput.value;
-                const courseGradeValue = courseGradeSelect.value;
-                const courseGradeText = courseGradeSelect.options[courseGradeSelect.selectedIndex].text;
-
-                if (calculatedCourses.find(c => c.name === courseName)) {
-                    alert('이미 추가된 과목입니다.');
-                    return;
-                }
-
-                calculatedCourses.push({
-                    name: courseName,
-                    credits: courseCredits,
-                    gradeValue: courseGradeValue,
-                    gradeText: courseGradeText
-                });
-
-                courseSelect.value = '';
-                courseCreditsInput.value = '';
-                courseGradeSelect.value = '4.5';
-
-                renderCourseList();
-                calculateAndRenderGPA();
-            });
-
-            function renderCourseList() {
-                if (!courseListEl) return;
-                courseListEl.innerHTML = '';
-
-                if (calculatedCourses.length === 0) {
-                    courseListEl.innerHTML = `<p class="text-center text-slate-500 py-4 text-sm">추가된 과목이 없습니다.</p>`;
-                    return;
-                }
-
-                calculatedCourses.forEach((course, index) => {
-                    const li = document.createElement('div');
-                    li.className = 'bg-white p-3 rounded-md shadow-sm flex justify-between items-center hover:shadow-md transition';
-                    li.innerHTML = `
-                    <div>
-                        <p class="font-bold text-sm">${course.name}</p>
-                        <p class="text-xs text-slate-500">${course.credits}학점 / ${course.gradeText}</p>
-                    </div>
-                    <button data-index="${index}" class="remove-btn text-red-500 hover:text-red-700 p-1">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                `;
-                    courseListEl.appendChild(li);
-                });
-            }
-
-            function calculateAndRenderGPA() {
-                let totalCredits = 0;
-                let totalGradePoints = 0;
-
-                calculatedCourses.forEach(course => {
-                    const credits = parseFloat(course.credits);
-                    const gradePoint = parseFloat(course.gradeValue);
-                    if (!isNaN(credits) && !isNaN(gradePoint)) {
-                        totalCredits += credits;
-                        totalGradePoints += credits * gradePoint;
-                    }
-                });
-
-                const gpa = totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : '0.00';
-
-                if (totalGpaEl && totalCreditsEl) {
-                    totalGpaEl.textContent = gpa;
-                    totalCreditsEl.textContent = totalCredits;
-                }
-            }
-
-            if (courseListEl) {
-                courseListEl.addEventListener('click', (e) => {
-                    const removeBtn = e.target.closest('.remove-btn');
-                    if (removeBtn) {
-                        const indexToRemove = removeBtn.dataset.index;
-                        calculatedCourses.splice(indexToRemove, 1);
-                        renderCourseList();
-                        calculateAndRenderGPA();
-                    }
-                });
-            }
-
-            const modal = document.getElementById('edit-grade-modal');
-            const modalOverlay = document.querySelector('.modal-overlay');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            const editForm = document.getElementById('edit-grade-form');
-            const deleteBtn = document.getElementById('delete-grade-btn');
-
-            const modalTitle = document.getElementById('modal-course-name');
-            const modalGradeId = document.getElementById('edit-grade-id');
-            const modalCredits = document.getElementById('edit-course-credits');
-            const modalGradeSelect = document.getElementById('edit-course-grade');
-
-            let pressTimer = null;
-
-            function openEditModal(targetRow) {
-                const gradeId = targetRow.dataset.gradeId;
-                const courseName = targetRow.dataset.courseName;
-                const credits = targetRow.dataset.credits;
-                const grade = targetRow.dataset.grade;
-
-                modalTitle.textContent = courseName;
-                modalGradeId.value = gradeId;
-                modalCredits.value = credits;
-                modalGradeSelect.value = grade;
-
-                modal.classList.add('show');
-            }
-
-            function closeEditModal() {
-                modal.classList.remove('show');
-            }
-
-            const gradeListSection = document.getElementById('grade-list-section');
-
-            if (gradeListSection) {
-                gradeListSection.addEventListener('mousedown', (e) => {
-                    const targetRow = e.target.closest('tr[data-grade-id]');
-                    if (!targetRow) return;
-
-                    // 꾹 누르기
-                    pressTimer = setTimeout(() => {
-                        openEditModal(targetRow);
-                    }, 500); // 0.5초
-                });
-
-                const cancelPress = () => {
-                    clearTimeout(pressTimer);
-                };
-                gradeListSection.addEventListener('mouseup', cancelPress);
-                gradeListSection.addEventListener('mouseleave', cancelPress);
-
-                // 우클릭
-                gradeListSection.addEventListener('contextmenu', (e) => {
-                    e.preventDefault(); // 기본 우클릭 메뉴 차단
-                    const targetRow = e.target.closest('tr[data-grade-id]');
-                    if (!targetRow) return;
-
-                    openEditModal(targetRow);
-                });
-            }
-
-            closeModalBtn.addEventListener('click', closeEditModal);
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) {    // 폼 영역 바깥을 클릭했을 때만 닫기
-                    closeEditModal();
-                }
-            });
-
-            // 삭제 버튼
-            deleteBtn.addEventListener('click', async () => {
-                const gradeId = modalGradeId.value;
-                const courseName = modalTitle.textContent;
-
-                if (confirm(`'${courseName}' 성적을 삭제합니다.\n삭제한 데이터는 복구할 수 없습니다. 정말 삭제하시겠습니까?`)) {
-                    try {
-                        // (백엔드) /api/grades/{id}로 DELETE 요청
-                        const response = await fetch(`/api/grades/${gradeId}`, {
-                            method: 'DELETE'
-                        });
-
-                        if (!response.ok) throw new Error('삭제 실패');
-
-                        alert('성적이 삭제되었습니다.');
-                        closeEditModal();
-                        // 실시간 반영을 위해 페이지 새로고침
-                        window.location.reload();
-
-                    } catch (error) {
-                        console.error('Delete error:', error);
-                        alert('삭제 중 오류가 발생했습니다.');
-                    }
-                }
-            });
-
-            // 수정 버튼
-            editForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const gradeId = modalGradeId.value;
-                const newGrade = modalGradeSelect.value;
-
-                try {
-                    // (백엔드) /api/grades/{id}로 PUT (또는 PATCH) 요청
-                    const response = await fetch(`/api/grades/${gradeId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            grade: newGrade
-                            // 학점(credits)은 수정 불가로 가정
-                        })
-                    });
-
-                    if (!response.ok) throw new Error('수정 실패');
-
-                    alert('성적이 수정되었습니다.');
-                    closeEditModal();
-                    window.location.reload();
-
-                } catch (error) {
-                    console.error('Update error:', error);
-                    alert('수정 중 오류가 발생했습니다.');
-                }
-            });
-
-            renderCourseList();
-            calculateAndRenderGPA();
-            fetchMyCourses();
-        });
-    </script>
     <div id="edit-grade-modal" class="modal-overlay">
         <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-
             <form id="edit-grade-form">
                 <h3 id="modal-title" class="text-xl font-bold text-slate-800">성적 수정</h3>
                 <p id="modal-course-name" class="text-sm text-slate-500 mb-4">과목명 로딩 중...</p>
-
                 <input type="hidden" id="edit-grade-id" name="grade_id">
-
                 <div class="space-y-4">
                     <div>
-                        <label for="edit-course-credits" class="form-label">학점</label>
+                        <label for="edit-course-credits" class="block text-sm font-medium text-slate-700">학점</label>
                         <input type="number" id="edit-course-credits" name="credits" class="form-input bg-slate-100"
                             readonly>
                     </div>
                     <div>
-                        <label for="edit-course-grade" class="form-label">성적</label>
+                        <label for="edit-course-grade" class="block text-sm font-medium text-slate-700">성적</label>
                         <select id="edit-course-grade" name="grade" class="form-select !bg-white">
                             <option value="A+">A+</option>
-                            <option value="A">A</option>
+                            <option value="A0">A</option>
                             <option value="B+">B+</option>
-                            <option value="B">B</option>
+                            <option value="B0">B</option>
                             <option value="C+">C+</option>
-                            <option value="C">C</option>
+                            <option value="C0">C</option>
                             <option value="D+">D+</option>
-                            <option value="D">D</option>
+                            <option value="D0">D</option>
                             <option value="F">F</option>
                         </select>
                     </div>
                 </div>
-
                 <div class="flex gap-2 mt-6">
                     <button type="button" id="delete-grade-btn"
                         class="w-1/3 bg-red-100 text-red-700 p-3 rounded-lg font-bold hover:bg-red-200 transition">
@@ -608,6 +297,208 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const addCourseBtn = document.getElementById('add-course-btn');
+            const courseSelect = document.getElementById('course-select');
+            const courseCreditsInput = document.getElementById('course-credits');
+            const courseGradeSelect = document.getElementById('course-grade');
+            const courseIsMajorCheckbox = document.getElementById('course-is-major');
+
+            const modal = document.getElementById('edit-grade-modal');
+            const modalOverlay = document.querySelector('.modal-overlay');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const editForm = document.getElementById('edit-grade-form');
+            const deleteBtn = document.getElementById('delete-grade-btn');
+            const modalTitle = document.getElementById('modal-course-name');
+            const modalGradeId = document.getElementById('edit-grade-id');
+            const modalCredits = document.getElementById('edit-course-credits');
+            const modalGradeSelect = document.getElementById('edit-course-grade');
+
+            let myCoursesData = [];
+            let pressTimer = null;
+
+            async function fetchMyCourses() {
+                try {
+                    const response = await fetch('/api/my-timetable-courses');
+                    if (!response.ok) throw new Error('Cannot fetch my courses');
+                    myCoursesData = await response.json();
+
+                    courseSelect.innerHTML = '<option value="">과목을 선택하세요 (시간표 기준)</option>';
+                    myCoursesData.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.title;
+                        option.textContent = course.title;
+                        option.dataset.credits = course.credits;
+                        courseSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error("Error loading my courses:", error);
+                    courseSelect.innerHTML = '<option value="">시간표 과목을 불러올 수 없습니다.</option>';
+                }
+            }
+
+            // 과목 선택 시 학점 자동 입력 
+            courseSelect.addEventListener('change', function () {
+                if (this.value === "") {
+                    courseCreditsInput.value = "";
+                    return;
+                }
+                const selectedCredits = this.options[this.selectedIndex].dataset.credits;
+                courseCreditsInput.value = selectedCredits;
+            });
+
+            addCourseBtn.addEventListener('click', async () => {
+                const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+                if (!selectedOption || courseSelect.value === "") {
+                    alert('과목을 선택해주세요.');
+                    return;
+                }
+                const courseName = selectedOption.textContent;
+                const courseCredits = courseCreditsInput.value || 0;
+                const gradeValue = courseGradeSelect.value;
+                const isMajor = courseIsMajorCheckbox.checked ? 1 : 0;
+
+                try {
+                    const resp = await fetch('/api/grades', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            course_title: courseName,
+                            credits: Number(courseCredits),
+                            grade: gradeValue,
+                            is_major: isMajor
+                        })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || !data.ok) {
+                        throw new Error(data.message || '저장 실패');
+                    }
+                    location.reload();  // 저장 후 새로고침
+                } catch (e) {
+                    alert(e.message || '성적을 저장하는 중 오류가 발생했습니다.');
+                }
+            });
+
+            const toggles = document.querySelectorAll('.sem-toggle');
+            toggles.forEach(btn => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('svg');
+                content.classList.add('hidden');
+
+                btn.addEventListener('click', () => {
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+
+            // 팝업(모달) 열기
+            function openEditModal(targetRow) {
+                clearTimeout(pressTimer);
+                const gradeId = targetRow.dataset.gradeId;
+                const courseName = targetRow.dataset.courseName;
+                const credits = targetRow.dataset.credits;
+                const grade = targetRow.dataset.grade;
+
+                modalTitle.textContent = courseName;
+                modalGradeId.value = gradeId;
+                modalCredits.value = credits;
+                modalGradeSelect.value = grade;
+
+                modal.classList.add('show');
+            }
+
+            // 팝업(모달) 닫기
+            function closeEditModal() {
+                modal.classList.remove('show');
+            }
+
+            // 꾹 누르기 or 우클릭
+            const gradeListSection = document.getElementById('grade-list-section');
+
+            if (gradeListSection) {
+                // 꾹 누르기 (touchstart - 모바일 대응)
+                gradeListSection.addEventListener('touchstart', (e) => {
+                    const targetRow = e.target.closest('tr[data-grade-id]');
+                    if (!targetRow) return;
+
+                    pressTimer = setTimeout(() => {
+                        openEditModal(targetRow);
+                    }, 500);
+                }, { passive: true });
+
+                const cancelPress = () => { clearTimeout(pressTimer); };
+                gradeListSection.addEventListener('touchend', cancelPress);
+                gradeListSection.addEventListener('touchmove', cancelPress);
+
+                // 우클릭 (PC 대응)
+                gradeListSection.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const targetRow = e.target.closest('tr[data-grade-id]');
+                    if (!targetRow) return;
+                    openEditModal(targetRow);
+                });
+            }
+
+            closeModalBtn.addEventListener('click', closeEditModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    closeEditModal();
+                }
+            });
+
+            deleteBtn.addEventListener('click', async () => {
+                const gradeId = modalGradeId.value;
+                const courseName = modalTitle.textContent;
+
+                if (confirm(`'${courseName}' 성적을 삭제합니다.\n삭제한 데이터는 복구할 수 없습니다. 정말 삭제하시겠습니까?`)) {
+                    try {
+                        // (백엔드) /api/grades/{id}로 DELETE 요청
+                        const response = await fetch(`/api/grades/${gradeId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (!response.ok) throw new Error('삭제 실패');
+
+                        alert('성적이 삭제되었습니다.');
+                        location.reload();
+
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                }
+            });
+
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const gradeId = modalGradeId.value;
+                const newGrade = modalGradeSelect.value;
+
+                try {
+                    // (백엔드) /api/grades/{id}로 PUT (또는 PATCH) 요청
+                    const response = await fetch(`/api/grades/${gradeId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ grade: newGrade })
+                    });
+
+                    if (!response.ok) throw new Error('수정 실패');
+
+                    alert('성적이 수정되었습니다.');
+                    location.reload();
+
+                } catch (error) {
+                    console.error('Update error:', error);
+                    alert('수정 중 오류가 발생했습니다.');
+                }
+            });
+
+            fetchMyCourses();
+        });
+    </script>
 </body>
 
 </html>
