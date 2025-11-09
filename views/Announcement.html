@@ -134,8 +134,9 @@
                         </a>
                     </li>
                     {% endfor %}
+                    <li id="no-result-message" class="text-center text-slate-500 p-4 text-sm" style="display: none;">일치하는 공지사항이 없습니다.</li>
                     {% else %}
-                    <li class="text-center text-slate-500 p-4 text-sm">공지사항이 없습니다.</li>
+                    <li id="no-result-message" class="text-center text-slate-500 p-4 text-sm">공지사항이 없습니다.</li>
                     {% endif %}
                 </ul>
 
@@ -247,12 +248,13 @@
                 });
 
                 // 검색 결과가 없을 때 '공지 없음' 메시지 처리
-                const noResultMsg = document.querySelector('#announcement-list > li:not(.announcement-item)');
-                if (noResultMsg && itemsFound === 0) {
-                    noResultMsg.style.display = '';
-                    noResultMsg.textContent = '일치하는 공지사항이 없습니다.';
-                } else if (noResultMsg) {
-                    noResultMsg.style.display = 'none';
+                const noResultMsg = document.getElementById('no-result-message');
+                if (noResultMsg) {
+                    if (itemsFound === 0) {
+                        noResultMsg.style.display = '';
+                    } else {
+                        noResultMsg.style.display = 'none';
+                    }
                 }
             }
 
