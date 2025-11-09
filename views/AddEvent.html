@@ -200,29 +200,25 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700">배경색</label>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700">배경색</label>
-                                    <div id="event-color-options" class="mt-2 flex space-x-3">
+                                <div id="event-color-options" class="mt-2 flex space-x-3">
 
-                                        <div data-color="bg-red-200"
-                                            class="event-color-option w-8 h-8 rounded-full bg-red-200 cursor-pointer ring-2 ring-offset-2 ring-sub-blue"
-                                            title="빨강"></div>
+                                    <div data-color="bg-red-200"
+                                        class="event-color-option w-8 h-8 rounded-full bg-red-200 cursor-pointer ring-2 ring-offset-2 ring-sub-blue"
+                                        title="빨강"></div>
 
-                                        <div data-color="bg-blue-200"
-                                            class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"
-                                            title="파랑"></div>
+                                    <div data-color="bg-blue-200"
+                                        class="event-color-option w-8 h-8 rounded-full bg-blue-200 cursor-pointer"
+                                        title="파랑"></div>
 
-                                        {% if user_role == 'admin' %}
-                                        <div data-color="bg-green-200"
-                                            class="event-color-option w-8 h-8 rounded-full bg-green-200 cursor-pointer"
-                                            title="초록"></div>
-                                        {% endif %}
-                                        <div data-color="bg-yellow-200"
-                                            class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
-                                            title="노랑"></div>
+                                    {% if user_role == 'admin' %}
+                                    <div data-color="bg-green-200"
+                                        class="event-color-option w-8 h-8 rounded-full bg-green-200 cursor-pointer"
+                                        title="초록"></div>
+                                    {% endif %}
+                                    <div data-color="bg-yellow-200"
+                                        class="event-color-option w-8 h-8 rounded-full bg-yellow-200 cursor-pointer"
+                                        title="노랑"></div>
 
-                                    </div>
-                                    <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
                                 </div>
                                 <input type="hidden" name="event_color" id="event-color" value="bg-red-200" />
                             </div>
@@ -308,7 +304,7 @@
             const addAlarmToggle = document.getElementById('add-alarm-toggle');
             const addAlarmOptions = document.getElementById('add-alarm-options');
             let currentAlarms = [];
-            
+
             if (tabPublic && tabPrivate) {
 
                 tabPublic.addEventListener('click', () => {
@@ -388,7 +384,7 @@
 
                 if (!currentAlarms.includes(alarmOffset)) {
                     currentAlarms.push(alarmOffset);
-                    renderAlarms(); 
+                    renderAlarms();
                 }
             });
 
