@@ -1631,6 +1631,78 @@ const getGradesSummaryApi = async (req, res) => {
     }
 };
 
+// 성적 수정 API (PUT /api/grades/:id)
+const updateGradeApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) {
+            return res.status(401).json({ ok: false, message: '학생만 이용 가능합니다.' });
+        }
+
+        const gradeId = parseInt(req.params.id, 10);
+        if (!gradeId) {
+            return res.status(400).json({ ok: false, message: '성적 ID가 필요합니다.' });
+        }
+
+        let { grade, is_major } = req.body;
+        if (!grade) {
+            return res.status(400).json({ ok: false, message: '성적이 필요합니다.' });
+        }
+
+        // 성적이 본인의 것인지 확인
+        const existingGrade = await model.getGradeById(gradeId, user.pkid);
+        if (!existingGrade) {
+            return res.status(404).json({ ok: false, message: '성적을 찾을 수 없습니다.' });
+        }
+
+        // 성적 수정
+        is_major = is_major ? 1 : 0;
+        const affected = await model.updateGrade(gradeId, user.pkid, grade, is_major);
+        
+        if (affected === 0) {
+            return res.status(404).json({ ok: false, message: '성적을 수정할 수 없습니다.' });
+        }
+
+        return res.json({ ok: true, message: '성적이 수정되었습니다.' });
+    } catch (err) {
+        console.error('성적 수정 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
+// 성적 삭제 API (DELETE /api/grades/:id)
+const deleteGradeApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user || user.isAdmin) {
+            return res.status(401).json({ ok: false, message: '학생만 이용 가능합니다.' });
+        }
+
+        const gradeId = parseInt(req.params.id, 10);
+        if (!gradeId) {
+            return res.status(400).json({ ok: false, message: '성적 ID가 필요합니다.' });
+        }
+
+        // 성적이 본인의 것인지 확인
+        const existingGrade = await model.getGradeById(gradeId, user.pkid);
+        if (!existingGrade) {
+            return res.status(404).json({ ok: false, message: '성적을 찾을 수 없습니다.' });
+        }
+
+        // 성적 삭제
+        const affected = await model.deleteGrade(gradeId, user.pkid);
+        
+        if (affected === 0) {
+            return res.status(404).json({ ok: false, message: '성적을 삭제할 수 없습니다.' });
+        }
+
+        return res.json({ ok: true, message: '성적이 삭제되었습니다.' });
+    } catch (err) {
+        console.error('성적 삭제 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
 // 바코드 생성 컨트롤러
 const generateBarcode = (req, res) => {
     const text = req.params.text;
@@ -1703,6 +1775,8 @@ module.exports = {
     // grades/timetable related APIs
     getMyTimetableCoursesApi,
     addGradeApi,
+    updateGradeApi,
+    deleteGradeApi,
     getGradesSummaryApi,
     generateBarcode
 }

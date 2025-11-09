@@ -572,15 +572,14 @@ const getStudentInfo = async (user_pkid) => {
     }
 }
 
-// 특정 학생의 모든 학점 기록 조회
+// 특정 학생의 모든 학점 기록 조회 (id를 pkid로 alias)
 const getGradesByUser = async (student_pkid) => {
     try {
-        // 년도와 학기 순으로 정렬하여 가져옵니다.
         const sql = `
-            SELECT year, semester, course_name, credits, grade, is_major 
+            SELECT id as pkid, year, semester, course_name, credits, grade, is_major 
             FROM grades 
             WHERE student_pkid = ? 
-            ORDER BY year, semester;
+            ORDER BY year DESC, semester DESC;
         `;
         const params = [student_pkid];
         const result = await db.runSql(sql, params);
@@ -682,6 +681,51 @@ const addOrUpdateGrade = async (student_pkid, year, semester, course_name, credi
     const params = [student_pkid, year, semester, course_name, credits || 0, grade, is_major ? 1 : 0];
     const result = await db.runSql(sql, params);
     return result.insertId || true;
+};
+
+// 성적 ID로 단일 조회
+const getGradeById = async (gradeId, student_pkid) => {
+    try {
+        const sql = `
+            SELECT id as pkid, year, semester, course_name, credits, grade, is_major
+            FROM grades
+            WHERE id = ? AND student_pkid = ?;
+        `;
+        const result = await db.runSql(sql, [gradeId, student_pkid]);
+        return result[0];
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 성적 수정 (grade, is_major만 수정 가능)
+const updateGrade = async (gradeId, student_pkid, grade, is_major) => {
+    try {
+        const sql = `
+            UPDATE grades
+            SET grade = ?, is_major = ?
+            WHERE id = ? AND student_pkid = ?;
+        `;
+        const params = [grade, is_major ? 1 : 0, gradeId, student_pkid];
+        const result = await db.runSql(sql, params);
+        return result.affectedRows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+// 성적 삭제
+const deleteGrade = async (gradeId, student_pkid) => {
+    try {
+        const sql = `
+            DELETE FROM grades
+            WHERE id = ? AND student_pkid = ?;
+        `;
+        const result = await db.runSql(sql, [gradeId, student_pkid]);
+        return result.affectedRows;
+    } catch (err) {
+        throw err;
+    }
 };
 
 // ===== Timetable-derived courses (distinct) =====
@@ -858,6 +902,9 @@ module.exports.getTimetablesByTitle = getTimetablesByTitle;
 module.exports.updateTimetableEntry = updateTimetableEntry;
 module.exports.deleteTimetableEntry = deleteTimetableEntry;
 module.exports.addOrUpdateGrade = addOrUpdateGrade;
+module.exports.getGradeById = getGradeById;
+module.exports.updateGrade = updateGrade;
+module.exports.deleteGrade = deleteGrade;
 module.exports.getUserTimetableCourses = getUserTimetableCourses;
 
 // 과목 관리 함수 export

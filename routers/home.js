@@ -72,6 +72,8 @@ router.get('/barcode/:text', controller.generateBarcode);
 // 학점/시간표 관련 API
 router.get('/api/my-timetable-courses', controller.getMyTimetableCoursesApi);
 router.post('/api/grades', controller.addGradeApi);
+router.put('/api/grades/:id', controller.updateGradeApi);
+router.delete('/api/grades/:id', controller.deleteGradeApi);
 router.get('/api/grades/summary', controller.getGradesSummaryApi);
 
 module.exports = {
