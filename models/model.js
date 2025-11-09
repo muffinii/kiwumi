@@ -402,7 +402,14 @@ const getPersonalEventById = async (event_id, user_pkid, user_type) => {
     const params = [event_id, user_pkid, user_type];
     const result = await db.runSql(sql, params);
     const event = result[0];
-    if (event && event.alarms) {
+    
+    // 일정을 찾지 못한 경우
+    if (!event) {
+        return null;
+    }
+    
+    // alarms 필드 파싱
+    if (event.alarms) {
         try {
             // MySQL JSON 타입은 이미 객체/배열로 파싱되어 올 수 있음
             if (typeof event.alarms === 'string') {
@@ -1070,6 +1077,93 @@ const markTokenAsUsed = async (tokenId) => {
     }
 };
 
+// ========== 알림 기능 ==========
+
+// 알림 생성
+const createNotification = async (user_pkid, user_type, type, title, message, link_url = null) => {
+    const sql = `
+        INSERT INTO notifications (user_pkid, user_type, type, title, message, link_url)
+        VALUES (?, ?, ?, ?, ?, ?);
+    `;
+    const result = await db.runSql(sql, [user_pkid, user_type, type, title, message, link_url]);
+    return result.insertId;
+};
+
+// 모든 사용자에게 알림 생성 (공지사항용)
+const createNotificationForAll = async (type, title, message, link_url = null) => {
+    // 모든 학생 가져오기
+    const students = await db.runSql('SELECT pkid FROM student');
+    // 모든 관리자 가져오기
+    const admins = await db.runSql('SELECT pkid FROM administrator');
+    
+    const notifications = [];
+    
+    // 학생들에게 알림 생성
+    for (const student of students) {
+        notifications.push([student.pkid, 'student', type, title, message, link_url]);
+    }
+    
+    // 관리자들에게 알림 생성
+    for (const admin of admins) {
+        notifications.push([admin.pkid, 'admin', type, title, message, link_url]);
+    }
+    
+    if (notifications.length > 0) {
+        // 각 알림을 개별적으로 삽입
+        for (const notif of notifications) {
+            const sql = `
+                INSERT INTO notifications (user_pkid, user_type, type, title, message, link_url)
+                VALUES (?, ?, ?, ?, ?, ?);
+            `;
+            await db.runSql(sql, notif);
+        }
+    }
+};
+
+// 사용자 알림 목록 조회
+const getNotifications = async (user_pkid, user_type) => {
+    const sql = `
+        SELECT id, type, title, message, link_url, is_read, 
+               DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at
+        FROM notifications
+        WHERE user_pkid = ? AND user_type = ?
+        ORDER BY is_read ASC, created_at DESC
+        LIMIT 100;
+    `;
+    return await db.runSql(sql, [user_pkid, user_type]);
+};
+
+// 미확인 알림 개수
+const getUnreadNotificationCount = async (user_pkid, user_type) => {
+    const sql = `
+        SELECT COUNT(*) as count
+        FROM notifications
+        WHERE user_pkid = ? AND user_type = ? AND is_read = FALSE;
+    `;
+    const result = await db.runSql(sql, [user_pkid, user_type]);
+    return result[0].count;
+};
+
+// 알림 읽음 처리
+const markNotificationAsRead = async (notification_id, user_pkid, user_type) => {
+    const sql = `
+        UPDATE notifications
+        SET is_read = TRUE
+        WHERE id = ? AND user_pkid = ? AND user_type = ?;
+    `;
+    await db.runSql(sql, [notification_id, user_pkid, user_type]);
+};
+
+// 모든 알림 읽음 처리
+const markAllNotificationsAsRead = async (user_pkid, user_type) => {
+    const sql = `
+        UPDATE notifications
+        SET is_read = TRUE
+        WHERE user_pkid = ? AND user_type = ? AND is_read = FALSE;
+    `;
+    await db.runSql(sql, [user_pkid, user_type]);
+};
+
 module.exports.findUserByEmail = findUserByEmail;
 module.exports.saveVerificationCode = saveVerificationCode;
 module.exports.verifyCode = verifyCode;
@@ -1077,3 +1171,9 @@ module.exports.createPasswordResetToken = createPasswordResetToken;
 module.exports.verifyPasswordResetToken = verifyPasswordResetToken;
 module.exports.updatePassword = updatePassword;
 module.exports.markTokenAsUsed = markTokenAsUsed;
+module.exports.createNotification = createNotification;
+module.exports.createNotificationForAll = createNotificationForAll;
+module.exports.getNotifications = getNotifications;
+module.exports.getUnreadNotificationCount = getUnreadNotificationCount;
+module.exports.markNotificationAsRead = markNotificationAsRead;
+module.exports.markAllNotificationsAsRead = markAllNotificationsAsRead;

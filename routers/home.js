@@ -79,6 +79,12 @@ router.put('/api/grades/:id', controller.updateGradeApi);
 router.delete('/api/grades/:id', controller.deleteGradeApi);
 router.get('/api/grades/summary', controller.getGradesSummaryApi);
 
+// 알림 관련 API
+router.get('/api/notifications', controller.getNotificationsApi);
+router.get('/api/notifications/unread-count', controller.getUnreadCountApi);
+router.put('/api/notifications/:id/read', controller.markNotificationReadApi);
+router.put('/api/notifications/read-all', controller.markAllNotificationsReadApi);
+
 module.exports = {
     router
 }

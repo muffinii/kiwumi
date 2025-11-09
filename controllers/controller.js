@@ -275,17 +275,28 @@ const createAnnouncement = async (req, res) => {
         // 첨부파일 정보 JSON으로 저장
         let attachments = null;
         if (req.files && req.files.length > 0) {
-            console.log('업로드된 파일:', req.files); // 디버깅 로그
             attachments = JSON.stringify(req.files.map(file => ({
                 filename: file.filename,
                 originalname: file.originalname,
                 size: file.size,
                 path: `/uploads/announcements/${file.filename}`
             })));
-            console.log('저장할 attachments:', attachments); // 디버깅 로그
         }
 
         const id = await model.createAnnouncement(title, content, author_pkid, category, attachments);
+        
+        // 알림 생성: 모든 사용자에게 전송
+        try {
+            await model.createNotificationForAll(
+                'announcement',
+                '새 공지사항',
+                `'${title}' 공지가 등록되었습니다.`,
+                `/ViewAnnouncement?id=${id}`
+            );
+        } catch (notifErr) {
+            console.error('알림 생성 오류:', notifErr);
+        }
+        
         common.alertAndGo(res, '공지 등록 완료', '/Announcement');
     } catch (err) {
         console.error(err);
@@ -608,6 +619,16 @@ const createPersonalEvent = async (req, res) => {
                 memo,
                 alarmsArray
             );
+            
+            // 일정 알림 생성
+            if (alarmsArray && alarmsArray.length > 0) {
+                try {
+                    await scheduleEventNotifications(user.pkid, user.isAdmin ? 'admin' : 'student', id, title, event_date, event_time, alarmsArray);
+                } catch (notifErr) {
+                    console.error('일정 알림 생성 오류:', notifErr);
+                }
+            }
+            
             return res.json({ ok: true, id });
         }
     } catch (err) {
@@ -1193,7 +1214,7 @@ const loginProc = async (req, res) => {
 const logout = (req, res) => {
     req.session.destroy((error) => {
         if (error) {
-            console.log("세션 삭제 실패");
+            console.error("세션 삭제 실패:", error);
         }
         common.alertAndGo(res, '로그아웃 되었습니다.', '/');
     })
@@ -1814,6 +1835,135 @@ const resetPasswordApi = async (req, res) => {
     }
 };
 
+// ========== 알림 API ==========
+
+// 일정 알림 스케줄링 함수
+const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_title, event_date, event_time, alarms) => {
+    // 일정 시간 계산
+    let eventDateTime;
+    if (event_time) {
+        eventDateTime = new Date(`${event_date}T${event_time}`);
+    } else {
+        // 시간이 없으면 당일 오전 9시로 설정
+        eventDateTime = new Date(`${event_date}T09:00:00`);
+    }
+    
+    const alarmOffsetMap = {
+        '10m': 10 * 60 * 1000,
+        '30m': 30 * 60 * 1000,
+        '1h': 60 * 60 * 1000,
+        '12h': 12 * 60 * 60 * 1000,
+        '1d': 24 * 60 * 60 * 1000,
+        '1w': 7 * 24 * 60 * 60 * 1000
+    };
+    
+    const alarmTextMap = {
+        '10m': '10분',
+        '30m': '30분',
+        '1h': '1시간',
+        '12h': '12시간',
+        '1d': '1일',
+        '1w': '1주일'
+    };
+    
+    for (const alarmOffset of alarms) {
+        const offsetMs = alarmOffsetMap[alarmOffset];
+        if (!offsetMs) continue;
+        
+        const notificationTime = new Date(eventDateTime.getTime() - offsetMs);
+        const now = new Date();
+        
+        // 알림 시간이 현재보다 미래인 경우에만 스케줄링
+        if (notificationTime > now) {
+            const delay = notificationTime.getTime() - now.getTime();
+            
+            setTimeout(async () => {
+                try {
+                    await model.createNotification(
+                        user_pkid,
+                        user_type,
+                        'event',
+                        '일정 알림',
+                        `'${event_title}' ${alarmTextMap[alarmOffset]} 전입니다.`,
+                        `/ViewEvent?eventId=${event_id}&type=private`
+                    );
+                } catch (err) {
+                    console.error('일정 알림 전송 오류:', err);
+                }
+            }, delay);
+        }
+    }
+};
+
+// 알림 목록 조회 API
+const getNotificationsApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+        const userType = user.isAdmin ? 'admin' : 'student';
+        const notifications = await model.getNotifications(user.pkid, userType);
+        
+        return res.json({ ok: true, notifications });
+    } catch (err) {
+        console.error('알림 목록 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
+// 미확인 알림 개수 조회 API
+const getUnreadCountApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+        const userType = user.isAdmin ? 'admin' : 'student';
+        const count = await model.getUnreadNotificationCount(user.pkid, userType);
+        
+        return res.json({ ok: true, count });
+    } catch (err) {
+        console.error('미확인 알림 개수 조회 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
+// 알림 읽음 처리 API
+const markNotificationReadApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+        const notificationId = parseInt(req.params.id, 10);
+        if (!notificationId) {
+            return res.status(400).json({ ok: false, message: '잘못된 알림 ID' });
+        }
+
+        const userType = user.isAdmin ? 'admin' : 'student';
+        await model.markNotificationAsRead(notificationId, user.pkid, userType);
+        
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('알림 읽음 처리 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
+// 모든 알림 읽음 처리 API
+const markAllNotificationsReadApi = async (req, res) => {
+    try {
+        const user = req.session && req.session.user;
+        if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+
+        const userType = user.isAdmin ? 'admin' : 'student';
+        await model.markAllNotificationsAsRead(user.pkid, userType);
+        
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('모든 알림 읽음 처리 오류:', err);
+        return res.status(500).json({ ok: false, message: '서버 오류' });
+    }
+};
+
 // 바코드 생성 컨트롤러
 const generateBarcode = (req, res) => {
     const text = req.params.text;
@@ -1893,7 +2043,12 @@ module.exports = {
     sendVerificationCodeApi,
     verifyCodeApi,
     resetPasswordApi,
-    generateBarcode
+    generateBarcode,
+    // notification APIs
+    getNotificationsApi,
+    getUnreadCountApi,
+    markNotificationReadApi,
+    markAllNotificationsReadApi
 }
 
 // 일정 수정 API
@@ -1959,6 +2114,12 @@ async function updateEventApi(req, res) {
                 return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
             }
             await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color, memo, alarmsArray);
+            
+            // 알림이 있다면 다시 스케줄링
+            if (alarmsArray && alarmsArray.length > 0) {
+                scheduleEventNotifications(user.pkid, userType, eventId, title, event_date, event_time, alarmsArray);
+            }
+            
             return res.json({ ok: true });
         }
     } catch (err) {

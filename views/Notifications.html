@@ -57,51 +57,7 @@
         <main class="flex-grow overflow-y-auto">
             
             <ul id="notification-list" class="divide-y divide-slate-100">
-                <li class="notification-item flex items-start space-x-3 bg-red-50">
-                    <div class="w-2 h-2 mt-1 bg-main-red rounded-full flex-shrink-0"></div> <div class="flex-grow">
-                        <p class="font-semibold text-sm text-slate-800">새 공지 도착</p>
-                        <p class="text-xs text-slate-600 mt-1">[학사] 2025학년도 2학기 **등록 기간**이 시작되었습니다.</p>
-                        <span class="text-[10px] text-slate-400 block mt-1 text-right">5분 전</span>
-                    </div>
-                </li>
-
-                <li class="notification-item flex items-start space-x-3 bg-yellow-50">
-                    <div class="w-2 h-2 mt-1 bg-yellow-500 rounded-full flex-shrink-0"></div>
-                    <div class="flex-grow">
-                        <p class="font-semibold text-sm text-slate-800">마감 임박</p>
-                        <p class="text-xs text-slate-600 mt-1">**웹프로그래밍 2차 과제** 마감일이 하루 남았습니다.</p>
-                        <span class="text-[10px] text-slate-400 block mt-1 text-right">1시간 전</span>
-                    </div>
-                </li>
-                
-                <li class="notification-item flex items-start space-x-3 opacity-80">
-                    <div class="w-2 h-2 mt-1 bg-slate-300 rounded-full flex-shrink-0"></div>
-                    <div class="flex-grow">
-                        <p class="font-semibold text-sm text-slate-700">수업 알림</p>
-                        <p class="text-xs text-slate-500 mt-1">**운영체제** 수업이 10분 뒤 시작합니다. (공학관 208호)</p>
-                        <span class="text-[10px] text-slate-400 block mt-1 text-right">어제 13:50</span>
-                    </div>
-                </li>
-                
-                <li class="notification-item flex items-start space-x-3 opacity-80">
-                    <div class="w-2 h-2 mt-1 bg-slate-300 rounded-full flex-shrink-0"></div>
-                    <div class="flex-grow">
-                        <p class="font-semibold text-sm text-slate-700">장학 공지</p>
-                        <p class="text-xs text-slate-500 mt-1">[장학] 교내 **성적 우수 장학금** 신청이 시작되었습니다.</p>
-                        <span class="text-[10px] text-slate-400 block mt-1 text-right">2025.10.14</span>
-                    </div>
-                </li>
-
-                <li class="notification-item flex items-start space-x-3 opacity-80">
-                    <div class="w-2 h-2 mt-1 bg-slate-300 rounded-full flex-shrink-0"></div>
-                    <div class="flex-grow">
-                        <p class="font-semibold text-sm text-slate-700">시스템 업데이트</p>
-                        <p class="text-xs text-slate-500 mt-1">키우미 앱 업데이트가 완료되었습니다.</p>
-                        <span class="text-[10px] text-slate-400 block mt-1 text-right">2025.10.10</span>
-                    </div>
-                </li>
-                
-                <div class="h-10"></div>
+                <li class="text-center py-8 text-slate-400">알림을 불러오는 중...</li>
             </ul>
 
         </main>
@@ -116,6 +72,89 @@
                 window.location.href = '/Main';
             }
         }
+
+        // 시간 포맷 함수
+        function formatTime(createdAt) {
+            const now = new Date();
+            const created = new Date(createdAt);
+            const diff = Math.floor((now - created) / 1000); // 초 단위
+
+            if (diff < 60) return '방금 전';
+            if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+            if (diff < 172800) return '어제';
+            
+            // 그 이상은 날짜 표시
+            return created.toLocaleDateString('ko-KR');
+        }
+
+        // 알림 목록 불러오기
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                const data = await response.json();
+
+                const listEl = document.getElementById('notification-list');
+                
+                if (!data.ok || data.notifications.length === 0) {
+                    listEl.innerHTML = '<li class="text-center py-8 text-slate-400">알림이 없습니다.</li>';
+                    return;
+                }
+
+                listEl.innerHTML = '';
+
+                data.notifications.forEach(notif => {
+                    const li = document.createElement('li');
+                    li.className = `notification-item flex items-start space-x-3 cursor-pointer ${notif.is_read ? '' : 'bg-red-50'}`;
+                    li.dataset.id = notif.id;
+                    li.dataset.url = notif.link_url || '';
+
+                    const iconColor = notif.is_read ? 'bg-slate-300' : 'bg-main-red';
+                    const textOpacity = notif.is_read ? 'opacity-80' : '';
+
+                    li.innerHTML = `
+                        <div class="w-2 h-2 mt-1 ${iconColor} rounded-full flex-shrink-0"></div>
+                        <div class="flex-grow ${textOpacity}">
+                            <p class="font-semibold text-sm text-slate-800">${notif.title}</p>
+                            <p class="text-xs text-slate-600 mt-1">${notif.message}</p>
+                            <span class="text-[10px] text-slate-400 block mt-1 text-right">${formatTime(notif.created_at)}</span>
+                        </div>
+                    `;
+
+                    // 클릭 이벤트
+                    li.addEventListener('click', async () => {
+                        // 읽음 처리
+                        if (!notif.is_read) {
+                            try {
+                                await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+                            } catch (e) {
+                                console.error('읽음 처리 실패:', e);
+                            }
+                        }
+
+                        // 링크 이동
+                        if (notif.link_url) {
+                            window.location.href = notif.link_url;
+                        }
+                    });
+
+                    listEl.appendChild(li);
+                });
+
+                // 하단 여백
+                const spacer = document.createElement('div');
+                spacer.className = 'h-10';
+                listEl.appendChild(spacer);
+
+            } catch (error) {
+                console.error('알림 불러오기 오류:', error);
+                const listEl = document.getElementById('notification-list');
+                listEl.innerHTML = '<li class="text-center py-8 text-red-500">알림을 불러오는데 실패했습니다.</li>';
+            }
+        }
+
+        // 페이지 로드 시 알림 불러오기
+        document.addEventListener('DOMContentLoaded', loadNotifications);
     </script>
 </body>
 </html>
