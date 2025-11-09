@@ -2074,7 +2074,7 @@ const generateBarcode = (req, res) => {
         text: text,            // 바코드에 인코딩할 텍스트
         scale: 3,              // 스케일
         height: 10,            // 높이
-        includetext: true,     // 텍스트 포함 여부
+        includetext: false,    // 텍스트 포함 여부
         textxalign: 'center',  // 텍스트 정렬
     }, (err, png) => {
         if (err) {
