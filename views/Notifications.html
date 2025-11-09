@@ -193,6 +193,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadNotifications();
+            // 15초마다 알림 목록 자동 새로고침
+            setInterval(loadNotifications, 15000);
 
             // 드롭다운 메뉴 이벤트 리스너
             const menuToggle = document.getElementById('menu-toggle');
