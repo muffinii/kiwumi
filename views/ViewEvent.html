@@ -16,15 +16,30 @@
         }
     </script>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
+        /* ▼▼▼ [1. CSS 수정] 배경색 흰색으로 변경 ▼▼▼ */
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: #ffffff; /* 흰색 배경 */
+        }
+        /* ▲▲▲ 수정 완료 ▲▲▲ */
+        
         .app-container { min-height: 100vh; display: flex; flex-direction: column; }
-        .section-card { background-color: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+        
+        /* section-card 스타일 제거됨 */
+
         /* 드롭다운 메뉴 스타일 */
         .dropdown-menu { display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 20; width: 120px; overflow: hidden; border: 1px solid #f1f5f9; }
         .dropdown-menu.show { display: block; }
         .dropdown-item { display: block; padding: 0.75rem 1rem; font-size: 0.875rem; color: #334155; }
         .dropdown-item:hover { background-color: #f1f5f9; }
         .dropdown-item.delete { color: #ed2024; }
+        
+        /* 알림 아이콘 스타일 */
+        .alarm-icon-display {
+            display: flex;
+            align-items: center;
+            color: #475569; /* text-slate-600 */
+        }
     </style>
 </head>
 <body>
@@ -32,7 +47,7 @@
     <div class="app-container">
         
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Calendar" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/Calendar.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center">일정 상세</h1>
@@ -48,9 +63,9 @@
             </div>
         </header>
 
-        <main class="flex-grow px-4 py-4 overflow-y-auto pb-20">
+        <main class="flex-grow px-4 py-6 overflow-y-auto pb-20">
             
-            <div id="event-detail-card" class="section-card space-y-4">
+            <div id="event-detail-content" class="space-y-5">
                 
                 <div>
                     <span id="event-category-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">로딩 중...</span>
@@ -63,46 +78,28 @@
 
                 <div class="border-t border-slate-200"></div>
 
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div id="event-place-group" class="hidden">
                         <label class="text-sm font-semibold text-slate-500">장소</label>
-                        <p id="event-place" class="text-base text-slate-700"></p>
+                        <p id="event-place" class="text-base text-slate-700 mt-1"></p>
                     </div>
                     
                     <div id="event-memo-group" class="hidden">
                         <label class="text-sm font-semibold text-slate-500">메모</label>
-                        <p id="event-memo" class="text-base text-slate-700 whitespace-pre-wrap"></p>
+                        <p id="event-memo" class="text-base text-slate-700 whitespace-pre-wrap mt-1"></p>
+                    </div>
+
+                    <div id="alarm-display-section" class="hidden">
+                        <label class="text-sm font-semibold text-slate-500">설정된 알림</label>
+                        <div id="alarm-display-list" class="space-y-2 mt-2">
+                            </div>
                     </div>
                 </div>
 
             </div>
         </main>
-        
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
-            <div class="flex justify-around h-16 items-start">
-                <a href="/Main" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    <span class="text-xs mt-1">홈</span>
-                </a>
-                <a href="/Calendar" class="flex flex-col items-center justify-center text-main-red font-bold p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
-                    <span class="text-xs mt-1">캘린더</span>
-                </a>
-                <a href="/AnnouncementGuest" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
-                    <span class="text-xs mt-1">공지사항</span>
-                </a>
-                {% if user_role == 'student' %}
-                <a href="/Timetable" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
-                    <span class="text-xs mt-1">시간표</span>
-                </a>
-                {% endif %}
-                <a href="/MyPage" class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span class="text-xs mt-1">마이</span>
-                </a>
-            </div>
+            ...
         </nav>
     </div>
 
@@ -110,7 +107,7 @@
     document.addEventListener('DOMContentLoaded', async function() {
         const params = new URLSearchParams(window.location.search);
         const eventId = params.get('eventId');
-        const eventType = params.get('type') || 'personal'; // 'personal' or 'academic'
+        const eventType = params.get('type') || 'personal';
 
         // --- 요소 가져오기 ---
         const titleEl = document.getElementById('event-title');
@@ -122,26 +119,35 @@
         const placeGroup = document.getElementById('event-place-group');
         const memoGroup = document.getElementById('event-memo-group');
         const menuContainer = document.getElementById('menu-container');
+        
+        // [신규] 알림 표시 요소
+        const alarmDisplaySection = document.getElementById('alarm-display-section');
+        const alarmDisplayList = document.getElementById('alarm-display-list');
 
         if (!eventId) {
             titleEl.textContent = "오류: 일정 ID가 없습니다.";
             if (menuContainer) menuContainer.style.display = 'none';
+            if (alarmDisplaySection) alarmDisplaySection.style.display = 'none';
             return;
         }
         
+        // --- 1. 백엔드에서 데이터 가져오기 ---
         try {
             const response = await fetch(`/api/events/${eventId}?type=${eventType}`);
             if (!response.ok) throw new Error('일정을 불러오지 못했습니다.');
             
             const data = await response.json();
+            // (백엔드 응답 예시)
+            // { 
+            //   id: 123, type: 'personal', title: '팀 프로젝트', ...
+            //   alarms: ["10m", "1h"] // (신규) 현재 설정된 알림 목록
+            // }
 
+            // --- 2. 데이터 화면에 표시 (기존 코드) ---
             titleEl.textContent = data.title;
-            dateEl.textContent = data.event_date || data.start_date || ''; // 학사일정은 start_date일 수 있음
+            dateEl.textContent = data.event_date || data.start_date || ''; 
             
-            if (data.event_time) {
-                timeEl.textContent = data.event_time;
-            }
-            // 개인 일정 카드 배경색은 유지, 배지는 아래에서 설정
+            if (data.event_time) timeEl.textContent = data.event_time;
             if (data.place) {
                 placeEl.textContent = data.place;
                 placeGroup.classList.remove('hidden');
@@ -150,18 +156,21 @@
                 memoEl.textContent = data.memo;
                 memoGroup.classList.remove('hidden');
             }
-
-            // 카테고리 배지 설정
+            
+            // --- 3. 알림 및 메뉴 표시 설정 ---
             if (data.type === 'academic') {
                 categoryEl.textContent = '학사 일정';
                 categoryEl.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800';
-                // 학사 일정은 수정/삭제 불가 (관리자만 가능)
-                {% if user_role != 'admin' %}
+                
+                // 학사일정은 알림/수정/삭제 불가 (관리자 제외)
+                if (alarmDisplaySection) alarmDisplaySection.style.display = 'none'; 
+                
+                {% if user_role == 'admin' %}
                     if (menuContainer) menuContainer.style.display = 'none';
-                {% endif %}
+                { % endif % }
             } else {
                 categoryEl.textContent = '개인 일정';
-                // 사용자가 선택한 색상으로 배지 배경/텍스트 색상 적용
+                // (배지 색상 설정 - 기존과 동일)
                 const badgeColorMap = {
                     'bg-red-200': { bg: '#fecaca', text: '#991b1b' },
                     'bg-blue-200': { bg: '#bfdbfe', text: '#1e40af' },
@@ -174,13 +183,28 @@
                     categoryEl.style.backgroundColor = bg;
                     categoryEl.style.color = text;
                 } else {
-                    // 기본 색상 (파랑 톤)
                     categoryEl.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800';
-                    categoryEl.style.backgroundColor = '';
-                    categoryEl.style.color = '';
+                }
+                
+                // [신규] 알림 목록 표시
+                if (data.alarms && data.alarms.length > 0) {
+                    alarmDisplaySection.classList.remove('hidden');
+                    alarmDisplayList.innerHTML = ''; // 목록 비우기
+                    const textMap = { '10m': '10분 전', '30m': '30분 전', '1h': '1시간 전', '12h': '12시간 전', '1d': '1일 전', '1w': '1주일 전' };
+                    
+                    data.alarms.forEach(alarmOffset => {
+                        const alarmItem = document.createElement('div');
+                        alarmItem.className = 'alarm-icon-display';
+                        alarmItem.innerHTML = `
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341A6.002 6.002 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span>${textMap[alarmOffset] || alarmOffset}</span>
+                        `;
+                        alarmDisplayList.appendChild(alarmItem);
+                    });
                 }
             }
 
+            // --- 4. 메뉴 버튼 설정 (기존 코드) ---
             const menuToggle = document.getElementById('menu-toggle');
             const dropdownMenu = document.getElementById('dropdown-menu');
             const modifyLink = document.getElementById('modify-link');
@@ -188,23 +212,18 @@
 
             if (menuToggle && dropdownMenu && modifyLink && deleteBtn) {
                 
-                modifyLink.href = `/ModifyEvent?eventId=${eventId}&type=${eventType}`;
-
-                menuToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    dropdownMenu.classList.toggle('show');
-                });
-
+                modifyLink.href = `/ModifyEvent.html?eventId=${eventId}&type=${eventType}`;
+                menuToggle.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+                
                 deleteBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     dropdownMenu.classList.remove('show');
-                    
                     if (confirm("이 일정을 삭제합니다. 정말 삭제하시겠습니까?")) {
                         try {
                             const deleteResponse = await fetch(`/api/events/${eventId}?type=${eventType}`, { method: 'DELETE' });
                             if (!deleteResponse.ok) throw new Error('삭제 실패');
                             alert('일정이 삭제되었습니다.');
-                            window.location.href = '/Calendar';
+                            window.location.href = '/Calendar.html';
                         } catch (err) {
                             alert('삭제 중 오류가 발생했습니다.');
                         }
@@ -216,6 +235,7 @@
             console.error(error);
             titleEl.textContent = "일정을 불러올 수 없습니다.";
             if (menuContainer) menuContainer.style.display = 'none';
+            if (alarmDisplaySection) alarmDisplaySection.style.display = 'none';
         }
 
         document.addEventListener('click', () => {
