@@ -252,7 +252,9 @@
                     data.slots.forEach((slot, index) => {
                         const option = document.createElement('option');
                         option.value = slot.id;
-                        option.textContent = `${slot.day} ${slot.startTime}-${slot.endTime} (${slot.place || '장소없음'})`;
+                        // 장소가 없으면 빈 문자열로 표시
+                        const placeText = slot.place && slot.place !== 'null' ? slot.place : '';
+                        option.textContent = `${slot.day} ${slot.startTime}-${slot.endTime}${placeText ? ` (${placeText})` : ''}`;
                         if (index === 0) option.selected = true;
                         sectionSelect.appendChild(option);
                     });

@@ -1459,24 +1459,31 @@ const modifyClass = async (req, res) => {
         if (!id) return res.status(400).send('수업 ID가 필요합니다.');
         
         const classInfo = await model.getTimetableById(id, user.pkid);
-        
         if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
-        
-        // 요일 변환
+
+        // 같은 과목명의 모든 시간표 항목(분반/슬롯) 불러오기
+        const allClassTimes = await model.getTimetablesByTitle(classInfo.title, user.pkid);
         const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
-        classInfo.dayName = dayMap[classInfo.day] || '';
-        
-        // 교시를 시간으로 변환
         const periodToTime = (period) => {
             const base = new Date(2000, 0, 1, 9, 0, 0);
             base.setMinutes(base.getMinutes() + (period - 1) * 60);
             return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
         };
-        
+        // 모든 시간대에 대해 요일/시간/장소 정보 추가, 장소가 null/빈값이면 빈 문자열
+        const timeSlots = allClassTimes.map(slot => ({
+            id: slot.id,
+            dayName: dayMap[slot.day] || '',
+            start_time: periodToTime(slot.start_period),
+            end_time: periodToTime(slot.end_period + 1),
+            location: slot.location && slot.location !== 'null' ? slot.location : ''
+        }));
+
+        // 기존 단일 슬롯 정보도 유지
+        classInfo.dayName = dayMap[classInfo.day] || '';
         classInfo.start_time = periodToTime(classInfo.start_period);
         classInfo.end_time = periodToTime(classInfo.end_period + 1);
-        
-        res.render('ModifyClass', { classInfo });
+
+        res.render('ModifyClass', { classInfo, timeSlots });
     } catch (err) {
         console.error(err);
         res.status(500).send("500 Error");
