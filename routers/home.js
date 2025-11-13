@@ -1,6 +1,10 @@
+
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/controller");
+// AI 챗봇 페이지 및 API
+router.get('/Chatbot', controller.chatbotPage);
+router.post('/api/chatbot', controller.chatbotApi);
 
 // 로그인 관련 라우트는 세션 검사 없이 접근 가능
 router.get("/Login", controller.login);

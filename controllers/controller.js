@@ -1,3 +1,24 @@
+// AI 챗봇 페이지 렌더링
+const chatbotPage = (req, res) => {
+    res.render('Chatbot');
+};
+
+// AI 챗봇 API (임시 답변)
+const chatbotApi = async (req, res) => {
+    try {
+        const { question } = req.body;
+        // 실제 AI 연동 대신 임시 답변
+        let answer = '아직 AI 답변 기능이 구현되지 않았어요. 곧 업데이트될 예정입니다!';
+        if (question && typeof question === 'string') {
+            // 예시: 간단한 키워드 응답
+            if (question.includes('학사')) answer = '학사 일정은 학교 홈페이지에서 확인할 수 있어요.';
+            else if (question.includes('도서관')) answer = '도서관은 09:00~18:00까지 운영됩니다.';
+        }
+        res.json({ answer });
+    } catch (err) {
+        res.status(500).json({ answer: '서버 오류가 발생했습니다.' });
+    }
+};
 const model = require('../models/model');
 const common = require('../common/common');
 const multer = require('multer');
@@ -2152,7 +2173,10 @@ module.exports = {
     getUnreadCountApi,
     markNotificationReadApi,
     markAllNotificationsReadApi,
-    deleteAllNotificationsApi
+    deleteAllNotificationsApi,
+    // AI 챗봇
+    chatbotPage,
+    chatbotApi
 }
 
 // 일정 수정 API
