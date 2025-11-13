@@ -1226,8 +1226,10 @@ const loginProc = async (req, res) => {
                 };
             }
 
-            // 로그인 성공 시 메인으로 리다이렉트
-            res.redirect('/');
+            // 세션 저장 후 리다이렉트
+            req.session.save(() => {
+                res.redirect('/');
+            });
         } else {
             // 아이디 또는 비번이 틀린 경우
             res.send('<script>alert("아이디 또는 비밀번호가 잘못되었습니다."); location.href="/Login";</script>');
