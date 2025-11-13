@@ -70,7 +70,7 @@
     <div class="app-container">
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <h1 class="text-xl font-bold text-slate-800">모바일 학생증</h1>
+            <h1 class="text-xl font-bold text-slate-800">{% if user_role == 'admin' %}모바일 사원증{% else %}모바일 학생증{% endif %}</h1>
             <a href="/Notifications" id="notificationBell" class="relative p-2 rounded-full hover:bg-slate-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
