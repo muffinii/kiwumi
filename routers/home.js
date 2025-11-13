@@ -72,6 +72,7 @@ router.get("/api/academic-schedule", controller.getAcademicScheduleApi);
 // 시간표 API
 router.get("/api/classes/:id", controller.getClassApi);
 router.get("/api/classes/:id/details", controller.getClassDetailsApi);
+router.get("/api/classes/:classId/sections", controller.getCourseSectionsApi);
 router.put("/api/classes/:id", controller.updateClassApi);
 router.delete("/api/classes/:id", controller.deleteClassApi);
 

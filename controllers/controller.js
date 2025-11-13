@@ -917,13 +917,95 @@ const getAllCoursesApi = async (req, res) => {
 // 특정 과목의 분반 목록 조회 API
 const getCourseSectionsApi = async (req, res) => {
     try {
-        const course_id = req.params.courseId;
-        if (!course_id) {
-            return res.status(400).json({ ok: false, message: '과목 ID가 필요합니다.' });
-        }
+        // 두 가지 경우를 모두 처리: 
+        // 1. courseId: 과목 ID로 모든 분반 조회 (기존)
+        // 2. classId: 시간표 항목 ID로 같은 과목의 분반 조회 (ModifyClass용)
         
-        const sections = await model.getSectionsByCourseId(course_id);
-        return res.json(sections);
+        const courseId = req.params.courseId;
+        const classId = req.params.classId;
+        
+        if (courseId) {
+            // 기존 로직: 과목 ID로 모든 분반 조회
+            const sections = await model.getSectionsByCourseId(courseId);
+            return res.json(sections);
+        } else if (classId) {
+            // 새 로직: 시간표 항목 ID로 같은 과목의 분반 조회 (과정 테이블 기반)
+            const user = req.session && req.session.user;
+            if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
+            
+            // 해당 수업 정보 가져오기
+            const classInfo = await model.getTimetableById(classId, user.pkid);
+            if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
+            
+            // 같은 과목명의 모든 분반 정보 조회 (courses 테이블 기반)
+            const allSectionSchedules = await model.getSectionsByCourseTitleWithSchedules(classInfo.title);
+            
+            // 분반별로 그룹화하여 각 분반의 일정을 배열로 구성
+            const sectionMap = {};
+            allSectionSchedules.forEach(schedule => {
+                if (!sectionMap[schedule.section_id]) {
+                    sectionMap[schedule.section_id] = {
+                        id: schedule.section_id,
+                        section_number: schedule.section_number,
+                        professor: schedule.professor,
+                        classroom: schedule.classroom,
+                        schedules: []
+                    };
+                }
+                if (schedule.schedule_id) {
+                    sectionMap[schedule.section_id].schedules.push({
+                        day_of_week: schedule.day_of_week,
+                        start_period: schedule.start_period,
+                        end_period: schedule.end_period
+                    });
+                }
+            });
+            
+            const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
+            const periodToTime = (period) => {
+                const base = new Date(2000, 0, 1, 9, 0, 0);
+                base.setMinutes(base.getMinutes() + (period - 1) * 60);
+                return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
+            };
+            
+            // 분반 정보를 드롭다운용 형식으로 변환
+            const sections = Object.values(sectionMap).map(section => {
+                // 모든 일정을 하나의 시간 범위로 표시 (여러 요일의 경우 첫 번째 일정 사용)
+                if (section.schedules.length > 0) {
+                    const firstSchedule = section.schedules[0];
+                    const allScheduleText = section.schedules.map(sch => 
+                        `${dayMap[sch.day_of_week]} ${periodToTime(sch.start_period)}-${periodToTime(sch.end_period + 1)}`
+                    ).join(', ');
+                    
+                    return {
+                        id: section.id,
+                        section_number: section.section_number,
+                        day: dayMap[firstSchedule.day_of_week] || '',
+                        startTime: periodToTime(firstSchedule.start_period),
+                        endTime: periodToTime(firstSchedule.end_period + 1),
+                        place: section.classroom || '',
+                        all_schedules: allScheduleText
+                    };
+                } else {
+                    return {
+                        id: section.id,
+                        section_number: section.section_number,
+                        day: '미정',
+                        startTime: '--:--',
+                        endTime: '--:--',
+                        place: section.classroom || '',
+                        all_schedules: '일정 없음'
+                    };
+                }
+            });
+            
+            return res.json({
+                ok: true,
+                sections: sections
+            });
+        } else {
+            return res.status(400).json({ ok: false, message: '과목 ID 또는 수업 ID가 필요합니다.' });
+        }
     } catch (err) {
         console.error('분반 조회 오류:', err);
         return res.status(500).json({ ok: false, message: '서버 오류' });

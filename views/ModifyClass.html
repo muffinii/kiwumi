@@ -83,7 +83,7 @@
                 </div>
                 <div class="mb-6">
                     <label for="section-select" class="form-label">시간 / 장소 (분반)</label>
-                    <select id="section-select" name="section_id" class="form-select" disabled></select>
+                    <select id="section-select" name="section_id" class="form-select"></select>
                 </div>
                 
                 <h3 class="text-lg font-bold mb-3 border-t pt-4 mt-6">표시 설정</h3>
@@ -150,7 +150,7 @@
         const backToView = document.getElementById('back-to-view');
         const sectionSelect = document.getElementById('section-select');
 
-        let courseIdCache = null; 
+        let allAvailableSections = null; // 모든 분반 정보를 저장
 
         // --- 색상 선택 로직 ---
         function updateColorSelection() {
@@ -173,53 +173,6 @@
             updateColorSelection();
         });
 
-
-        // --- 분반 목록 가져오기 및 현재 상태 표시 ---
-        async function fetchAndPopulateSections(currentCourseId, currentSectionId) {
-            sectionSelect.innerHTML = '<option value="">분반 정보를 불러오는 중...</option>';
-            sectionSelect.disabled = true;
-
-            if (!currentCourseId) {
-                sectionSelect.innerHTML = '<option value="">과목 ID가 없습니다.</option>';
-                return;
-            }
-
-            try {
-                // (백엔드) /api/course/{courseId}/sections API를 호출하여 해당 과목의 모든 분반을 가져옵니다.
-                const response = await fetch(`/api/course/${currentCourseId}/sections`);
-                if (!response.ok) throw new Error('분반 로드 실패');
-                
-                const sections = await response.json(); 
-
-                sectionSelect.innerHTML = '<option value="">다른 분반을 선택하세요...</option>';
-                let foundCurrent = false;
-
-                sections.forEach(section => {
-                    const option = document.createElement('option');
-                    option.value = section.id;
-                    option.textContent = `${section.section_number}분반 - ${section.time_string} (${section.place})`;
-                    
-                    if (section.id === currentSectionId) {
-                        option.selected = true; 
-                        foundCurrent = true;
-                    }
-                    sectionSelect.appendChild(option);
-                });
-                
-                if (!foundCurrent) {
-                    alert("경고: 기존 분반 정보를 찾을 수 없습니다. 수정이 제한됩니다.");
-                    sectionSelect.disabled = true;
-                } else {
-                    sectionSelect.disabled = false;
-                }
-
-            } catch (error) {
-                console.error("Error loading sections:", error);
-                sectionSelect.innerHTML = '<option value="">분반 로드 중 오류 발생</option>';
-            }
-        }
-
-
         // --- 페이지 로드 (GET) 및 폼 제출 (PUT) 로직 ---
         document.addEventListener('DOMContentLoaded', async function () {
             const params = new URLSearchParams(window.location.search);
@@ -235,7 +188,7 @@
             }
 
             try {
-                // 1. 기존 시간표 항목의 전체 정보 로드 (모든 시간 슬롯 포함)
+                // 1. 기존 시간표 항목의 전체 정보 로드
                 const response = await fetch(`/api/classes/${classId}`);
                 if (!response.ok) throw new Error('데이터 로딩 실패');
                 const data = await response.json();
@@ -246,15 +199,21 @@
                 colorHidden.value = data.color || 'bg-blue-100';
                 updateColorSelection();
 
-                // 3. 시간표 슬롯을 분반 선택으로 표시
-                sectionSelect.innerHTML = '';
-                if (data.slots && data.slots.length > 0) {
-                    data.slots.forEach((slot, index) => {
+                // 3. 과목의 모든 가능한 분반 로드 (같은 과목의 다른 분반 포함)
+                const sectionsResponse = await fetch(`/api/classes/${classId}/sections`);
+                if (!sectionsResponse.ok) throw new Error('분반 정보 로드 실패');
+                const sectionsData = await sectionsResponse.json();
+                
+                allAvailableSections = sectionsData.sections || []; // 모든 분반 정보 저장
+                
+                sectionSelect.innerHTML = '<option value="">다른 분반을 선택하세요...</option>';
+                if (allAvailableSections && allAvailableSections.length > 0) {
+                    allAvailableSections.forEach((section, index) => {
                         const option = document.createElement('option');
-                        option.value = slot.id;
-                        // 장소가 없으면 빈 문자열로 표시
-                        const placeText = slot.place && slot.place !== 'null' ? slot.place : '';
-                        option.textContent = `${slot.day} ${slot.startTime}-${slot.endTime}${placeText ? ` (${placeText})` : ''}`;
+                        option.value = section.id; // section_id
+                        const placeText = section.place ? ` (${section.place})` : '';
+                        option.textContent = `${section.day} ${section.startTime}-${section.endTime}${placeText}`;
+                        // 첫 번째 분반(현재 수강 중인 분반)을 기본 선택
                         if (index === 0) option.selected = true;
                         sectionSelect.appendChild(option);
                     });
@@ -276,21 +235,41 @@
 
             const color = colorHidden.value;
             const memo = document.getElementById('memo').value;
+            const selectedSectionId = sectionSelect.value; // section_id
+
+            if (!selectedSectionId) {
+                alert('분반을 선택해주세요.');
+                return;
+            }
 
             try {
-                // 기존 데이터를 다시 가져와서 slots 정보 유지
+                // 기존 데이터 로드
                 const getResponse = await fetch(`/api/classes/${classId}`);
                 if (!getResponse.ok) throw new Error('데이터 로딩 실패');
                 const currentData = await getResponse.json();
 
-                // 색상과 메모만 업데이트, 나머지는 기존 데이터 유지
+                // 선택된 분반의 정보 찾기
+                const selectedSection = allAvailableSections.find(s => String(s.id) === String(selectedSectionId));
+                
+                if (!selectedSection) {
+                    throw new Error('선택된 분반 정보를 찾을 수 없습니다.');
+                }
+
+                // 선택된 분반의 정보로 slot 객체 생성
+                const selectedSlot = {
+                    day: selectedSection.day,
+                    startTime: selectedSection.startTime,
+                    endTime: selectedSection.endTime,
+                    place: selectedSection.place || ''
+                };
+
                 const data = {
                     title: currentData.title,
                     class_color: color,
                     memo: memo,
                     professor: currentData.professor,
                     credits: currentData.credits,
-                    slots: currentData.slots
+                    slots: [selectedSlot] // 선택된 분반 정보만 포함
                 };
 
                 // 수정 요청 (PUT)
