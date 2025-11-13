@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,9 +24,7 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f8fafc;
-            /* bg-slate-50 */
             color: #1e293b;
-            /* text-slate-800 */
         }
 
         .app-container {
@@ -48,8 +45,22 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* 상단 시작 */
             padding: 1rem;
+            flex-grow: 1;
+        }
+        
+        /* 챗봇 플로팅 버튼 (MyPage용) */
+        .chatbot-fixed-btn {
+            width: 100%;
+            max-width: 320px; /* 학생증 카드와 너비 맞춤 */
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -60,7 +71,7 @@
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
             <h1 class="text-xl font-bold text-slate-800">모바일 학생증</h1>
-            <a href="/Notifications" id="notificationBell" class="relative p-2 rounded-full hover:bg-slate-200 transition-colors">
+            <a href="/Notifications.html" id="notificationBell" class="relative p-2 rounded-full hover:bg-slate-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="text-slate-600">
@@ -113,6 +124,7 @@
                 <p class="text-sm text-slate-500">학번</p>
                 <p class="font-mono text-lg font-semibold">{{ user.student_num }}</p>
                 {% endif %}
+                
                 <img src="/barcode/{% if user_role == 'admin' %}{{ user.employee_num }}{% else %}{{ user.student_num }}{% endif %}" alt="Barcode" class="mt-4" width="180px">
 
                 {% if user_role == 'student' %}
@@ -142,6 +154,16 @@
                 </div>
                 {% endif %}
             </div>
+            
+            {% if user_role == 'student' %}
+            <a href="/Chatbot.html"
+                class="chatbot-fixed-btn bg-sub-blue text-white rounded-lg hover:bg-blue-800 transition">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                </svg>
+                AI 챗봇에게 문의하기
+            </a>
+            {% endif %}
 
             <form id="photo-form" action="/UploadPhoto" method="post" enctype="multipart/form-data" class="hidden">
                 <input type="file" id="photo-upload" name="student_photo" accept="image/*">
@@ -155,7 +177,7 @@
 
         <nav class="flex-shrink-0 fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.05)] pt-1">
             <div class="flex justify-around h-16 items-start">
-                <a href="/Main"
+                <a href="/Main.html"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -164,7 +186,7 @@
                     </svg>
                     <span class="text-xs mt-1">홈</span>
                 </a>
-                <a href="/Calendar"
+                <a href="/Calendar.html"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -189,7 +211,7 @@
                     <span class="text-xs mt-1">공지사항</span>
                 </a>
                 {% if user_role == 'student' %}
-                <a href="/Timetable"
+                <a href="/Timetable.html"
                     class="flex flex-col items-center justify-center text-slate-500 hover:text-sub-blue p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -220,7 +242,6 @@
             }
         });
 
-        // 읽지 않은 알림 개수 확인
         async function checkUnreadNotifications() {
             try {
                 const response = await fetch('/api/notifications/unread-count');
@@ -238,7 +259,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             checkUnreadNotifications();
-            setInterval(checkUnreadNotifications, 15000); // 15초마다
+            setInterval(checkUnreadNotifications, 15000);
         });
     </script>
 
