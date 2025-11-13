@@ -7,12 +7,21 @@ const chatbotPage = (req, res) => {
 const chatbotApi = async (req, res) => {
     try {
         const { question } = req.body;
-        // 실제 AI 연동 대신 임시 답변
-        let answer = '아직 AI 답변 기능이 구현되지 않았어요. 곧 업데이트될 예정입니다!';
+        let answer = '죄송해요, 답변을 준비 중이에요.';
         if (question && typeof question === 'string') {
-            // 예시: 간단한 키워드 응답
-            if (question.includes('학사')) answer = '학사 일정은 학교 홈페이지에서 확인할 수 있어요.';
-            else if (question.includes('도서관')) answer = '도서관은 09:00~18:00까지 운영됩니다.';
+            const q = question.toLowerCase();
+            if (q.includes('학사')) answer = '학사 일정은 학교 홈페이지에서 확인할 수 있어요.';
+            else if (q.includes('도서관')) answer = '도서관은 09:00~18:00까지 운영됩니다.';
+            else if (q.includes('장학')) answer = '장학금 관련 문의는 학생처로 연락하세요.';
+            else if (q.includes('식당')) answer = '학생식당은 11:00~14:00, 17:00~19:00 운영합니다.';
+            else if (q.includes('버스')) answer = '셔틀버스는 정문에서 08:00~18:00 운행합니다.';
+            else if (q.includes('캠퍼스')) answer = '캠퍼스 지도는 학교 홈페이지에서 확인 가능합니다.';
+            else if (q.includes('동아리')) answer = '동아리 가입은 학생회관 1층에서 신청할 수 있습니다.';
+            else if (q.includes('상담')) answer = '상담센터는 본관 2층에 위치해 있습니다.';
+            else if (q.includes('등록금')) answer = '등록금 납부는 우리은행 가상계좌로 가능합니다.';
+            else if (q.includes('휴학')) answer = '휴학 신청은 학사관리시스템에서 가능합니다.';
+            else if (q.includes('졸업')) answer = '졸업 요건은 학과 사무실에 문의하세요.';
+            // 원하는 키워드와 답변을 계속 추가
         }
         res.json({ answer });
     } catch (err) {
@@ -1446,14 +1455,10 @@ const modifyClass = async (req, res) => {
         if (!user) return res.redirect('/Login');
         
         const id = req.params.id || req.query.id || req.query.classId;
-        console.log('modifyClass - req.params:', req.params);
-        console.log('modifyClass - req.query:', req.query);
-        console.log('modifyClass - id:', id);
         
         if (!id) return res.status(400).send('수업 ID가 필요합니다.');
         
         const classInfo = await model.getTimetableById(id, user.pkid);
-        console.log('modifyClass - classInfo:', classInfo);
         
         if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
         

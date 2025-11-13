@@ -252,7 +252,9 @@
                     selectedCourse.sections.forEach(section => {
                         const option = document.createElement('option');
                         option.value = section.id;
-                        option.textContent = `${section.section_number}분반 - ${section.time_string} (${section.place})`;
+                        // 강의실 정보가 없으면 빈 문자열로 처리
+                        const placeText = section.place && section.place !== 'null' ? section.place : '';
+                        option.textContent = `${section.section_number}분반 - ${section.time_string}${placeText ? ` (${placeText})` : ''}`;
                         option.dataset.sectionData = JSON.stringify(section);
                         sectionSelect.appendChild(option);
                     });

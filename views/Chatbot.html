@@ -53,7 +53,7 @@
     <div class="app-container">
 
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/MyPage.html" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <a href="/MyPage" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </a>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center">AI 챗봇 키우</h1>
@@ -72,8 +72,8 @@
 
         <div class="flex-shrink-0 p-3 bg-white border-t border-slate-200">
             <form id="chat-form" class="relative flex items-center">
-                <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." 
-                       class="form-input w-full p-3 pr-12 text-sm border border-slate-300 rounded-full focus:ring-sub-blue focus:border-sub-blue">
+                  <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off"
+                      class="form-input w-full p-3 pr-12 text-sm border border-slate-300 rounded-full focus:ring-sub-blue focus:border-sub-blue">
                 <button type="submit" id="send-button"
                         class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-sub-blue text-white hover:bg-blue-800 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -111,6 +111,13 @@
                 scrollToBottom();
             }
 
+            // 입력창 포커스 시 입력값이 남아있지 않도록
+            chatInput.addEventListener('focus', function() {
+                if (chatInput.value === chatInput.placeholder) {
+                    chatInput.value = '';
+                }
+            });
+
             // 폼 제출 이벤트 (백엔드 통신)
             chatForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -120,7 +127,8 @@
 
                 // 1. 사용자 메시지 표시
                 appendMessage('user', userMessage);
-                chatInput.value = ''; // 입력창 비우기
+                chatInput.value = '';
+                chatInput.blur(); // 입력 후 포커스 해제
 
                 // 2. 로딩 상태 표시 (AI가 응답을 준비하는 것처럼)
                 appendMessage('ai', '...');
@@ -128,17 +136,13 @@
 
                 try {
                     // 3. 백엔드 API 호출 (POST)
-                    // (백엔드 참고) /api/chatbot API가 질문을 받아 답변을 JSON으로 반환해야 함
                     const response = await fetch('/api/chatbot', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ question: userMessage })
                     });
-                    
                     const data = await response.json();
-                    
                     let aiResponseText;
-
                     if (response.ok && data.answer) {
                         aiResponseText = data.answer;
                     } else if (response.status === 404) {
@@ -146,17 +150,14 @@
                     } else {
                         aiResponseText = "응답을 처리하는 중 오류가 발생했습니다.";
                     }
-                    
-                    // 4. 로딩 버블을 실제 답변으로 교체
                     loadingBubble.innerHTML = `<p class="text-sm font-normal">${aiResponseText}</p>`;
-
                 } catch (error) {
                     console.error('Chatbot API error:', error);
                     loadingBubble.innerHTML = `<p class="text-sm font-normal text-main-red">서버 연결에 실패했습니다.</p>`;
                 }
                 scrollToBottom();
             });
-            
+
             // 초기 로드 시 스크롤
             scrollToBottom();
         });
