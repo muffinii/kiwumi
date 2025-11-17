@@ -1,48 +1,6 @@
 const db = require('../common/db');
 
-// student 테이블에 photo_url 컬럼 추가
-const ensureStudentPhotoColumn = async () => {
-    try {
-        const alterSql = `ALTER TABLE student ADD COLUMN IF NOT EXISTS photo_url VARCHAR(500) NULL;`;
-        await db.runSql(alterSql);
-    } catch (err) {
-        // MySQL 5.x에서는 IF NOT EXISTS를 지원하지 않으므로 에러 무시
-        if (!err.message.includes('Duplicate column name')) {
-            console.log('photo_url column alter skipped:', err.message);
-        }
-    }
-}
-
-// administrator 테이블에 필요한 컬럼 추가
-const ensureAdminColumns = async () => {
-    try {
-        // photo_url 컬럼 추가
-        await db.runSql('ALTER TABLE administrator ADD COLUMN photo_url VARCHAR(500) NULL;');
-    } catch (err) {
-        if (!err.message.includes('Duplicate column name')) {
-            console.log('administrator photo_url column alter skipped:', err.message);
-        }
-    }
-    
-    try {
-        // employee_num 컬럼 추가 (사번)
-        await db.runSql('ALTER TABLE administrator ADD COLUMN employee_num VARCHAR(50) NULL;');
-    } catch (err) {
-        if (!err.message.includes('Duplicate column name')) {
-            console.log('administrator employee_num column alter skipped:', err.message);
-        }
-    }
-    
-    try {
-        // department 컬럼 추가 (부서)
-        await db.runSql('ALTER TABLE administrator ADD COLUMN department VARCHAR(100) NULL;');
-    } catch (err) {
-        if (!err.message.includes('Duplicate column name')) {
-            console.log('administrator department column alter skipped:', err.message);
-        }
-    }
-}
-
+// 로그인 체크
 const loginCheck = async (identifier, student_pw) => {
     // identifier: 학번 또는 아이디(학생용)
     try {
@@ -74,7 +32,6 @@ const loginCheck = async (identifier, student_pw) => {
 // 관리자 로그인 체크
 const adminLoginCheck = async (admin_id, admin_pw) => {
     try {
-        await ensureAdminColumns();
         const sql = "SELECT pkid, name, admin_id, role, photo_url, employee_num, department FROM administrator WHERE admin_id = ? AND admin_pw = ?;";
         const params = [admin_id, admin_pw];
 
@@ -105,7 +62,6 @@ const checkPreRegisteredStudent = async (name, student_num) => {
 // 회원가입: 이름과 사번으로 사전 등록된 관리자(직원) 확인
 const checkPreRegisteredAdmin = async (name, employee_num) => {
     try {
-        await ensureAdminColumns();
         const sql = `
             SELECT pkid, name, employee_num, admin_id, email
             FROM administrator
@@ -142,7 +98,6 @@ const checkStudentAlreadyRegistered = async (student_pkid) => {
 // 회원가입: 이미 가입된 관리자 계정인지 확인
 const checkAdminAlreadyRegistered = async (admin_pkid) => {
     try {
-        await ensureAdminColumns();
         const sql = `
             SELECT admin_id, email
             FROM administrator
@@ -178,7 +133,6 @@ const checkUsernameExists = async (username) => {
 // 회원가입: 관리자 아이디 중복 체크
 const checkAdminUsernameExists = async (admin_id) => {
     try {
-        await ensureAdminColumns();
         const sql = `
             SELECT pkid FROM administrator
             WHERE admin_id = ? AND admin_id NOT LIKE 'temp_%';
@@ -211,7 +165,6 @@ const checkEmailExists = async (email) => {
 // 회원가입: 관리자 이메일 중복 체크
 const checkAdminEmailExists = async (email) => {
     try {
-        await ensureAdminColumns();
         const sql = `
             SELECT pkid FROM administrator
             WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
@@ -243,7 +196,6 @@ const updateStudentRegistration = async (student_pkid, username, password, email
 // 회원가입: 관리자 정보 업데이트 (admin_id, admin_pw, email)
 const updateAdminRegistration = async (admin_pkid, admin_id, admin_pw, email) => {
     try {
-        await ensureAdminColumns();
         const sql = `
             UPDATE administrator
             SET admin_id = ?, admin_pw = ?, email = ?
@@ -334,65 +286,31 @@ const deleteAnnouncement = async (pkid) => {
     }
 }
 
-    const ensurePersonalEventsTable = async () => {
-        const createSql = `
-            CREATE TABLE IF NOT EXISTS personal_events (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_pkid INT NOT NULL,
-                user_type ENUM('student', 'admin') NOT NULL DEFAULT 'student',
-                title VARCHAR(255) NOT NULL,
-                event_date DATE NOT NULL,
-                event_time TIME NULL,
-                color VARCHAR(32) NOT NULL,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_user_date (user_pkid, user_type, event_date)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        `;
-        await db.runSql(createSql);
+const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color, memo = null, alarms = null) => {
+    const alarmsJson = alarms ? JSON.stringify(alarms) : null;
+    const sql = `
+        INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color, memo, alarms)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+    `;
+    const params = [user_pkid, user_type, title, event_date, event_time, color, memo, alarmsJson];
+    const result = await db.runSql(sql, params);
+    return result.insertId;
+}
 
-        // memo 컬럼 추가 (기존 테이블에 없는 경우 안전하게 추가)
-        try {
-            await db.runSql('ALTER TABLE personal_events ADD COLUMN memo TEXT NULL AFTER color;');
-        } catch (err) {
-            // 이미 존재하면 무시
-        }
-        
-        // alarms 컬럼 추가 (JSON 형식으로 저장)
-        try {
-            await db.runSql('ALTER TABLE personal_events ADD COLUMN alarms JSON NULL AFTER memo;');
-        } catch (err) {
-            // 이미 존재하면 무시
-        }
-    }
-
-    const createPersonalEvent = async (user_pkid, user_type, title, event_date, event_time, color, memo = null, alarms = null) => {
-        await ensurePersonalEventsTable();
-        const alarmsJson = alarms ? JSON.stringify(alarms) : null;
-        const sql = `
-            INSERT INTO personal_events (user_pkid, user_type, title, event_date, event_time, color, memo, alarms)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-        `;
-        const params = [user_pkid, user_type, title, event_date, event_time, color, memo, alarmsJson];
-        const result = await db.runSql(sql, params);
-        return result.insertId;
-    }
-
-    const getPersonalEventsByMonth = async (user_pkid, user_type, year, month1to12) => {
-        await ensurePersonalEventsTable();
-        const sql = `
-            SELECT id, DAY(event_date) as day, title, color, TIME_FORMAT(event_time, '%H:%i') as time
-            FROM personal_events
-            WHERE user_pkid = ? AND user_type = ? AND YEAR(event_date) = ? AND MONTH(event_date) = ?
-            ORDER BY event_date, event_time;
-        `;
-        const params = [user_pkid, user_type, year, month1to12];
-        const rows = await db.runSql(sql, params);
-        return rows;
-    }
+const getPersonalEventsByMonth = async (user_pkid, user_type, year, month1to12) => {
+    const sql = `
+        SELECT id, DAY(event_date) as day, title, color, TIME_FORMAT(event_time, '%H:%i') as time
+        FROM personal_events
+        WHERE user_pkid = ? AND user_type = ? AND YEAR(event_date) = ? AND MONTH(event_date) = ?
+        ORDER BY event_date, event_time;
+    `;
+    const params = [user_pkid, user_type, year, month1to12];
+    const rows = await db.runSql(sql, params);
+    return rows;
+}
 
 // 개인 일정 상세 조회
 const getPersonalEventById = async (event_id, user_pkid, user_type) => {
-    await ensurePersonalEventsTable();
     const sql = `
      SELECT id, title, DATE_FORMAT(event_date, '%Y-%m-%d') as event_date, 
          TIME_FORMAT(event_time, '%H:%i') as event_time, color, memo, alarms
@@ -426,7 +344,6 @@ const getPersonalEventById = async (event_id, user_pkid, user_type) => {
 
 // 개인 일정 삭제
 const deletePersonalEvent = async (event_id, user_pkid, user_type) => {
-    await ensurePersonalEventsTable();
     const sql = `
         DELETE FROM personal_events
         WHERE id = ? AND user_pkid = ? AND user_type = ?;
@@ -437,7 +354,6 @@ const deletePersonalEvent = async (event_id, user_pkid, user_type) => {
 
 // 개인 일정 수정
 const updatePersonalEvent = async (event_id, user_pkid, user_type, title, event_date, event_time, color, memo = null, alarms = null) => {
-    await ensurePersonalEventsTable();
     const alarmsJson = alarms ? JSON.stringify(alarms) : null;
     const sql = `
         UPDATE personal_events
@@ -525,7 +441,6 @@ const updateAcademicSchedule = async (event_id, title, start_date, end_date) => 
 
 // 시간표 조회
 const getTimetablesByPkid = async (user_pkid) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color, memo
         FROM timetable_entries
@@ -538,7 +453,6 @@ const getTimetablesByPkid = async (user_pkid) => {
 }
 
 const getTodayTimetable = async (user_pkid, dayOfWeek) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, start_period, end_period, title, location, color
         FROM timetable_entries
@@ -551,7 +465,6 @@ const getTodayTimetable = async (user_pkid, dayOfWeek) => {
 }
 
 const getTodayPersonalEvents = async (user_pkid, user_type, date) => {
-    await ensurePersonalEventsTable();
     const sql = `
         SELECT id, title, color, TIME_FORMAT(event_time, '%H:%i') AS time
         FROM personal_events
@@ -566,7 +479,6 @@ const getTodayPersonalEvents = async (user_pkid, user_type, date) => {
 // 학생 사진 URL 업데이트
 const updateStudentPhoto = async (user_pkid, photo_url) => {
     try {
-        await ensureStudentPhotoColumn();
         const sql = "UPDATE student SET photo_url = ? WHERE pkid = ?;";
         const params = [photo_url, user_pkid];
         const result = await db.runSql(sql, params);
@@ -579,7 +491,6 @@ const updateStudentPhoto = async (user_pkid, photo_url) => {
 // 관리자 사진 URL 업데이트
 const updateAdminPhoto = async (user_pkid, photo_url) => {
     try {
-        await ensureAdminColumns();
         const sql = "UPDATE administrator SET photo_url = ? WHERE pkid = ?;";
         const params = [photo_url, user_pkid];
         const result = await db.runSql(sql, params);
@@ -759,7 +670,6 @@ const deleteGrade = async (gradeId, student_pkid) => {
 
 // ===== Timetable-derived courses (distinct) =====
 const getUserTimetableCourses = async (user_pkid) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT title AS course_name, 
                COALESCE(MAX(credits), 0) AS credits
@@ -774,7 +684,6 @@ const getUserTimetableCourses = async (user_pkid) => {
 };
 
 const addTimetableEntry = async (user_pkid, day, start_period, end_period, title, location, color, memo = null, professor = null, credits = null) => {
-    await ensureTimetableTable();
     const sql = `
         INSERT INTO timetable_entries (user_pkid, user_type, day, start_period, end_period, title, location, color, memo, professor, credits)
         VALUES (?, 'student', ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -785,7 +694,6 @@ const addTimetableEntry = async (user_pkid, day, start_period, end_period, title
 }
 
 const getTimetableByUser = async (user_pkid) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color
         FROM timetable_entries
@@ -797,7 +705,6 @@ const getTimetableByUser = async (user_pkid) => {
 }
 
 const getTimetableById = async (id, user_pkid) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color, memo, professor, credits
         FROM timetable_entries
@@ -809,7 +716,6 @@ const getTimetableById = async (id, user_pkid) => {
 
 // 같은 과목명의 모든 시간표 항목 가져오기
 const getTimetablesByTitle = async (title, user_pkid) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, day, start_period, end_period, title, location, color, memo, professor, credits
         FROM timetable_entries
@@ -821,7 +727,6 @@ const getTimetablesByTitle = async (title, user_pkid) => {
 }
 
 const updateTimetableEntry = async (id, user_pkid, day, start_period, end_period, title, location, color) => {
-    await ensureTimetableTable();
     const sql = `
         UPDATE timetable_entries
         SET day = ?, start_period = ?, end_period = ?, title = ?, location = ?, color = ?
@@ -833,7 +738,6 @@ const updateTimetableEntry = async (id, user_pkid, day, start_period, end_period
 }
 
 const deleteTimetableEntry = async (id, user_pkid) => {
-    await ensureTimetableTable();
     const sql = "DELETE FROM timetable_entries WHERE id = ? AND user_pkid = ? AND user_type = 'student';";
     const result = await db.runSql(sql, [id, user_pkid]);
     return result.affectedRows;
@@ -952,7 +856,6 @@ const getSectionsByCourseTitleWithSchedules = async (courseTitle) => {
 
 // 시간표 충돌 체크: 특정 사용자의 기존 시간표와 새로운 수업 시간이 겹치는지 확인
 const checkTimetableConflict = async (user_pkid, day_of_week, start_period, end_period) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, title, day, start_period, end_period, location
         FROM timetable_entries
@@ -969,7 +872,6 @@ const checkTimetableConflict = async (user_pkid, day_of_week, start_period, end_
 
 // 사용자가 이미 특정 과목을 시간표에 추가했는지 확인
 const checkCourseAlreadyAdded = async (user_pkid, course_title) => {
-    await ensureTimetableTable();
     const sql = `
         SELECT id, title
         FROM timetable_entries
@@ -1014,7 +916,6 @@ const findUserByEmail = async (email) => {
         if (result.length > 0) return result[0];
 
         // 관리자 테이블에서 검색
-        await ensureAdminColumns();
         sql = 'SELECT pkid, name, email, "admin" as user_type FROM administrator WHERE email = ?;';
         result = await db.runSql(sql, [email]);
         if (result.length > 0) return result[0];
