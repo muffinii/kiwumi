@@ -525,7 +525,7 @@ const timetable = async (req, res) => {
                 semesterGPA: parseFloat(semesterGPA),
                 semesterMajorGPA: parseFloat(semesterMajorGPA)
             };
-        });
+        }).sort((a, b) => a.year === b.year ? a.semester - b.semester : a.year - b.year);
 
         // 5. 템플릿에 모든 데이터 전달
         res.render('Timetable', { 

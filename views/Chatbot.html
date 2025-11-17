@@ -97,13 +97,26 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
 
+            // 텍스트를 HTML로 변환하는 함수 (줄바꿈, 링크 처리)
+            function formatMessage(text) {
+                // 1. 줄바꿈 처리 (\n을 <br>로)
+                let formatted = text.replace(/\n/g, '<br>');
+                
+                // 2. URL을 클릭 가능한 링크로 변환
+                const urlPattern = /(https?:\/\/[^\s]+)/g;
+                formatted = formatted.replace(urlPattern, '<a href="$1" target="_blank" class="text-blue-500 hover:text-blue-700 underline">$1</a>');
+                
+                return formatted;
+            }
+
             // 메시지를 채팅창에 추가하는 함수
-            function appendMessage(sender, text) {
+            function appendMessage(sender, text, isFormatted = false) {
                 const isUser = sender === 'user';
+                const formattedText = isFormatted ? text : formatMessage(text);
                 const messageHtml = `
                     <div class="flex ${isUser ? 'justify-end' : 'justify-start'} mb-4">
                         <div class="${isUser ? 'user-bubble' : 'ai-bubble'}">
-                            <p class="text-sm font-normal">${text}</p>
+                            <p class="text-sm font-normal">${formattedText}</p>
                         </div>
                     </div>
                 `;
@@ -150,7 +163,7 @@
                     } else {
                         aiResponseText = "응답을 처리하는 중 오류가 발생했습니다.";
                     }
-                    loadingBubble.innerHTML = `<p class="text-sm font-normal">${aiResponseText}</p>`;
+                    loadingBubble.innerHTML = `<p class="text-sm font-normal">${formatMessage(aiResponseText)}</p>`;
                 } catch (error) {
                     console.error('Chatbot API error:', error);
                     loadingBubble.innerHTML = `<p class="text-sm font-normal text-main-red">서버 연결에 실패했습니다.</p>`;

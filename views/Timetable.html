@@ -186,7 +186,6 @@
                         <div id="grade-chart-container"
                             class="w-full h-48 bg-white p-4 rounded-lg shadow flex justify-center items-center">
                             {% if semesters and semesters.length > 0 %}
-                            {% set sorted_semesters = semesters|sort(attribute='year')|sort(attribute='semester') %}
                             <svg width="100%" height="100%" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid meet">
                                 <line x1="40" y1="20" x2="40" y2="140" stroke="#cbd5e1" stroke-width="2" />
                                 <line x1="40" y1="140" x2="380" y2="140" stroke="#cbd5e1" stroke-width="2" />
@@ -200,27 +199,27 @@
                                 <text x="30" y="{{ 143 - 4.5 * 26.67 }}" class="chart-label"
                                     text-anchor="end">4.5</text>
                                 {% set chartWidth = 340 %}
-                                {% set numSemesters = sorted_semesters|length %}
+                                {% set numSemesters = semesters|length %}
                                 {% set spacing = chartWidth / (numSemesters - 1) if numSemesters > 1 else 0 %}
                                 <polyline
                                     points="
-                                {% for s in sorted_semesters %}{{ 40 + loop.index0 * spacing }},{{ 140 - s.semesterGPA * 26.67 }} {% endfor %}"
+                                {% for s in semesters %}{{ 40 + loop.index0 * spacing }},{{ 140 - s.semesterGPA * 26.67 }} {% endfor %}"
                                     fill="none" stroke="#003875" stroke-width="2" />
                                 <polyline
                                     points="
-                                {% for s in sorted_semesters %}{{ 40 + loop.index0 * spacing }},{{ 140 - s.semesterMajorGPA * 26.67 }} {% endfor %}"
+                                {% for s in semesters %}{{ 40 + loop.index0 * spacing }},{{ 140 - s.semesterMajorGPA * 26.67 }} {% endfor %}"
                                     fill="none" stroke="#ed2024" stroke-width="2" />
-                                {% for s in sorted_semesters %}
+                                {% for s in semesters %}
                                 <circle cx="{{ 40 + loop.index0 * spacing }}"
                                     cy="{{ 140 - s.semesterGPA * 26.67 }}" r="4" fill="#003875" stroke="white"
                                     stroke-width="2" />
                                 {% endfor %}
-                                {% for s in sorted_semesters %}
+                                {% for s in semesters %}
                                 <circle cx="{{ 40 + loop.index0 * spacing }}"
                                     cy="{{ 140 - s.semesterMajorGPA * 26.67 }}" r="4" fill="#ed2024"
                                     stroke="white" stroke-width="2" />
                                 {% endfor %}
-                                {% for s in sorted_semesters %}
+                                {% for s in semesters %}
                                 <text x="{{ 40 + loop.index0 * spacing }}" y="155" class="chart-label">{{ s.year }}{% if s.semester == 1 %}-1{% else %}-2{% endif %}</text>
                                 {% endfor %}
                                 <line x1="250" y1="10" x2="270" y2="10" stroke="#003875" stroke-width="2" />

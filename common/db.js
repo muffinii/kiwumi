@@ -3,8 +3,7 @@ const mysql = require('mysql2');
 
 const db = {
     // host : '192.168.14.121',
-    // host : '192.168.219.110',
-    host : '192.168.5.129',
+    host : '192.168.219.103',
     user : 'kiwumi',
     password : 'kiwumi!@',
     database : 'kiwumi'
