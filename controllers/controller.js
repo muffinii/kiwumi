@@ -7,21 +7,19 @@ const chatbotPage = (req, res) => {
 const chatbotApi = async (req, res) => {
     try {
         const { question } = req.body;
-        let answer = '죄송해요, 답변을 준비 중이에요.';
+        let answer = '죄송합니다. 답변을 준비 중이에요.';
         if (question && typeof question === 'string') {
             const q = question.toLowerCase();
             if (q.includes('학사')) answer = '학사 일정은 학교 홈페이지에서 확인할 수 있어요.';
             else if (q.includes('도서관')) answer = '도서관은 09:00~18:00까지 운영됩니다.';
             else if (q.includes('장학')) answer = '장학금 관련 문의는 학생처로 연락하세요.';
             else if (q.includes('식당')) answer = '학생식당은 11:00~14:00, 17:00~19:00 운영합니다.';
-            else if (q.includes('버스')) answer = '셔틀버스는 정문에서 08:00~18:00 운행합니다.';
             else if (q.includes('캠퍼스')) answer = '캠퍼스 지도는 학교 홈페이지에서 확인 가능합니다.';
             else if (q.includes('동아리')) answer = '동아리 가입은 학생회관 1층에서 신청할 수 있습니다.';
             else if (q.includes('상담')) answer = '상담센터는 본관 2층에 위치해 있습니다.';
             else if (q.includes('등록금')) answer = '등록금 납부는 우리은행 가상계좌로 가능합니다.';
             else if (q.includes('휴학')) answer = '휴학 신청은 학사관리시스템에서 가능합니다.';
             else if (q.includes('졸업')) answer = '졸업 요건은 학과 사무실에 문의하세요.';
-            // 원하는 키워드와 답변을 계속 추가
         }
         res.json({ answer });
     } catch (err) {
