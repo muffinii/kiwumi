@@ -10,16 +10,13 @@ const chatbotApi = async (req, res) => {
         let answer = '죄송합니다. 답변을 준비 중이에요.';
         if (question && typeof question === 'string') {
             const q = question.toLowerCase();
-            if (q.includes('학사')) answer = '학사 일정은 학교 홈페이지에서 확인할 수 있어요.';
-            else if (q.includes('도서관')) answer = '도서관은 09:00~18:00까지 운영됩니다.';
-            else if (q.includes('장학')) answer = '장학금 관련 문의는 학생처로 연락하세요.';
-            else if (q.includes('식당')) answer = '학생식당은 11:00~14:00, 17:00~19:00 운영합니다.';
-            else if (q.includes('캠퍼스')) answer = '캠퍼스 지도는 학교 홈페이지에서 확인 가능합니다.';
-            else if (q.includes('동아리')) answer = '동아리 가입은 학생회관 1층에서 신청할 수 있습니다.';
-            else if (q.includes('상담')) answer = '상담센터는 본관 2층에 위치해 있습니다.';
-            else if (q.includes('등록금')) answer = '등록금 납부는 우리은행 가상계좌로 가능합니다.';
-            else if (q.includes('휴학')) answer = '휴학 신청은 학사관리시스템에서 가능합니다.';
-            else if (q.includes('졸업')) answer = '졸업 요건은 학과 사무실에 문의하세요.';
+            if (q.includes('학사')) answer = '학사 일정은 키우미 앱 내 캘린더에서 확인 가능해요!';
+            else if (q.includes('도서관') && q.includes('시간')) answer = '2층은 평일 오전 9시부터 오후 9시까지 운영해요. 방학 중에는 오전 9시부터 4시까지 이용 가능해요. 자세한 사항은 https://library.kiwu.ac.kr/#/guide/hours 에서 확인 가능해요.';
+            else if (q.includes('장학')) answer = '교내 장학은 크게 성적, 봉사, 가계곤란, 근로 장학금이 있어요. 자세한 내용은 https://www.kiwu.ac.kr/ko/cms/FR_CON/index.do?MENU_ID=1190 에서 확인 가능해요.';
+            else if (q.includes('식당')) answer = '학생식당은 봉아관 지하 1층에 위치해 있고 11시 30분부터 오후 2시까지 이용 가능해요.';
+            else if (q.includes('휴학')) answer = '휴학 절차는 학과 사무실에서 휴학원서를 받아서 휴학원서를 작성하고 학과장, 지도교수의 상담을 받아야 해요. 그 이후에 종합서비스센터에 휴학원서를 제출해야 해요.';
+            else if (q.includes('복학')) answer = '복학 신청은 마이포탈의 온라인 복학 신청 메뉴를 통해서 할 수 있어요.';
+            else if (q.includes('졸업')) answer = '2025년도 입학자 기준으로 알려드릴게요!\n2년제 학과 : 4학기 이상 재학, 72학점 이상 이수(교양 10학점, 전공 43학점 이상 취득, 필수과목 이수)\n3년제 학과 : 6학기 이상 재학, 108학점 이상 이수(교양 10학점, 전공 68학점 이상 취득, 필수과목 이수\n4년제 학과 : 8학기 이상 재학, 132학점 이상 이수(교양 10학점, 전공 98학점 이상 취득)\n더 자세한 사항은 https://www.kiwu.ac.kr/ko/cms/FR_CON/index.do?MENU_ID=280 에서 확인 가능해요!';
         }
         res.json({ answer });
     } catch (err) {
