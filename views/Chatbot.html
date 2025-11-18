@@ -21,11 +21,26 @@
         }
     </script>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .app-container { min-height: 100vh; display: flex; flex-direction: column; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            width: 100%; 
+            height: 100%; 
+            overflow-x: hidden; 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b; 
+        }
+        .app-container { 
+            width: 100%;
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
+        }
         .chat-area { 
             flex-grow: 1; 
             overflow-y: auto; 
+            overflow-x: hidden;
             padding: 1rem; 
             background-color: #f8fafc; /* bg-slate-50 */
         }
@@ -174,14 +189,14 @@
             // 초기 로드 시 스크롤
             scrollToBottom();
 
-            // 입력 필드 포커스 시 자동 스크롤 (모바일 WebView용)
-            const inputs = document.querySelectorAll('input, textarea');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    setTimeout(() => {
-                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 300);
-                });
+            // 채팅 입력창 포커스 시 화면 하단으로 스크롤 (키보드 위에 입력창이 보이도록)
+            chatInput.addEventListener('focus', function() {
+                setTimeout(() => {
+                    // 채팅 영역을 맨 아래로 스크롤
+                    scrollToBottom();
+                    // 입력창을 화면 하단으로 (키보드 바로 위로)
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }, 300);
             });
         });
     </script>
