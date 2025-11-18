@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>키우미 | 회원가입</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -183,6 +183,16 @@
                     messageEl.textContent = '요청 중 오류가 발생했습니다. (서버 연결 확인)';
                     messageEl.className = 'text-center text-sm h-6 mt-2 text-red-500';
                 }
+            });
+        });
+
+        // 입력 필드 포커스 시 자동 스크롤 (모바일 WebView용)
+        const inputs = document.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                setTimeout(() => {
+                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
             });
         });
     </script>
