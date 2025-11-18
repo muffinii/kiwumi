@@ -54,8 +54,8 @@ app.use((req, res) => {
     res.status(404).send("404 오류 발생");
 });
 
-app.listen( // 80 : 포트
-    80, () => {
-        console.log(80, '번에서 express 동작 중...');
-    }
-);
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`서버가 ${PORT}번 포트에서 실행 중...`);
+    console.log(`로컬 접속: http://localhost:${PORT}`);
+});
