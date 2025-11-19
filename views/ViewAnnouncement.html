@@ -76,7 +76,7 @@
             <div id="announcement-content-card" class="section-card">
                 
                 {% if announcement %}
-                <span id="announcement-category" class="font-bold text-sm {% if announcement.category == '학사' %}text-main-red{% elif announcement.category == '장학' %}text-sub-blue{% elif announcement.category == '채용' %}text-purple-600{% else %}text-slate-600{% endif %}">
+                <span id="announcement-category" class="font-bold text-sm {% if announcement.category == '학사' %}text-main-red{% elif announcement.category == '공모' %}text-sub-blue{% elif announcement.category == '채용' %}text-purple-600{% else %}text-slate-600{% endif %}">
                     [{{ announcement.category or '일반' }}]
                 </span>
                 

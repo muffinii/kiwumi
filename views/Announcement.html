@@ -108,7 +108,7 @@
                         data-filter="학사">학사</button>
                     <button
                         class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
-                        data-filter="장학">장학</button>
+                        data-filter="공모">공모</button>
                     <button
                         class="filter-btn px-3 py-1 text-sm bg-white text-slate-700 rounded-full shadow-sm border border-slate-200"
                         data-filter="채용">채용</button>
@@ -128,7 +128,7 @@
                                 <span class="truncate min-w-0 flex-1">
                                     {% set catClass = 'text-slate-600' %}
                                     {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category
-                                    == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set
+                                    == '공모') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set
                                     catClass = 'text-purple-600' %}{% endif %}
                                     <span class="font-bold {{ catClass }}">[{{ a.category or '일반' }}]</span>
                                     {{ a.title }}

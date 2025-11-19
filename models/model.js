@@ -223,8 +223,8 @@ const getAnnouncements = async () => {
 // 공지 생성
 const createAnnouncement = async (title, content, author_pkid, category = '일반', attachments = null) => {
     try {
-        const sql = "INSERT INTO announcements (title, content, category, author_pkid, attachments, created_at) VALUES (?, ?, ?, ?, ?, NOW());";
-        const params = [title, content, category, author_pkid, attachments];
+        const sql = "INSERT INTO announcements (title, content, author_pkid, category, attachments, created_at) VALUES (?, ?, ?, ?, ?, NOW());";
+        const params = [title, content, author_pkid, category, attachments];
         const result = await db.runSql(sql, params);
         return result.insertId;
     } catch (err) {

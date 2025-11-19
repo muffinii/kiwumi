@@ -44,7 +44,7 @@
                         <label for="announcement-category" class="block text-sm font-medium text-slate-700 mb-1">카테고리</label>
                         <select id="announcement-category" name="category" class="form-field bg-white">
                             <option {% if announcement.category == '학사' %}selected{% endif %}>학사</option>
-                            <option {% if announcement.category == '장학' %}selected{% endif %}>장학</option>
+                            <option {% if announcement.category == '공모' %}selected{% endif %}>공모</option>
                             <option {% if announcement.category == '채용' %}selected{% endif %}>채용</option>
                             <option {% if announcement.category == '일반' %}selected{% endif %}>일반</option>
                         </select>

@@ -125,7 +125,7 @@
                         <a href="/ViewAnnouncement/{{ a.pkid }}" class="block p-2 rounded-md hover:bg-slate-50">
                             <p class="font-bold text-sm truncate">
                                 {% set catClass = 'text-slate-600' %}
-                                {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category == '장학') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set catClass = 'text-purple-600' %}{% endif %}
+                                {% if (a.category == '학사') %}{% set catClass = 'text-main-red' %}{% elif (a.category == '공모') %}{% set catClass = 'text-sub-blue' %}{% elif (a.category == '채용') %}{% set catClass = 'text-purple-600' %}{% endif %}
                                 <span class="font-extrabold {{ catClass }}">[{{ a.category or '일반' }}]</span>
                                 {{ a.title }}
                             </p>
