@@ -88,8 +88,10 @@ const announcementStorage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const timestamp = Date.now();
-        const ext = path.extname(file.originalname);
-        const basename = path.basename(file.originalname, ext);
+        // 한글 파일명 처리를 위해 Buffer를 사용
+        const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        const ext = path.extname(originalname);
+        const basename = path.basename(originalname, ext);
         cb(null, `${timestamp}_${basename}${ext}`);
     }
 });
@@ -303,12 +305,16 @@ const createAnnouncement = async (req, res) => {
         // 첨부파일 정보 JSON으로 저장
         let attachments = null;
         if (req.files && req.files.length > 0) {
-            attachments = JSON.stringify(req.files.map(file => ({
-                filename: file.filename,
-                originalname: file.originalname,
-                size: file.size,
-                path: `/uploads/announcements/${file.filename}`
-            })));
+            attachments = JSON.stringify(req.files.map(file => {
+                // 한글 파일명 처리
+                const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                return {
+                    filename: file.filename,
+                    originalname: originalname,
+                    size: file.size,
+                    path: `/uploads/announcements/${file.filename}`
+                };
+            }));
         }
 
         const id = await model.createAnnouncement(title, content, author_pkid, category, attachments);
@@ -2199,6 +2205,34 @@ const generateBarcode = (req, res) => {
     });
 };
 
+// 공지사항 첨부파일 다운로드
+const downloadAnnouncementFile = async (req, res) => {
+    try {
+        const filename = req.params.filename;
+        const filePath = path.join(__dirname, '../uploads/announcements', filename);
+        
+        // 파일 존재 확인
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).send('파일을 찾을 수 없습니다.');
+        }
+        
+        // 원본 파일명 추출 (timestamp_ 제거)
+        const originalName = filename.replace(/^\d+_/, '');
+        
+        // 한글 파일명을 위한 UTF-8 인코딩
+        const encodedFileName = encodeURIComponent(originalName);
+        
+        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        
+        // 파일 전송
+        res.sendFile(filePath);
+    } catch (err) {
+        console.error('파일 다운로드 오류:', err);
+        res.status(500).send('파일 다운로드 중 오류가 발생했습니다.');
+    }
+};
+
 module.exports = {
     main,
     calendar,
@@ -2265,7 +2299,9 @@ module.exports = {
     deleteAllNotificationsApi,
     // AI 챗봇
     chatbotPage,
-    chatbotApi
+    chatbotApi,
+    // 파일 다운로드
+    downloadAnnouncementFile
 }
 
 // 일정 수정 API

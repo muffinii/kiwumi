@@ -38,6 +38,7 @@ router.get("/CreateAnnouncement", controller.addAnnouncement);
 router.post("/CreateAnnouncement", controller.uploadAnnouncement.array('attachment_file', 5), controller.createAnnouncement);
 router.get("/ViewAnnouncement/:id", controller.viewAnnouncement);
 router.get("/ViewAnnouncement", controller.viewAnnouncement);
+router.get("/download/announcement/:filename", controller.downloadAnnouncementFile);
 router.get("/ModifyAnnouncement/:id", controller.modifyAnnouncement);
 router.get("/ModifyAnnouncement", controller.modifyAnnouncement);
 router.post("/ModifyAnnouncement/:id", controller.modifyAnnouncementProc);
