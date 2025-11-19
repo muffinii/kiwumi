@@ -247,9 +247,9 @@ const getRecentAnnouncements = async (limit = 5) => {
 const getAnnouncementById = async (pkid) => {
     try {
         const sql = `
-            SELECT a.pkid, a.title, a.content, a.category, a.author_pkid, a.created_at, a.attachments, s.name as author_name
+            SELECT a.pkid, a.title, a.content, a.category, a.author_pkid, a.created_at, a.attachments, admin.name as author_name
             FROM announcements a
-            LEFT JOIN student s ON a.author_pkid = s.pkid
+            LEFT JOIN administrator admin ON a.author_pkid = admin.pkid
             WHERE a.pkid = ?;
         `;
         const result = await db.runSql(sql, [pkid]);
