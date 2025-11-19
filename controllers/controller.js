@@ -12,6 +12,8 @@ const chatbotApi = async (req, res) => {
             const q = question.toLowerCase();
             if (q.includes('학사')) answer = '학사 일정은 키우미 앱 내 캘린더에서 확인 가능해요!';
             else if (q.includes('도서관') && q.includes('시간')) answer = '2층은 평일 오전 9시부터 오후 9시까지 운영해요. 방학 중에는 오전 9시부터 4시까지 이용 가능해요. 자세한 사항은 https://library.kiwu.ac.kr/#/guide/hours 에서 확인 가능해요.';
+            else if (q.includes('도서관') && q.includes('위치')) answer = '도서관은 20주년 기념관에 위치해 있어요.\n2층엔 자료열람실, 멀티미디어실이 있고\n3층엔 전공열람실 및 개방형 열람실이 있으며\n4층에는 일반열람실과 북카페가 있어요.';
+            else if (q.includes('도서관') && q.includes('어디')) answer = '도서관은 20주년 기념관에 위치해 있어요.\n2층엔 자료열람실, 멀티미디어실이 있고\n3층엔 전공열람실 및 개방형 열람실이 있으며\n4층에는 일반열람실과 북카페가 있어요.';
             else if (q.includes('장학')) answer = '교내 장학은 크게 성적, 봉사, 가계곤란, 근로 장학금이 있어요. 자세한 내용은 https://www.kiwu.ac.kr/ko/cms/FR_CON/index.do?MENU_ID=1190 에서 확인 가능해요.';
             else if (q.includes('식당')) answer = '학생식당은 봉아관 지하 1층에 위치해 있고 11시 30분부터 오후 2시까지 이용 가능해요.';
             else if (q.includes('휴학')) answer = '휴학 절차는 학과 사무실에서 휴학원서를 받아서 휴학원서를 작성하고 학과장, 지도교수의 상담을 받아야 해요. 그 이후에 종합서비스센터에 휴학원서를 제출해야 해요.';
