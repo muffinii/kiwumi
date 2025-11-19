@@ -27,6 +27,7 @@ app.use(express.json()); // JSON 파싱 미들웨어 추가
 
 app.use("/assets", express.static(__dirname + "/views/assets"));
 app.use("/uploads", express.static(__dirname + "/uploads")); // 업로드된 파일 제공
+app.use("/logo.png", express.static(__dirname + "/views/logo.png")); // 로고 파일 제공
 
 // Session 사용 설정
 const session = require('express-session');
