@@ -142,6 +142,29 @@
         document.addEventListener('DOMContentLoaded', function () {
             const fileInput = document.getElementById('file-upload');
             const fileListDisplay = document.getElementById('file-list');
+            const form = document.querySelector('form');
+            const titleInput = document.getElementById('announcement-title');
+            const contentInput = document.getElementById('announcement-content');
+
+            // 폼 제출 시 유효성 검사
+            form.addEventListener('submit', function (e) {
+                const title = titleInput.value.trim();
+                const content = contentInput.value.trim();
+
+                if (!title) {
+                    e.preventDefault();
+                    alert('제목을 입력해 주세요.');
+                    titleInput.focus();
+                    return false;
+                }
+
+                if (!content) {
+                    e.preventDefault();
+                    alert('본문을 입력해 주세요.');
+                    contentInput.focus();
+                    return false;
+                }
+            });
 
             fileInput.addEventListener('change', function (e) {
                 fileListDisplay.innerHTML = '';

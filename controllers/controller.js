@@ -302,6 +302,14 @@ const createAnnouncement = async (req, res) => {
         content = common.reqeustFilter(content, 5000, false);
         category = common.reqeustFilter(category, 50, false);
 
+        // 제목과 본문 필수 입력 검증
+        if (!title || title.trim() === '') {
+            return common.alertAndBack(res, '제목을 입력해 주세요.');
+        }
+        if (!content || content.trim() === '') {
+            return common.alertAndBack(res, '본문을 입력해 주세요.');
+        }
+
         // 첨부파일 정보 JSON으로 저장
         let attachments = null;
         if (req.files && req.files.length > 0) {
