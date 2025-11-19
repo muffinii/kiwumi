@@ -50,9 +50,9 @@
     <div class="app-container">
         
         <header class="flex justify-between items-center px-4 py-4 flex-shrink-0 bg-white shadow-sm">
-            <a href="/Announcement" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
+            <button id="back-btn" class="p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </a>
+            </button>
             <h1 class="text-xl font-bold text-slate-800 flex-grow text-center">공지 상세</h1>
             
             {% if isAdmin %}
@@ -157,6 +157,21 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // 뒤로가기 버튼 처리
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                // 브라우저 히스토리를 사용하여 이전 페이지로 이동
+                // 알림에서 온 경우 알림으로, 공지사항 목록에서 온 경우 목록으로 돌아감
+                if (document.referrer && document.referrer !== '') {
+                    window.history.back();
+                } else {
+                    // referrer가 없는 경우 (직접 URL 접근 등) 공지사항 목록으로
+                    window.location.href = '/Announcement';
+                }
+            });
+        }
+
         const menuToggle = document.getElementById('menu-toggle');
         const dropdownMenu = document.getElementById('dropdown-menu');
 
