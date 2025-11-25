@@ -114,14 +114,23 @@ const checkAdminAlreadyRegistered = async (admin_pkid) => {
 // 회원가입: 아이디 중복 체크
 const checkUsernameExists = async (username) => {
     try {
-        const sql = `
+        // 학생 테이블에서 확인
+        const studentSql = `
             SELECT pkid
             FROM student
             WHERE student_id = ? AND student_id != 'temp_id';
         `;
-        const params = [username];
-        const result = await db.runSql(sql, params);
-        return result.length > 0; // 이미 있으면 true
+        const studentResult = await db.runSql(studentSql, [username]);
+        if (studentResult.length > 0) return true;
+
+        // 관리자 테이블에서 확인
+        const adminSql = `
+            SELECT pkid
+            FROM administrator
+            WHERE admin_id = ? AND admin_id NOT LIKE 'temp_%';
+        `;
+        const adminResult = await db.runSql(adminSql, [username]);
+        return adminResult.length > 0;
     } catch (err) {
         console.error('아이디 중복 확인 오류:', err);
         throw err;
@@ -131,12 +140,21 @@ const checkUsernameExists = async (username) => {
 // 회원가입: 관리자 아이디 중복 체크
 const checkAdminUsernameExists = async (admin_id) => {
     try {
-        const sql = `
+        // 관리자 테이블에서 확인
+        const adminSql = `
             SELECT pkid FROM administrator
             WHERE admin_id = ? AND admin_id NOT LIKE 'temp_%';
         `;
-        const result = await db.runSql(sql, [admin_id]);
-        return result.length > 0;
+        const adminResult = await db.runSql(adminSql, [admin_id]);
+        if (adminResult.length > 0) return true;
+
+        // 학생 테이블에서 확인
+        const studentSql = `
+            SELECT pkid FROM student
+            WHERE student_id = ? AND student_id != 'temp_id';
+        `;
+        const studentResult = await db.runSql(studentSql, [admin_id]);
+        return studentResult.length > 0;
     } catch (err) {
         console.error('관리자 아이디 중복 확인 오류:', err);
         throw err;
@@ -146,14 +164,23 @@ const checkAdminUsernameExists = async (admin_id) => {
 // 회원가입: 이메일 중복 체크
 const checkEmailExists = async (email) => {
     try {
-        const sql = `
+        // 학생 테이블에서 확인
+        const studentSql = `
             SELECT pkid
             FROM student
             WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
         `;
-        const params = [email];
-        const result = await db.runSql(sql, params);
-        return result.length > 0; // 이미 있으면 true
+        const studentResult = await db.runSql(studentSql, [email]);
+        if (studentResult.length > 0) return true;
+
+        // 관리자 테이블에서 확인
+        const adminSql = `
+            SELECT pkid
+            FROM administrator
+            WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
+        `;
+        const adminResult = await db.runSql(adminSql, [email]);
+        return adminResult.length > 0; // 이미 있으면 true
     } catch (err) {
         console.error('이메일 중복 확인 오류:', err);
         throw err;
@@ -163,12 +190,21 @@ const checkEmailExists = async (email) => {
 // 회원가입: 관리자 이메일 중복 체크
 const checkAdminEmailExists = async (email) => {
     try {
-        const sql = `
+        // 관리자 테이블에서 확인
+        const adminSql = `
             SELECT pkid FROM administrator
             WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
         `;
-        const result = await db.runSql(sql, [email]);
-        return result.length > 0;
+        const adminResult = await db.runSql(adminSql, [email]);
+        if (adminResult.length > 0) return true;
+
+        // 학생 테이블에서 확인
+        const studentSql = `
+            SELECT pkid FROM student
+            WHERE email = ? AND email NOT LIKE '%@temp.placeholder';
+        `;
+        const studentResult = await db.runSql(studentSql, [email]);
+        return studentResult.length > 0;
     } catch (err) {
         console.error('관리자 이메일 중복 확인 오류:', err);
         throw err;
