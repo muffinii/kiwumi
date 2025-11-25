@@ -1,10 +1,8 @@
 const db = require('../common/db');
 
-// 로그인 체크
+// 로그인
 const loginCheck = async (identifier, student_pw) => {
-    // identifier: 학번 또는 아이디(학생용)
     try {
-        // 우선 student_id(아이디) 컬럼이 있다고 가정하고 학번/아이디 둘 다 매칭 시도
         const sql = `
             SELECT pkid, name, student_num, photo_url, is_fee_paid, major
             FROM student
@@ -14,7 +12,7 @@ const loginCheck = async (identifier, student_pw) => {
         const result = await db.runSql(sql, params);
         return result[0];
     } catch (err) {
-        // 호환성: student_id 컬럼이 없는 기존 스키마면 학번만으로 재시도
+        // student_id 컬럼이 없는 경우면 학번만으로 재시도
         if (String(err.message || '').includes('Unknown column') || String(err.sqlMessage || '').includes('Unknown column')) {
             const fallbackSql = `
                 SELECT pkid, name, student_num, photo_url, is_fee_paid, major
@@ -76,7 +74,7 @@ const checkPreRegisteredAdmin = async (name, employee_num) => {
     }
 }
 
-// 회원가입: 이미 가입된 계정인지 확인 (regdate 또는 실제 이메일 존재 여부로 판단)
+// 회원가입: 이미 가입된 계정인지 확인
 const checkStudentAlreadyRegistered = async (student_pkid) => {
     try {
         const sql = `
@@ -177,7 +175,7 @@ const checkAdminEmailExists = async (email) => {
     }
 }
 
-// 회원가입: 학생 정보 업데이트 (student_id, student_pw, email, phone_number 등)
+// 회원가입: 학생 정보 업데이트
 const updateStudentRegistration = async (student_pkid, username, password, email, phone) => {
     try {
         const sql = `
@@ -193,7 +191,7 @@ const updateStudentRegistration = async (student_pkid, username, password, email
     }
 }
 
-// 회원가입: 관리자 정보 업데이트 (admin_id, admin_pw, email)
+// 회원가입: 관리자 정보 업데이트
 const updateAdminRegistration = async (admin_pkid, admin_id, admin_pw, email) => {
     try {
         const sql = `
@@ -231,7 +229,7 @@ const createAnnouncement = async (title, content, author_pkid, category = '일�
         throw err;
     }
 }
-// 최근 공지 N개 조회 (기본 5개)
+// 최근 공지 5개 조회
 const getRecentAnnouncements = async (limit = 5) => {
     try {
         const lim = Math.max(1, Math.min(100, parseInt(limit, 10) || 5));
@@ -321,15 +319,12 @@ const getPersonalEventById = async (event_id, user_pkid, user_type) => {
     const result = await db.runSql(sql, params);
     const event = result[0];
     
-    // 일정을 찾지 못한 경우
     if (!event) {
         return null;
     }
     
-    // alarms 필드 파싱
     if (event.alarms) {
         try {
-            // MySQL JSON 타입은 이미 객체/배열로 파싱되어 올 수 있음
             if (typeof event.alarms === 'string') {
                 event.alarms = JSON.parse(event.alarms);
             }
@@ -500,7 +495,7 @@ const updateAdminPhoto = async (user_pkid, photo_url) => {
     }
 }
 
-// 학생 정보 조회 (사진 포함)
+// 학생 정보 조회
 const getStudentInfo = async (user_pkid) => {
     try {
         const sql = "SELECT pkid, name, student_num, photo_url, is_fee_paid, major FROM student WHERE pkid = ?;";
@@ -512,7 +507,7 @@ const getStudentInfo = async (user_pkid) => {
     }
 }
 
-// 특정 학생의 모든 학점 기록 조회 (id를 pkid로 alias)
+// 특정 학생의 모든 학점 기록 조회
 const getGradesByUser = async (student_pkid) => {
     try {
         const sql = `
@@ -563,55 +558,9 @@ module.exports = {
     updateStudentPhoto,
     updateAdminPhoto,
     getStudentInfo,
-    getGradesByUser,
-    // timetable will be appended below
+    getGradesByUser
 }
 
-// ==== Timetable (classes) ====
-const ensureTimetableTable = async () => {
-    const sql = `
-        CREATE TABLE IF NOT EXISTS timetable_entries (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_pkid INT NOT NULL,
-            user_type ENUM('student', 'admin') NOT NULL DEFAULT 'student',
-            day TINYINT NOT NULL, -- 1=Mon .. 5=Fri
-            start_period TINYINT NOT NULL,
-            end_period TINYINT NOT NULL,
-            title VARCHAR(100) NOT NULL,
-            location VARCHAR(100) NULL,
-            color VARCHAR(32) NOT NULL DEFAULT 'bg-blue-100',
-            memo TEXT NULL,
-            professor VARCHAR(100) NULL,
-            credits TINYINT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_user_day (user_pkid, user_type, day)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `;
-    await db.runSql(sql);
-    
-    // memo 컬럼 추가 (기존 테이블에 없는 경우)
-    try {
-        await db.runSql('ALTER TABLE timetable_entries ADD COLUMN memo TEXT NULL;');
-    } catch (err) {
-        // 컬럼이 이미 존재하면 무시
-    }
-    
-    // professor 컬럼 추가 (기존 테이블에 없는 경우)
-    try {
-        await db.runSql('ALTER TABLE timetable_entries ADD COLUMN professor VARCHAR(100) NULL;');
-    } catch (err) {
-        // 컬럼이 이미 존재하면 무시
-    }
-    
-    // credits 컬럼 추가 (기존 테이블에 없는 경우)
-    try {
-        await db.runSql('ALTER TABLE timetable_entries ADD COLUMN credits TINYINT NULL;');
-    } catch (err) {
-        // 컬럼이 이미 존재하면 무시
-    }
-}
-
-// ===== Grades helpers (upsert only; DDL managed externally) =====
 const addOrUpdateGrade = async (student_pkid, year, semester, course_name, credits, grade, is_major = 0) => {
     const sql = `
         INSERT INTO grades (student_pkid, year, semester, course_name, credits, grade, is_major)
@@ -638,7 +587,7 @@ const getGradeById = async (gradeId, student_pkid) => {
     }
 };
 
-// 성적 수정 (grade, is_major만 수정 가능)
+// 성적 수정
 const updateGrade = async (gradeId, student_pkid, grade, is_major) => {
     try {
         const sql = `
@@ -668,7 +617,6 @@ const deleteGrade = async (gradeId, student_pkid) => {
     }
 };
 
-// ===== Timetable-derived courses (distinct) =====
 const getUserTimetableCourses = async (user_pkid) => {
     const sql = `
         SELECT title AS course_name, 
@@ -679,7 +627,6 @@ const getUserTimetableCourses = async (user_pkid) => {
         ORDER BY title ASC;
     `;
     const rows = await db.runSql(sql, [user_pkid]);
-    // map to expected shape
     return rows.map(r => ({ id: r.course_name, title: r.course_name, credits: r.credits }));
 };
 
@@ -743,11 +690,6 @@ const deleteTimetableEntry = async (id, user_pkid) => {
     return result.affectedRows;
 }
 
-// ============================================================
-// 과목 및 분반 관리 함수
-// ============================================================
-
-// 활성화된 모든 과목 목록 조회 (분반 및 시간 정보 포함)
 const getAllAvailableCourses = async () => {
     const sql = `
         SELECT 
@@ -854,7 +796,7 @@ const getSectionsByCourseTitleWithSchedules = async (courseTitle) => {
     return result;
 }
 
-// 시간표 충돌 체크: 특정 사용자의 기존 시간표와 새로운 수업 시간이 겹치는지 확인
+// 시간표 시간 충돌 체크
 const checkTimetableConflict = async (user_pkid, day_of_week, start_period, end_period) => {
     const sql = `
         SELECT id, title, day, start_period, end_period, location
@@ -867,7 +809,7 @@ const checkTimetableConflict = async (user_pkid, day_of_week, start_period, end_
     `;
     const params = [user_pkid, day_of_week, start_period, end_period];
     const result = await db.runSql(sql, params);
-    return result[0]; // 충돌하는 수업이 있으면 반환, 없으면 undefined
+    return result[0];
 }
 
 // 사용자가 이미 특정 과목을 시간표에 추가했는지 확인
@@ -879,10 +821,9 @@ const checkCourseAlreadyAdded = async (user_pkid, course_title) => {
         LIMIT 1;
     `;
     const result = await db.runSql(sql, [user_pkid, course_title]);
-    return result[0]; // 이미 추가되어 있으면 반환, 없으면 undefined
+    return result[0];
 }
 
-module.exports.ensureTimetableTable = ensureTimetableTable;
 module.exports.addTimetableEntry = addTimetableEntry;
 module.exports.getTimetableByUser = getTimetableByUser;
 module.exports.getTimetableById = getTimetableById;
@@ -895,7 +836,6 @@ module.exports.updateGrade = updateGrade;
 module.exports.deleteGrade = deleteGrade;
 module.exports.getUserTimetableCourses = getUserTimetableCourses;
 
-// 과목 관리 함수 export
 module.exports.getAllAvailableCourses = getAllAvailableCourses;
 module.exports.getSectionDetails = getSectionDetails;
 module.exports.getSectionsByCourseId = getSectionsByCourseId;
@@ -903,11 +843,7 @@ module.exports.getSectionsByCourseTitleWithSchedules = getSectionsByCourseTitleW
 module.exports.checkTimetableConflict = checkTimetableConflict;
 module.exports.checkCourseAlreadyAdded = checkCourseAlreadyAdded;
 
-// ============================================================
-// 이메일 인증 및 비밀번호 재설정 관련 함수
-// ============================================================
-
-// 이메일로 사용자 찾기 (학생 또는 관리자)
+// 이메일로 사용자 찾기
 const findUserByEmail = async (email) => {
     try {
         // 학생 테이블에서 검색
@@ -1037,8 +973,6 @@ const markTokenAsUsed = async (tokenId) => {
     }
 };
 
-// ========== 알림 기능 ==========
-
 // 알림 생성
 const createNotification = async (user_pkid, user_type, type, title, message, link_url = null) => {
     const sql = `
@@ -1051,25 +985,20 @@ const createNotification = async (user_pkid, user_type, type, title, message, li
 
 // 모든 사용자에게 알림 생성 (공지사항용)
 const createNotificationForAll = async (type, title, message, link_url = null) => {
-    // 모든 학생 가져오기
     const students = await db.runSql('SELECT pkid FROM student');
-    // 모든 관리자 가져오기
     const admins = await db.runSql('SELECT pkid FROM administrator');
     
     const notifications = [];
     
-    // 학생들에게 알림 생성
     for (const student of students) {
         notifications.push([student.pkid, 'student', type, title, message, link_url]);
     }
     
-    // 관리자들에게 알림 생성
     for (const admin of admins) {
         notifications.push([admin.pkid, 'admin', type, title, message, link_url]);
     }
     
     if (notifications.length > 0) {
-        // 각 알림을 개별적으로 삽입
         for (const notif of notifications) {
             const sql = `
                 INSERT INTO notifications (user_pkid, user_type, type, title, message, link_url)

@@ -1,20 +1,14 @@
 const nodemailer = require('nodemailer');
 
-// 이메일 전송 설정 (Gmail 사용 예시)
-// 실제 사용 시 환경변수로 관리하는 것을 권장합니다
+// 이메일 전송 설정
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'kiwumitest@gmail.com', // 발신자 이메일 (실제 Gmail 주소로 변경)
-        pass: 'jaqqpouwkqpedehn'      // Gmail 앱 비밀번호 (2단계 인증 필요)
+        user: 'kiwumitest@gmail.com', // 발신자 이메일
+        pass: 'jaqqpouwkqpedehn'      // Gmail 앱 비밀번호
     }
 });
 
-/**
- * 인증번호 이메일 발송
- * @param {string} to - 수신자 이메일
- * @param {string} code - 6자리 인증번호
- */
 const sendVerificationCode = async (to, code) => {
     const mailOptions = {
         from: '"키우미 시스템" <kiwumitest@gmail.com>',

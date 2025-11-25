@@ -1,9 +1,9 @@
-// AI 챗봇 페이지 렌더링
+// AI 챗봇 페이지
 const chatbotPage = (req, res) => {
     res.render('Chatbot');
 };
 
-// AI 챗봇 API (임시 답변)
+// 챗봇 답변
 const chatbotApi = async (req, res) => {
     try {
         const { question } = req.body;
@@ -33,24 +33,23 @@ const fs = require('fs');
 const bwipjs = require('bwip-js');
 const mailer = require('../common/mailer');
 
-// 일정 알림 타이머 저장소 (eventId를 키로 사용)
+// 일정 알림 타이머 저장소
 const eventNotificationTimers = new Map();
 
-// Multer 설정: 파일 저장 위치 및 파일명 설정
+// 파일 저장 위치 및 파일명 설정
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const user = req.session.user;
         const uploadDir = user && user.isAdmin 
             ? path.join(__dirname, '../uploads/admin')
             : path.join(__dirname, '../uploads/students');
-        // 디렉토리가 없으면 생성
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        // 파일명: 학번_timestamp.확장자 (예: 202512345_1699999999999.jpg)
+        // 파일명: 번호_timestamp.확장자 (예: 202512345_1699999999999.jpg)
         const user = req.session.user;
         const identifier = user.isAdmin 
             ? (user.employee_num || user.admin_id || user.pkid)
@@ -79,7 +78,7 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-// 공지사항 첨부파일용 Multer 설정
+// 공지사항 첨부파일 설정
 const announcementStorage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(__dirname, '../uploads/announcements');
@@ -90,7 +89,6 @@ const announcementStorage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const timestamp = Date.now();
-        // 한글 파일명 처리를 위해 Buffer를 사용
         const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
         const ext = path.extname(originalname);
         const basename = path.basename(originalname, ext);
@@ -133,7 +131,7 @@ const main = async (req, res) => {
             })()
         }));
 
-        // 학점 현황 가져오기 (학생인 경우에만)
+        // 학점 현황 가져오기
         let gpaInfo = null;
         if (user && !user.isAdmin) {
             const grades = await model.getGradesByUser(user.pkid);
@@ -168,12 +166,12 @@ const main = async (req, res) => {
             };
         }
 
-        // 오늘의 일정 가져오기 (로그인한 경우에만)
+        // 오늘의 일정 가져오기
         let todaySchedule = [];
         if (user) {
             const now = new Date();
             const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const dayOfWeek = now.getDay(); // 0=일, 1=월, ..., 6=토
+            const dayOfWeek = now.getDay(); // 0=일, 1=월 형식
             
             // 개인 일정 가져오기
             const userType = user.isAdmin ? 'admin' : 'student';
@@ -207,7 +205,7 @@ const main = async (req, res) => {
             // 시간표 수업 추가
             timetableEntries.forEach(e => {
                 const startTime = periodToTime(e.start_period);
-                const endPeriod = e.end_period + 1; // 종료 교시의 다음 교시 시작 시간
+                const endPeriod = e.end_period + 1;
                 const endTime = periodToTime(endPeriod);
                 todaySchedule.push({
                     title: e.title,
@@ -282,12 +280,12 @@ const announcement = async (req, res) => {
     }
 }
 
-// 관리자용 공지 목록 (호환성을 위해 유지, announcement로 리다이렉트)
+// 관리자용 공지 목록
 const announcementAdmin = async (req, res) => {
     res.redirect('/Announcement');
 }
 
-// 게스트용 공지 목록 (호환성을 위해 유지, announcement로 리다이렉트)
+// 학생용 공지 목록
 const announcementGuest = async (req, res) => {
     res.redirect('/Announcement');
 }
@@ -299,12 +297,11 @@ const createAnnouncement = async (req, res) => {
         const author_pkid = req.session && req.session.user ? req.session.user.pkid : null;
         if (!author_pkid) return res.status(403).send('권한 없음');
 
-        // 간단한 검증/필터
         title = common.reqeustFilter(title, 255, false);
         content = common.reqeustFilter(content, 5000, false);
         category = common.reqeustFilter(category, 50, false);
 
-        // 제목과 본문 필수 입력 검증
+        // 제목과 본문 필수 입력
         if (!title || title.trim() === '') {
             return common.alertAndBack(res, '제목을 입력해 주세요.');
         }
@@ -312,11 +309,10 @@ const createAnnouncement = async (req, res) => {
             return common.alertAndBack(res, '본문을 입력해 주세요.');
         }
 
-        // 첨부파일 정보 JSON으로 저장
+        // 첨부파일 정보 저장
         let attachments = null;
         if (req.files && req.files.length > 0) {
             attachments = JSON.stringify(req.files.map(file => {
-                // 한글 파일명 처리
                 const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 return {
                     filename: file.filename,
@@ -329,7 +325,7 @@ const createAnnouncement = async (req, res) => {
 
         const id = await model.createAnnouncement(title, content, author_pkid, category, attachments);
         
-        // 알림 생성: 모든 사용자에게 전송
+        // 알림 생성
         try {
             await model.createNotificationForAll(
                 'announcement',
@@ -348,7 +344,7 @@ const createAnnouncement = async (req, res) => {
     }
 }
 
-// 공지 작성 페이지 (GET)
+// 공지 작성 페이지
 const addAnnouncement = (req, res) => {
     try {
         res.render('CreateAnnouncement');
@@ -364,21 +360,18 @@ const calculator = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user || user.isAdmin) return res.redirect('/Login');
 
-        // 사용자 전체 성적 조회
         const grades = await model.getGradesByUser(user.pkid);
 
-        // 점수 맵핑
         const gradeToPoint = (grade) => {
             const map = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0.0 };
             return map[grade] ?? null; // P 등은 null
         };
 
-        // 전체 GPA/학점 계산
-        let totalEarnedCredits = 0; // F 제외, P 포함
-        let gpaCredits = 0;         // GPA 계산 대상 (A+~F)
+        let totalEarnedCredits = 0;
+        let gpaCredits = 0;
         let totalPoints = 0;
         
-        let majorGpaCredits = 0;    // 전공 GPA 계산 대상
+        let majorGpaCredits = 0;
         let majorTotalPoints = 0;
 
         grades.forEach(g => {
@@ -389,7 +382,6 @@ const calculator = async (req, res) => {
                 gpaCredits += credit;
                 totalPoints += point * credit;
                 
-                // 전공 과목만 따로 계산
                 if (g.is_major) {
                     majorGpaCredits += credit;
                     majorTotalPoints += point * credit;
@@ -413,7 +405,6 @@ const calculator = async (req, res) => {
             }
             semestersMap[key].courses.push(g);
         });
-    // 최근 학기(연도/학기 내림차순) 먼저 보이도록 정렬
     const semesters = Object.values(semestersMap).sort((a,b)=> a.year===b.year ? b.semester - a.semester : b.year - a.year);
 
         res.render('Calculator', { overallGPA, majorGPA, totalCredits: totalEarnedCredits, semesters });
@@ -428,7 +419,7 @@ const timetable = async (req, res) => {
         const user = req.session && req.session.user;
         if (!user) return res.redirect('/Login');
 
-        // 1. 기존 시간표 데이터 가져오기 (관리자는 빈 배열)
+        // 기존 시간표 데이터 가져오기(관리자는 빈 배열)
         const entries = user.isAdmin ? [] : await model.getTimetableByUser(user.pkid);
         
         let maxPeriod = Math.min(10, Math.max(8, ...(entries.map(e => e.end_period)), 0));
@@ -460,39 +451,39 @@ const timetable = async (req, res) => {
             rows.push({ period: p, time: periodStartLabel(p), cells });
         }
 
-        // 2. 학점 데이터 가져오기 (관리자는 빈 배열)
+        // 학점 데이터 가져오기 (관리자는 빈 배열)
         const grades = user.isAdmin ? [] : await model.getGradesByUser(user.pkid);
 
-        // 3. 학점 계산 로직 수정
+        // 학점 계산 로직
         const gradeToPoint = (grade) => {
             const map = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0.0 };
             return map[grade] ?? null; // P/F 과목 등을 위해 null 반환
         };
 
-        let totalEarnedCredits = 0; // 총 취득 학점 (P/F 포함, F 제외)
-        let gpaCredits = 0;         // 전체 평점 계산에 사용될 학점 (A+~F)
+        let totalEarnedCredits = 0; // 총 취득 학점
+        let gpaCredits = 0;         // 전체 평점 계산에 사용될 학점
         let totalPoints = 0;        // 전체 (학점 * 점수) 합계
 
-        let majorGpaCredits = 0;    // 전공 평점 계산에 사용될 학점 (A+~F, 전공만)
+        let majorGpaCredits = 0;    // 전공 평점 계산에 사용될 학점
         let majorTotalPoints = 0;   // 전공 (학점 * 점수) 합계
 
         grades.forEach(g => {
             const point = gradeToPoint(g.grade);
             const credit = g.credits || 0;
 
-            // 전체 평점 계산 (A+~F 포함, P는 제외)
+            // 전체 평점 계산
             if (point !== null) {
                 gpaCredits += credit;
                 totalPoints += point * credit;
             }
 
-            // 전공 평점 계산 (is_major == 1인 과목만, P 제외)
+            // 전공 평점 계산
             if (g.is_major && point !== null) {
                 majorGpaCredits += credit;
                 majorTotalPoints += point * credit;
             }
 
-            // 총 취득 학점 계산 (F 제외, P 포함 규칙 적용)
+            // 총 취득 학점 계산
             if (g.grade !== 'F') {
                 totalEarnedCredits += credit;
             }
@@ -501,7 +492,7 @@ const timetable = async (req, res) => {
         const overallGPA = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : '0.00';
         const majorGPA = majorGpaCredits > 0 ? (majorTotalPoints / majorGpaCredits).toFixed(2) : '0.00';
 
-        // 4. 학기별로 데이터 그룹화
+        // 학기별로 데이터 그룹화
         const semesters = {};
         grades.forEach(g => {
             const key = `${g.year}-${g.semester}`;
@@ -511,7 +502,7 @@ const timetable = async (req, res) => {
             semesters[key].courses.push(g);
         });
 
-        // 학기별 GPA 계산
+        // 학기별 계산
         const semesterStats = Object.values(semesters).map(s => {
             let semGpaCredits = 0;
             let semTotalPoints = 0;
@@ -543,7 +534,7 @@ const timetable = async (req, res) => {
             };
         }).sort((a, b) => a.year === b.year ? a.semester - b.semester : a.year - b.year);
 
-        // 5. 템플릿에 모든 데이터 전달
+        // 템플릿에 모든 데이터 전달
         res.render('Timetable', { 
             rows, 
             dayNames,
@@ -591,7 +582,7 @@ const viewEvent = (req, res) => {
     }
 }
 
-// 개인/학사 일정 생성 (POST)
+// 개인/학사 일정 생성
 const createPersonalEvent = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -600,11 +591,9 @@ const createPersonalEvent = async (req, res) => {
         const event_type = (req.body.event_type || 'private').toLowerCase();
     let { title, event_date, event_time, event_color, start_date, end_date, memo, alarms } = req.body;
 
-        // 간단 검증 및 길이 제한
         title = common.reqeustFilter(title, 255, false);
         
         if (event_type === 'public') {
-            // 관리자만 학사일정 등록 가능
             if (!user.isAdmin) {
                 return res.status(403).json({ ok: false, message: '권한이 없습니다.' });
             }
@@ -619,8 +608,6 @@ const createPersonalEvent = async (req, res) => {
             const id = await model.createAcademicSchedule(title, start_date, end_date, null, null);
             return res.json({ ok: true, id });
         } else {
-            // private (개인 일정)
-            // 알림 데이터 파싱
             let alarmsArray = [];
             if (alarms) {
                 try {
@@ -631,24 +618,21 @@ const createPersonalEvent = async (req, res) => {
             }
             
             event_date = common.reqeustFilter(event_date, 20, false); // YYYY-MM-DD
-            event_color = common.reqeustFilter(event_color, 30, false); // tailwind class like bg-red-200
+            event_color = common.reqeustFilter(event_color, 30, false);
             memo = memo ? common.reqeustFilter(memo, 1000, false, '') : null;
             
-            // event_time은 선택 사항 (빈 문자열이면 null로 처리)
             if (event_time && event_time.trim()) {
                 event_time = common.reqeustFilter(event_time, 20, false);
             } else {
                 event_time = null;
             }
 
-            // 날짜/시간 정규식 검증
             if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
                 return res.status(400).json({ ok: false, message: '잘못된 날짜 형식' });
             }
             if (event_time && !/^\d{2}:\d{2}(:\d{2})?$/.test(event_time)) {
                 return res.status(400).json({ ok: false, message: '잘못된 시간 형식' });
             }
-            // 색상 클래스 화이트리스트 패턴
             if (!/^bg-(red|blue|green|yellow)-(100|200|300|400|500|600|700|800|900)$/.test(event_color)) {
                 return res.status(400).json({ ok: false, message: '허용되지 않는 색상' });
             }
@@ -681,7 +665,7 @@ const createPersonalEvent = async (req, res) => {
     }
 }
 
-// 월별 개인 일정 조회 API (JSON)
+// 월별 개인 일정 조회
 const getPersonalEventsApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -702,7 +686,7 @@ const getPersonalEventsApi = async (req, res) => {
     }
 }
 
-// 월별 학사일정 조회 API (JSON)
+// 월별 학사일정 조회
 const getAcademicScheduleApi = async (req, res) => {
     try {
         const year = parseInt(req.query.year, 10);
@@ -719,7 +703,7 @@ const getAcademicScheduleApi = async (req, res) => {
     }
 }
 
-// 일정 상세 조회 API (개인/학사 통합)
+// 일정 상세 조회
 const getEventByIdApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -748,7 +732,7 @@ const getEventByIdApi = async (req, res) => {
                 type: 'academic',
                 campus: event.campus,
                 source_url: event.source_url,
-                alarms: [] // 학사일정은 알림 사용 안 함
+                alarms: []
             });
         } else {
             // 개인일정 조회
@@ -764,7 +748,7 @@ const getEventByIdApi = async (req, res) => {
                 event_date: event.event_date,
                 event_time: event.event_time,
                 event_color: event.color,
-                color: event.color, // ViewEvent.html 호환성
+                color: event.color,
                 memo: event.memo,
                 type: 'personal',
                 alarms: event.alarms || []
@@ -776,7 +760,7 @@ const getEventByIdApi = async (req, res) => {
     }
 }
 
-// 일정 삭제 API
+// 일정 삭제
 const deleteEventApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -824,7 +808,7 @@ const addClass = (req, res) => {
     }
 }
 
-// 모든 과목 및 분반 조회 API
+// 모든 과목 및 분반 조회
 const getAllCoursesApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -832,14 +816,12 @@ const getAllCoursesApi = async (req, res) => {
 
         const rows = await model.getAllAvailableCourses();
         
-        // 데이터를 과목별 → 분반별로 그룹화
         const coursesMap = {};
         
         rows.forEach(row => {
             const courseId = row.course_id;
             const sectionId = row.section_id;
             
-            // 과목이 처음 등장하면 초기화
             if (!coursesMap[courseId]) {
                 coursesMap[courseId] = {
                     id: courseId,
@@ -850,7 +832,6 @@ const getAllCoursesApi = async (req, res) => {
                 };
             }
             
-            // 분반이 처음 등장하면 초기화
             if (!coursesMap[courseId].sections[sectionId]) {
                 coursesMap[courseId].sections[sectionId] = {
                     id: sectionId,
@@ -861,7 +842,6 @@ const getAllCoursesApi = async (req, res) => {
                 };
             }
             
-            // 해당 분반의 시간 정보 추가
             coursesMap[courseId].sections[sectionId].schedules.push({
                 day_of_week: row.day_of_week,
                 start_period: row.start_period,
@@ -869,17 +849,14 @@ const getAllCoursesApi = async (req, res) => {
             });
         });
         
-        // Map을 배열로 변환하고 sections도 배열로 변환
         const courses = Object.values(coursesMap).map(course => {
             const sections = Object.values(course.sections).map(section => {
-                // 시간 정보를 사람이 읽을 수 있는 형태로 변환
                 const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
                 const periodToTime = (period) => {
                     const hour = 8 + period; // 1교시=09:00
                     return `${String(hour).padStart(2, '0')}:00`;
                 };
                 
-                // 요일별로 그룹화해서 시간 문자열 생성
                 const schedulesByDay = {};
                 section.schedules.forEach(sch => {
                     const day = dayMap[sch.day_of_week] || sch.day_of_week;
@@ -905,7 +882,7 @@ const getAllCoursesApi = async (req, res) => {
                     professor: section.professor,
                     time_string: timeStrings.join(', '),
                     place: section.classroom,
-                    schedules: section.schedules // 원본 스케줄 정보도 포함
+                    schedules: section.schedules
                 };
             });
             
@@ -925,33 +902,24 @@ const getAllCoursesApi = async (req, res) => {
     }
 }
 
-// 특정 과목의 분반 목록 조회 API
+// 특정 과목의 분반 목록 조회
 const getCourseSectionsApi = async (req, res) => {
     try {
-        // 두 가지 경우를 모두 처리: 
-        // 1. courseId: 과목 ID로 모든 분반 조회 (기존)
-        // 2. classId: 시간표 항목 ID로 같은 과목의 분반 조회 (ModifyClass용)
-        
         const courseId = req.params.courseId;
         const classId = req.params.classId;
         
         if (courseId) {
-            // 기존 로직: 과목 ID로 모든 분반 조회
             const sections = await model.getSectionsByCourseId(courseId);
             return res.json(sections);
         } else if (classId) {
-            // 새 로직: 시간표 항목 ID로 같은 과목의 분반 조회 (과정 테이블 기반)
             const user = req.session && req.session.user;
             if (!user) return res.status(401).json({ ok: false, message: '로그인이 필요합니다.' });
             
-            // 해당 수업 정보 가져오기
             const classInfo = await model.getTimetableById(classId, user.pkid);
             if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
             
-            // 같은 과목명의 모든 분반 정보 조회 (courses 테이블 기반)
             const allSectionSchedules = await model.getSectionsByCourseTitleWithSchedules(classInfo.title);
             
-            // 분반별로 그룹화하여 각 분반의 일정을 배열로 구성
             const sectionMap = {};
             allSectionSchedules.forEach(schedule => {
                 if (!sectionMap[schedule.section_id]) {
@@ -979,9 +947,7 @@ const getCourseSectionsApi = async (req, res) => {
                 return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
             };
             
-            // 분반 정보를 드롭다운용 형식으로 변환
             const sections = Object.values(sectionMap).map(section => {
-                // 모든 일정을 하나의 시간 범위로 표시 (여러 요일의 경우 첫 번째 일정 사용)
                 if (section.schedules.length > 0) {
                     const firstSchedule = section.schedules[0];
                     const allScheduleText = section.schedules.map(sch => 
@@ -1023,7 +989,7 @@ const getCourseSectionsApi = async (req, res) => {
     }
 }
 
-// 시간표에 과목 추가 API (충돌 체크 포함)
+// 시간표에 과목 추가
 const addCourseToTimetableApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1037,7 +1003,7 @@ const addCourseToTimetableApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '분반 ID가 필요합니다.' });
         }
 
-        // 1. 분반 정보 조회
+        // 분반 정보 조회
         const sectionDetails = await model.getSectionDetails(section_id);
         if (!sectionDetails || sectionDetails.length === 0) {
             return res.status(404).json({ ok: false, message: '해당 분반을 찾을 수 없습니다.' });
@@ -1048,7 +1014,7 @@ const addCourseToTimetableApi = async (req, res) => {
         const professor = sectionDetails[0].professor;
         const classroom = sectionDetails[0].classroom;
 
-        // 2. 이미 같은 과목을 추가했는지 확인
+        // 이미 같은 과목을 추가했는지 확인
         const alreadyAdded = await model.checkCourseAlreadyAdded(user.pkid, courseTitle);
         if (alreadyAdded) {
             return res.status(409).json({ 
@@ -1058,7 +1024,7 @@ const addCourseToTimetableApi = async (req, res) => {
             });
         }
 
-        // 3. 시간 충돌 체크
+        // 시간 충돌 체크
         const conflicts = [];
         for (const schedule of sectionDetails) {
             const conflict = await model.checkTimetableConflict(
@@ -1090,7 +1056,7 @@ const addCourseToTimetableApi = async (req, res) => {
             });
         }
 
-        // 4. 시간표에 추가 (각 시간대별로)
+        // 시간표에 추가
         const classColor = color || 'bg-blue-100';
         for (const schedule of sectionDetails) {
             await model.addTimetableEntry(
@@ -1118,7 +1084,6 @@ const addCourseToTimetableApi = async (req, res) => {
     }
 }
 
-// ModifyEvent 페이지 렌더
 const modifyEvent = (req, res) => {
     try {
         res.render('ModifyEvent');
@@ -1127,7 +1092,7 @@ const modifyEvent = (req, res) => {
     }
 }
 
-// 시간 문자열을 교시로 변환하는 헬퍼 (모든 교시 1시간 간격)
+// 시간 문자열을 교시로 변환 (모든 교시 1시간 간격)
 const timeToPeriod = (hhmm) => {
     const m = /^([0-2]?\d):(\d{2})$/.exec(hhmm || '');
     if (!m) return null;
@@ -1143,7 +1108,7 @@ const timeToPeriod = (hhmm) => {
     return null;
 }
 
-// 수업 추가 처리 (POST)
+// 수업 추가
 const addClassProc = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1156,7 +1121,6 @@ const addClassProc = async (req, res) => {
         professor = professor ? common.reqeustFilter(professor, 100, false, '') : null;
         credits = credits ? parseInt(credits, 10) : null;
 
-        // 다중 슬롯 필드 (배열로 수신)
         let day = req.body.day || [];
         let start_time = req.body.start_time || [];
         let end_time = req.body.end_time || [];
@@ -1177,10 +1141,10 @@ const addClassProc = async (req, res) => {
             const et = (end_time[i] || '').trim();
             if (!dNum) continue;
             const sp = timeToPeriod(st);
-            const epStart = timeToPeriod(et); // 종료 시각이 다음 교시의 시작이면 ep = epStart - 1
+            const epStart = timeToPeriod(et);
             if (sp == null || epStart == null) continue;
             const ep = epStart - 1;
-            if (ep < sp || sp < 1 || ep > 10) continue; // 10교시까지만
+            if (ep < sp || sp < 1 || ep > 10) continue;
 
             const location = common.reqeustFilter(place[i] || '', 100, false, '');
             await model.addTimetableEntry(user.pkid, dNum, sp, ep, title, location, class_color, memo, professor, credits);
@@ -1199,7 +1163,6 @@ const login = (req, res) => {
     try {
         res.render('Login');
     } catch {
-        // 500 : 시스템 에러
         res.status(500).send("500 Error");
     }
 }
@@ -1212,7 +1175,6 @@ const join = (req, res) => {
     }
 }
 
-// 비밀번호 찾기/인증/재설정 페이지 렌더
 const forgotPassword = (req, res) => {
     try {
         res.render('ForgotPassword');
@@ -1241,7 +1203,6 @@ const registerProc = async (req, res) => {
     try {
     let { name, student_id, username, password, password_confirm, email, phone } = req.body;
 
-        // 입력값 필터링 및 검증
         name = common.reqeustFilter(name, 100, false);
         student_id = common.reqeustFilter(student_id, 50, false);
         username = common.reqeustFilter(username, 50, false);
@@ -1249,22 +1210,19 @@ const registerProc = async (req, res) => {
         email = common.reqeustFilter(email, 100, false);
         phone = common.reqeustFilter(phone, 20, false);
 
-        // 필수 항목 체크
         if (!name || !student_id || !username || !password || !email || !phone) {
             return res.status(400).json({ message: '모든 항목을 입력해 주세요.' });
         }
 
-        // 비밀번호 확인
         if (password !== password_confirm) {
             return res.status(400).json({ message: '비밀번호가 일치하지 않습니다.' });
         }
 
-        // 아이디 길이 체크
         if (username.length < 6) {
             return res.status(400).json({ message: '아이디는 6자 이상이어야 합니다.' });
         }
 
-        // 학생/직원 중 누가 사전 등록인지 판별
+        // 학생/직원 사전 등록 판별
         const preStudent = await model.checkPreRegisteredStudent(name, student_id);
         const preAdmin = preStudent ? null : await model.checkPreRegisteredAdmin(name, student_id);
 
@@ -1273,7 +1231,6 @@ const registerProc = async (req, res) => {
         }
 
         if (preStudent) {
-            // 학생 가입 플로우
             const alreadyRegistered = await model.checkStudentAlreadyRegistered(preStudent.pkid);
             if (alreadyRegistered) return res.status(400).json({ message: '이미 가입된 계정입니다.' });
 
@@ -1286,7 +1243,6 @@ const registerProc = async (req, res) => {
             await model.updateStudentRegistration(preStudent.pkid, username, password, email, phone);
             return res.status(200).json({ message: '학생 회원가입이 완료되었습니다.' });
         } else {
-            // 관리자(직원) 가입 플로우
             const alreadyRegistered = await model.checkAdminAlreadyRegistered(preAdmin.pkid);
             if (alreadyRegistered) return res.status(400).json({ message: '이미 가입된 관리자 계정입니다.' });
 
@@ -1323,7 +1279,7 @@ const loginProc = async (req, res) => {
         }
 
         if(result != null) {
-            // 로그인처리 ==> 세션 저장
+            // 로그인처리
             if (isAdmin) {
                 // 관리자 로그인
                 req.session.user = {
@@ -1349,12 +1305,10 @@ const loginProc = async (req, res) => {
                 };
             }
 
-            // 세션 저장 후 리다이렉트
             req.session.save(() => {
                 res.redirect('/');
             });
         } else {
-            // 아이디 또는 비번이 틀린 경우
             res.send('<script>alert("아이디 또는 비밀번호가 잘못되었습니다."); location.href="/Login";</script>');
         }
     } catch {
@@ -1379,12 +1333,10 @@ const uploadPhotoProc = async (req, res) => {
             return res.status(401).send('<script>alert("로그인이 필요합니다."); location.href="/Login";</script>');
         }
 
-        // multer가 처리한 파일 정보
         if (!req.file) {
             return res.send('<script>alert("파일이 업로드되지 않았습니다."); history.back();</script>');
         }
 
-        // 파일 경로를 DB에 저장 (웹 경로)
         let photoUrl;
         if (user.isAdmin) {
             photoUrl = `/uploads/admin/${req.file.filename}`;
@@ -1394,7 +1346,6 @@ const uploadPhotoProc = async (req, res) => {
             await model.updateStudentPhoto(user.pkid, photoUrl);
         }
 
-        // 세션 업데이트
         req.session.user.photo_url = photoUrl;
 
         common.alertAndGo(res, '사진이 업로드되었습니다.', '/MyPage');
@@ -1414,7 +1365,6 @@ const viewAnnouncement = async (req, res) => {
         const announcement = await model.getAnnouncementById(pkid);
         if (!announcement) return res.status(404).send('공지를 찾을 수 없습니다.');
         
-        // 날짜 포맷팅
         const d = new Date(announcement.created_at);
         if (!isNaN(d)) {
             const y = d.getFullYear();
@@ -1423,7 +1373,6 @@ const viewAnnouncement = async (req, res) => {
             announcement.created_at = `${y}-${m}-${day}`;
         }
         
-        // 관리자 여부 확인
         const isAdmin = user && user.isAdmin === true;
         const user_role = user ? (user.isAdmin ? 'admin' : 'student') : 'guest';
         
@@ -1497,14 +1446,11 @@ const viewClass = async (req, res) => {
         const id = req.params.id || req.query.id || req.query.classId;
         if (!id) return res.status(400).send('수업 ID가 필요합니다.');
         
-        // 먼저 해당 ID의 수업 정보를 가져와서 과목명을 확인
         const mainClassInfo = await model.getTimetableById(id, user.pkid);
         if (!mainClassInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
         
-        // 같은 과목명의 모든 시간표 항목 가져오기
         const allClassTimes = await model.getTimetablesByTitle(mainClassInfo.title, user.pkid);
         
-        // 요일 변환
         const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
         
         // 교시를 시간으로 변환
@@ -1514,7 +1460,6 @@ const viewClass = async (req, res) => {
             return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
         };
         
-        // 모든 시간대에 대해 요일과 시간 정보 추가
         const timeSlots = allClassTimes.map(slot => ({
             id: slot.id,
             dayName: dayMap[slot.day] || '',
@@ -1523,7 +1468,6 @@ const viewClass = async (req, res) => {
             location: slot.location || ''
         }));
         
-        // 기본 정보는 첫 번째 항목 사용
         const classInfo = {
             id: mainClassInfo.id,
             title: mainClassInfo.title,
@@ -1554,7 +1498,6 @@ const modifyClass = async (req, res) => {
         const classInfo = await model.getTimetableById(id, user.pkid);
         if (!classInfo) return res.status(404).send('수업을 찾을 수 없습니다.');
 
-        // 같은 과목명의 모든 시간표 항목(분반/슬롯) 불러오기
         const allClassTimes = await model.getTimetablesByTitle(classInfo.title, user.pkid);
         const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
         const periodToTime = (period) => {
@@ -1562,7 +1505,6 @@ const modifyClass = async (req, res) => {
             base.setMinutes(base.getMinutes() + (period - 1) * 60);
             return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
         };
-        // 모든 시간대에 대해 요일/시간/장소 정보 추가, 장소가 null/빈값이면 빈 문자열
         const timeSlots = allClassTimes.map(slot => ({
             id: slot.id,
             dayName: dayMap[slot.day] || '',
@@ -1571,7 +1513,6 @@ const modifyClass = async (req, res) => {
             location: slot.location && slot.location !== 'null' ? slot.location : ''
         }));
 
-        // 기존 단일 슬롯 정보도 유지
         classInfo.dayName = dayMap[classInfo.day] || '';
         classInfo.start_time = periodToTime(classInfo.start_period);
         classInfo.end_time = periodToTime(classInfo.end_period + 1);
@@ -1592,7 +1533,7 @@ const notifications = (req, res) => {
     }
 }
 
-// 시간표 단일 조회 API (JSON)
+// 시간표 단일 조회
 const getClassApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1601,24 +1542,19 @@ const getClassApi = async (req, res) => {
         const id = req.params.id;
         if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
         
-        // 해당 수업 정보 가져오기
         const classInfo = await model.getTimetableById(id, user.pkid);
         if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
         
-        // 같은 과목명의 모든 시간표 슬롯 가져오기
         const allSlots = await model.getTimetablesByTitle(classInfo.title, user.pkid);
         
-        // 요일 변환
         const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
         
-        // 교시를 시간으로 변환
         const periodToTime = (period) => {
             const base = new Date(2000, 0, 1, 9, 0, 0);
             base.setMinutes(base.getMinutes() + (period - 1) * 60);
             return `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
         };
         
-        // 슬롯 데이터 변환
         const slots = allSlots.map(slot => ({
             id: slot.id,
             day: dayMap[slot.day] || '',
@@ -1642,7 +1578,7 @@ const getClassApi = async (req, res) => {
     }
 }
 
-// 시간표 상세 정보 조회 API (ModifyClass용)
+// 시간표 상세 정보 조회
 const getClassDetailsApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1651,7 +1587,6 @@ const getClassDetailsApi = async (req, res) => {
         const id = req.params.id;
         if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
         
-        // 해당 수업 정보 가져오기
         const classInfo = await model.getTimetableById(id, user.pkid);
         if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
         
@@ -1669,7 +1604,7 @@ const getClassDetailsApi = async (req, res) => {
     }
 }
 
-// 시간표 수정 API (JSON)
+// 시간표 수정
 const updateClassApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1690,7 +1625,6 @@ const updateClassApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '최소 하나의 시간 슬롯이 필요합니다.' });
         }
         
-        // 시간을 교시로 변환하는 함수
         const timeToPeriod = (hhmm) => {
             const m = /^([0-2]?\d):(\d{2})$/.exec(hhmm || '');
             if (!m) return null;
@@ -1704,7 +1638,6 @@ const updateClassApi = async (req, res) => {
         
         const dayMap = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5 };
         
-        // 기존 같은 과목명의 모든 시간표 삭제
         const oldClass = await model.getTimetableById(id, user.pkid);
         if (!oldClass) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
         
@@ -1713,7 +1646,6 @@ const updateClassApi = async (req, res) => {
             await model.deleteTimetableEntry(slot.id, user.pkid);
         }
         
-        // 새로운 슬롯들 추가
         let firstNewId = null;
         for (const slot of slots) {
             const day = dayMap[slot.day];
@@ -1730,7 +1662,7 @@ const updateClassApi = async (req, res) => {
                 user.pkid,
                 day,
                 start_period,
-                end_period - 1, // end_period는 실제 마지막 교시
+                end_period - 1, // end_period : 실제 마지막 교시
                 title,
                 location,
                 class_color,
@@ -1749,7 +1681,7 @@ const updateClassApi = async (req, res) => {
     }
 }
 
-// 시간표 삭제 API (JSON)
+// 시간표 삭제
 const deleteClassApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1758,11 +1690,9 @@ const deleteClassApi = async (req, res) => {
         const id = req.params.id;
         if (!id) return res.status(400).json({ ok: false, message: '수업 ID가 필요합니다.' });
         
-        // 해당 수업 정보 가져오기
         const classInfo = await model.getTimetableById(id, user.pkid);
         if (!classInfo) return res.status(404).json({ ok: false, message: '수업을 찾을 수 없습니다.' });
         
-        // 같은 과목명의 모든 시간표 슬롯 삭제
         const allSlots = await model.getTimetablesByTitle(classInfo.title, user.pkid);
         for (const slot of allSlots) {
             await model.deleteTimetableEntry(slot.id, user.pkid);
@@ -1775,7 +1705,7 @@ const deleteClassApi = async (req, res) => {
     }
 }
 
-// ===== Helper: 현재 연도/학기 계산 =====
+// 현재 연도/학기 계산
 function getCurrentYearSemester() {
     const now = new Date();
     const year = now.getFullYear();
@@ -1784,7 +1714,7 @@ function getCurrentYearSemester() {
     return { year, semester };
 }
 
-// 시간표 과목 리스트 (학점 포함) 반환
+// 시간표 과목 리스트 반환
 const getMyTimetableCoursesApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1797,7 +1727,7 @@ const getMyTimetableCoursesApi = async (req, res) => {
     }
 };
 
-// 성적 입력/수정 API
+// 성적 입력/수정
 const addGradeApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1820,7 +1750,7 @@ const addGradeApi = async (req, res) => {
     }
 };
 
-// 성적 요약 API (GPA/총 학점)
+// 성적 요약
 const getGradesSummaryApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1857,7 +1787,7 @@ const getGradesSummaryApi = async (req, res) => {
     }
 };
 
-// 성적 수정 API (PUT /api/grades/:id)
+// 성적 수정
 const updateGradeApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1875,13 +1805,11 @@ const updateGradeApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '성적이 필요합니다.' });
         }
 
-        // 성적이 본인의 것인지 확인
         const existingGrade = await model.getGradeById(gradeId, user.pkid);
         if (!existingGrade) {
             return res.status(404).json({ ok: false, message: '성적을 찾을 수 없습니다.' });
         }
 
-        // 성적 수정
         is_major = is_major ? 1 : 0;
         const affected = await model.updateGrade(gradeId, user.pkid, grade, is_major);
         
@@ -1896,7 +1824,6 @@ const updateGradeApi = async (req, res) => {
     }
 };
 
-// 성적 삭제 API (DELETE /api/grades/:id)
 const deleteGradeApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -1909,13 +1836,11 @@ const deleteGradeApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '성적 ID가 필요합니다.' });
         }
 
-        // 성적이 본인의 것인지 확인
         const existingGrade = await model.getGradeById(gradeId, user.pkid);
         if (!existingGrade) {
             return res.status(404).json({ ok: false, message: '성적을 찾을 수 없습니다.' });
         }
 
-        // 성적 삭제
         const affected = await model.deleteGrade(gradeId, user.pkid);
         
         if (affected === 0) {
@@ -1929,11 +1854,7 @@ const deleteGradeApi = async (req, res) => {
     }
 };
 
-// ============================================================
-// 이메일 인증 및 비밀번호 재설정 API
-// ============================================================
-
-// 인증번호 발송 API
+// 인증번호 발송
 const sendVerificationCodeApi = async (req, res) => {
     try {
         const { email } = req.body;
@@ -1942,7 +1863,6 @@ const sendVerificationCodeApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '이메일을 입력해주세요.' });
         }
 
-        // 이메일로 사용자 찾기
         const user = await model.findUserByEmail(email);
         if (!user) {
             return res.status(404).json({ ok: false, message: '가입되지 않은 이메일입니다.' });
@@ -1968,7 +1888,7 @@ const sendVerificationCodeApi = async (req, res) => {
     }
 };
 
-// 인증번호 확인 API
+// 인증번호 확인
 const verifyCodeApi = async (req, res) => {
     try {
         const { email, code } = req.body;
@@ -1977,7 +1897,6 @@ const verifyCodeApi = async (req, res) => {
             return res.status(400).json({ ok: false, message: '이메일과 인증번호를 입력해주세요.' });
         }
 
-        // 인증번호 확인
         const isValid = await model.verifyCode(email, code);
 
         if (isValid) {
@@ -1993,7 +1912,7 @@ const verifyCodeApi = async (req, res) => {
     }
 };
 
-// 비밀번호 재설정 API
+// 비밀번호 재설정
 const resetPasswordApi = async (req, res) => {
     try {
         const { token, password } = req.body;
@@ -2025,19 +1944,14 @@ const resetPasswordApi = async (req, res) => {
     }
 };
 
-// ========== 알림 API ==========
-
-// 일정 알림 스케줄링 함수
+// 일정 알림 스케줄링
 const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_title, event_date, event_time, alarms) => {
-    // 기존 타이머가 있으면 먼저 취소
     cancelEventNotifications(event_id);
     
-    // 일정 시간 계산
     let eventDateTime;
     if (event_time) {
         eventDateTime = new Date(`${event_date}T${event_time}`);
     } else {
-        // 시간이 없으면 당일 오전 9시로 설정
         eventDateTime = new Date(`${event_date}T09:00:00`);
     }
     
@@ -2068,7 +1982,6 @@ const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_
         const notificationTime = new Date(eventDateTime.getTime() - offsetMs);
         const now = new Date();
         
-        // 알림 시간이 현재보다 미래인 경우에만 스케줄링
         if (notificationTime > now) {
             const delay = notificationTime.getTime() - now.getTime();
             
@@ -2091,13 +2004,12 @@ const scheduleEventNotifications = async (user_pkid, user_type, event_id, event_
         }
     }
     
-    // 타이머 ID들을 저장
     if (timers.length > 0) {
         eventNotificationTimers.set(event_id, timers);
     }
 };
 
-// 일정 알림 취소 함수
+// 일정 알림 취소
 const cancelEventNotifications = (event_id) => {
     const timers = eventNotificationTimers.get(event_id);
     if (timers) {
@@ -2106,7 +2018,7 @@ const cancelEventNotifications = (event_id) => {
     }
 };
 
-// 알림 목록 조회 API
+// 알림 목록 조회
 const getNotificationsApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -2122,7 +2034,7 @@ const getNotificationsApi = async (req, res) => {
     }
 };
 
-// 미확인 알림 개수 조회 API
+// 미확인 알림 개수 조회
 const getUnreadCountApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -2138,7 +2050,7 @@ const getUnreadCountApi = async (req, res) => {
     }
 };
 
-// 알림 읽음 처리 API
+// 알림 읽음 처리
 const markNotificationReadApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -2159,7 +2071,7 @@ const markNotificationReadApi = async (req, res) => {
     }
 };
 
-// 모든 알림 읽음 처리 API
+// 모든 알림 읽음 처리
 const markAllNotificationsReadApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -2175,7 +2087,7 @@ const markAllNotificationsReadApi = async (req, res) => {
     }
 };
 
-// 모든 알림 삭제 API
+// 모든 알림 삭제
 const deleteAllNotificationsApi = async (req, res) => {
     try {
         const user = req.session && req.session.user;
@@ -2191,19 +2103,19 @@ const deleteAllNotificationsApi = async (req, res) => {
     }
 };
 
-// 바코드 생성 컨트롤러
+// 바코드 생성
 const generateBarcode = (req, res) => {
     const text = req.params.text;
     if (!text) {
         return res.status(400).send('Barcode text is required');
     }
     bwipjs.toBuffer({
-        bcid: 'code128',       // 바코드 타입
-        text: text,            // 바코드에 인코딩할 텍스트
-        scale: 3,              // 스케일
-        height: 10,            // 높이
-        includetext: false,    // 텍스트 포함 여부
-        textxalign: 'center',  // 텍스트 정렬
+        bcid: 'code128',
+        text: text,
+        scale: 3,
+        height: 10,
+        includetext: false,
+        textxalign: 'center',
     }, (err, png) => {
         if (err) {
             console.error("Barcode generation error:", err);
@@ -2221,21 +2133,18 @@ const downloadAnnouncementFile = async (req, res) => {
         const filename = req.params.filename;
         const filePath = path.join(__dirname, '../uploads/announcements', filename);
         
-        // 파일 존재 확인
         if (!fs.existsSync(filePath)) {
             return res.status(404).send('파일을 찾을 수 없습니다.');
         }
         
-        // 원본 파일명 추출 (timestamp_ 제거)
+        // 원본 파일명 추출
         const originalName = filename.replace(/^\d+_/, '');
         
-        // 한글 파일명을 위한 UTF-8 인코딩
         const encodedFileName = encodeURIComponent(originalName);
         
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
         res.setHeader('Content-Type', 'application/octet-stream');
         
-        // 파일 전송
         res.sendFile(filePath);
     } catch (err) {
         console.error('파일 다운로드 오류:', err);
@@ -2290,31 +2199,26 @@ module.exports = {
     getAllCoursesApi,
     getCourseSectionsApi,
     addCourseToTimetableApi,
-    // grades/timetable related APIs
     getMyTimetableCoursesApi,
     addGradeApi,
     updateGradeApi,
     deleteGradeApi,
     getGradesSummaryApi,
-    // email verification APIs
     sendVerificationCodeApi,
     verifyCodeApi,
     resetPasswordApi,
     generateBarcode,
-    // notification APIs
     getNotificationsApi,
     getUnreadCountApi,
     markNotificationReadApi,
     markAllNotificationsReadApi,
     deleteAllNotificationsApi,
-    // AI 챗봇
     chatbotPage,
     chatbotApi,
-    // 파일 다운로드
     downloadAnnouncementFile
 }
 
-// 일정 수정 API
+// 일정 수정
 async function updateEventApi(req, res) {
     try {
         const user = req.session && req.session.user;
@@ -2329,7 +2233,6 @@ async function updateEventApi(req, res) {
         if (!title) return res.status(400).json({ ok: false, message: '제목이 필요합니다.' });
 
         if (eventType === 'academic') {
-            // 관리자만 수정 가능
             if (!user.isAdmin) return res.status(403).json({ ok: false, message: '권한이 없습니다.' });
             let start_date = common.reqeustFilter(req.body.start_date, 20, false);
             let end_date = common.reqeustFilter(req.body.end_date, 20, false);
@@ -2342,13 +2245,10 @@ async function updateEventApi(req, res) {
             await model.updateAcademicSchedule(eventId, title, start_date, end_date);
             return res.json({ ok: true });
         } else {
-            // 개인 일정: 본인 것만 수정
             const userType = user.isAdmin ? 'admin' : 'student';
-            // 존재 확인
             const existing = await model.getPersonalEventById(eventId, user.pkid, userType);
             if (!existing) return res.status(404).json({ ok: false, message: '일정을 찾을 수 없습니다.' });
 
-            // 알림 데이터 파싱
             let alarmsArray = [];
             if (req.body.alarms) {
                 try {
@@ -2378,7 +2278,6 @@ async function updateEventApi(req, res) {
             }
             await model.updatePersonalEvent(eventId, user.pkid, userType, title, event_date, event_time, event_color, memo, alarmsArray);
             
-            // 알림이 있다면 다시 스케줄링
             if (alarmsArray && alarmsArray.length > 0) {
                 scheduleEventNotifications(user.pkid, userType, eventId, title, event_date, event_time, alarmsArray);
             }
